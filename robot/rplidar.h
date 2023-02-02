@@ -10,7 +10,13 @@
 ////*************************************************************************************
 ////*************************************************************************************
 #pragma once
+#ifdef _WIN32
 #include<windows.h>
+#else
+#include<arpa/inet.h>
+#include<sys/socket.h>
+
+#endif
 //#include <winsock2.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,13 +31,15 @@
 #include <stdio.h>
 
 #include<iostream>
-//#include<arpa/inet.h>
+
 //#include<unistd.h>
-//#include<sys/socket.h>
+//
 #include<sys/types.h>
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+
+
 
 typedef struct
 {
@@ -96,7 +104,11 @@ private:
     //--ktore je posledne odovzdane uzivatelovi
      long long poslednePoslane;
     int hCom;
+#ifdef _WIN32
     HANDLE  threadHandle; // handle na vlakno
+#else
+    pthread_t threadHandle; // handle na vlakno
+#endif
     int threadID;  // id vlakna
 
 public:

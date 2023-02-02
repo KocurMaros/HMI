@@ -101,7 +101,7 @@ private:
     std::string camera_link;
     std::thread camerathreadhandle;
     std::function<int(cv::Mat)> camera_callback=nullptr;
-    void Robot::imageViewer();
+    void imageViewer();
 
     ///
     ///

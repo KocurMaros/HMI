@@ -25,7 +25,7 @@ Robot::~Robot()
     camerathreadhandle.join();
 #ifdef _WIN32
 WSACleanup();
-#endif;
+#endif
 }
 
 Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std::function<int(LaserMeasurement)> &lascallback,std::string ipaddressRobot,int robotportRobot, int robotportMe,std::function<int(TKobukiData)> &robcallback): wasLaserSet(0),wasRobotSet(0),wasCameraSet(0)
@@ -35,6 +35,9 @@ Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std:
     setRobotParameters(ipaddressRobot,robotportRobot,robotportMe,robcallback);
     readyFuture=ready_promise.get_future();
 }
+
+///tato funkcia vas nemusi zaujimat
+/// toto je funkcia s nekonecnou sluckou,ktora cita data z robota (UDP komunikacia)
 void Robot::robotprocess()
 {
 #ifdef _WIN32
@@ -51,9 +54,10 @@ void Robot::robotprocess()
     }
 
     char rob_broadcastene=1;
+#ifdef _WIN32
     DWORD timeout=100;
-
     ::setsockopt(rob_s, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof timeout);
+#endif
     ::setsockopt(rob_s,SOL_SOCKET,SO_BROADCAST,&rob_broadcastene,sizeof(rob_broadcastene));
     // zero out the structure
     memset((char *) &rob_si_me, 0, sizeof(rob_si_me));
@@ -95,6 +99,7 @@ void Robot::robotprocess()
 
             continue;
         }
+        //https://i.pinimg.com/236x/1b/91/34/1b9134e6a5d2ea2e5447651686f60520--lol-funny-funny-shit.jpg
         //tu mame data..zavolame si funkciu
 
         //     memcpy(&sens,buff,sizeof(sens));
@@ -113,7 +118,6 @@ void Robot::robotprocess()
 
 
             ///---toto je callback funkcia...
-         //   robot_callback(sens);
             std::async(std::launch::async, [this](TKobukiData sensdata) { robot_callback(sensdata); },sens);
 
         }
@@ -152,6 +156,9 @@ void Robot::setRotationSpeed(double radpersec) //left
 
      }
  }
+
+ ///tato funkcia vas nemusi zaujimat
+ /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void Robot::laserprocess()
 {
 #ifdef _WIN32
@@ -188,7 +195,10 @@ void Robot::laserprocess()
     las_si_posli.sin_addr.s_addr = inet_addr(laser_ipaddress.data());;//htonl(INADDR_BROADCAST);
     ::bind(las_s , (struct sockaddr*)&las_si_me, sizeof(las_si_me) );
     char command=0x00;
-    if (::sendto(las_s, &command, sizeof(command), 0, (struct sockaddr*) &las_si_posli, rob_slen) == -1)
+    //najskor posleme prazdny prikaz
+    //preco?
+    //https://ih0.redbubble.net/image.74126234.5567/raf,750x1000,075,t,heather_grey_lightweight_raglan_sweatshirt.u3.jpg
+    if (::sendto(las_s, &command, sizeof(command), 0, (struct sockaddr*) &las_si_posli, rob_slen) == -1)//podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
     {
 
     }
@@ -204,11 +214,10 @@ void Robot::laserprocess()
             continue;
         }
         measure.numberOfScans=las_recv_len/sizeof(LaserData);
-        //tu mame data..zavolame si funkciu
+        //tu mame data..zavolame si funkciu-- vami definovany callback
 
         std::async(std::launch::async, [this](LaserMeasurement sensdata) { laser_callback(sensdata); },measure);
-        //     memcpy(&sens,buff,sizeof(sens));
-      //  int returnValue=autonomouslaser(measure);
+  ///ako som vravel,toto vas nemusi zaujimat
 
     }
     std::cout<<"koniec thread"<<std::endl;
@@ -243,6 +252,7 @@ void Robot::imageViewer()
     cv::Mat frameBuf;
     while(1)
     {
+
         if(readyFuture.wait_for(std::chrono::seconds(0))==std::future_status::ready)
             break;
         cap >> frameBuf;
@@ -250,11 +260,16 @@ void Robot::imageViewer()
 
 
 
+        std::cout<<"doslo toto "<<frameBuf.rows<<" "<<frameBuf.cols<<std::endl;
 
 
-      //  frameBuf.copyTo(robotPicture);
+      // tu sa vola callback..
         std::async(std::launch::async, [this](cv::Mat camdata) { camera_callback(camdata.clone()); },frameBuf);
+#ifdef _WIN32
         cv::waitKey(1);
+#else
+        usleep(1*1000);
+#endif
 
     }
     cap.release();

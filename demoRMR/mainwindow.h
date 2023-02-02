@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#ifdef _WIN32
 #include<windows.h>
+#endif
 #include<iostream>
 //#include<arpa/inet.h>
 //#include<unistd.h>
@@ -29,6 +31,7 @@ namespace Ui {
 class MainWindow;
 }
 
+///toto je trieda s oknom.. ktora sa spusti ked sa spusti aplikacia.. su tu vsetky gombiky a spustania...
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -67,7 +70,8 @@ private slots:
     void getNewFrame();
 
 private:
-     JOYINFO joystickInfo;
+
+    //--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
     Ui::MainWindow *ui;
      void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
      int updateLaserPicture;

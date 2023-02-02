@@ -4,6 +4,11 @@
 
 #include "errno.h"
 
+///niektore funkcie maju zakomentovane tela..
+/// je to preto ze povodna trieda je na priamu komunikaciu s lidarom
+/// (ano, toto zial bezi na robote. sklamanie,ze?)
+/// vy ale pracujete s udp verziou, ktora pouziva CKobuki len kvoli niektorym pomocnym funkciam
+/// kazdy rozumny programator by urobil novu triedu..ale kto rozumny by robil v skolstve,ze ano
 
 int
 set_interface_attribs (int fd, int speed, int parity)
@@ -125,10 +130,17 @@ void rplidar::recvCommandUDP()
     while(1)
     {
 
+#ifdef _WIN32
         if ((recv_len = recvfrom(s, buf, 1, 0, (struct sockaddr *) &si_other, (int*)&slen)) == -1)
         {
 
         }
+#else
+        if ((recv_len = recvfrom(s, buf, 1, 0, (struct sockaddr *) &si_other, &slen)) == -1)
+        {
+
+        }
+#endif
         printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
         printf("Data: %s\n" , buf);
         if(buf[0]==1)
@@ -153,10 +165,15 @@ void rplidar::recvCommandUDP()
         }
         else if(buf[0]==5)
         {
+            /*
             //reset spojenia
             stop();
            // close(hCom);
+
             Sleep(100);
+
+            usleep(100*1000);
+
             WasEnabled=0;
             ktoreMeranie=-1;
             kdeJeCele=-1;
@@ -167,7 +184,7 @@ void rplidar::recvCommandUDP()
          //   int err=connect("/dev/laser");
 
             enable();
-            start();
+            start();*/
         }
 
     }
@@ -205,21 +222,12 @@ int rplidar::start()
 int rplidar::stop()
 {
     stopMeasurement=1;
+#ifdef _WIN32
     WaitForSingleObject(threadHandle, INFINITE);
-   // pthread_join(threadHandle,NULL);
-  /*  char request[]={0xa5, 0x25};
-   // int Pocet=0;
-    write(hCom,&request,2);
+#else
+    pthread_join(threadHandle,NULL);
 
-    usleep(2000);
-    //tu treba vycitat buffer
-    char buffer[5000];
-    int readnum=0;
-    do
-    {
-         readnum=read(hCom,buffer,5000);
-    }while(readnum>0);
-*/
+#endif
     return 0;
 }
 LaserMeasurement rplidar::getMeasurement()
@@ -344,7 +352,7 @@ Start:
                 //---ak bolo -1 aka zaciatok, nastavim ze pisem na 0 miesto, ak uz nejake bolo, zmenime podla toho,kde bolo predtym,a ci nahodou prave neposielam
                 ktoreZapisujem= (ktoreZapisujem==-1)? 0: ((ktoreZapisujem+1)%3 ==ktorePosielam)? (ktoreZapisujem+2)%3: (ktoreZapisujem+1)%3;
 
-                //tu preposleme cele meranie na siet...
+                //tu preposleme cele meranie nrobotoma siet...
                 if (sendto(s, (char*)&localMeranie[kdeJeCele].Data, sizeof(LaserData)*localMeranie[kdeJeCele].numberOfScans, 0, (struct sockaddr*) &si_posli, slen) == -1)
                 {
 

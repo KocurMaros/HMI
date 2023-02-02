@@ -37,85 +37,85 @@ using namespace std;
 
 typedef struct
 {
-	
-	unsigned short x;
-	unsigned short y;
-	unsigned short z;
+
+    unsigned short x;
+    unsigned short y;
+    unsigned short z;
 
 }TRawGyroData;
 typedef struct
 {
-	//Hardware Version
-	unsigned char HardwareVersionMajor;
-	unsigned char HardwareVersionMinor;
-	unsigned char HardwareVersionPatch;
-	//Firmware Version
-	unsigned char FirmwareVersionMajor;
-	unsigned char FirmwareVersionMinor;
-	unsigned char FirmwareVersionPatch;
+    //Hardware Version
+    unsigned char HardwareVersionMajor;
+    unsigned char HardwareVersionMinor;
+    unsigned char HardwareVersionPatch;
+    //Firmware Version
+    unsigned char FirmwareVersionMajor;
+    unsigned char FirmwareVersionMinor;
+    unsigned char FirmwareVersionPatch;
 
-	//Unique Device IDentifier(UDID)
-	unsigned int UDID0;
-	unsigned int UDID1;
-	unsigned int UDID2;
-	//Controller Info
-	unsigned char PIDtype;
-	unsigned int PIDgainP;
-	unsigned int PIDgainI;
-	unsigned int PIDgainD;
+    //Unique Device IDentifier(UDID)
+    unsigned int UDID0;
+    unsigned int UDID1;
+    unsigned int UDID2;
+    //Controller Info
+    unsigned char PIDtype;
+    unsigned int PIDgainP;
+    unsigned int PIDgainI;
+    unsigned int PIDgainD;
 }TExtraRequestData;
 
 typedef struct
 {
-	//---zakladny balik
-	unsigned short timestamp;
-	//narazniky
-	bool BumperLeft;
-	bool BumperCenter;
-	bool BumperRight;
-	//cliff
-	bool CliffLeft;
-	bool CliffCenter;
-	bool CliffRight;
-	// padnutie kolies
-	bool WheelDropLeft;  
-	bool WheelDropRight; 
-	//tocenie kolies
-	unsigned short EncoderRight;
-	unsigned short EncoderLeft;
-	unsigned char PWMright;
-	unsigned char PWMleft;
-	//gombiky
-	unsigned char ButtonPress;// 0 nie, 1 2 4 pre button 0 1 2 (7 je ze vsetky tri)
-	//napajanie
-	unsigned char Charger;
-	unsigned char Battery;
-	unsigned char overCurrent;
-	//---docking ir
-	unsigned char IRSensorRight;
-	unsigned char IRSensorCenter;
-	unsigned char IRSensorLeft;
-	//---Inertial Sensor Data
-	signed short GyroAngle;
-	unsigned short GyroAngleRate;
-	//---Cliff Sensor Data
-	unsigned short CliffSensorRight;
-	unsigned short CliffSensorCenter;
-	unsigned short CliffSensorLeft;
-	//---Current
-	unsigned char wheelCurrentLeft;
-	unsigned char wheelCurrentRight;
-	//---Raw Data Of 3D Gyro
-	unsigned char frameId;
-	std::vector<TRawGyroData> gyroData;
-	//---General Purpose Input
-	unsigned short digitalInput;
-	unsigned short analogInputCh0;
-	unsigned short analogInputCh1;
-	unsigned short analogInputCh2;
-	unsigned short analogInputCh3;
-	//---struktura s datami ktore sa nam tam objavia iba na poziadanie
-	TExtraRequestData extraInfo;
+    //---zakladny balik
+    unsigned short timestamp;
+    //narazniky
+    bool BumperLeft;
+    bool BumperCenter;
+    bool BumperRight;
+    //cliff
+    bool CliffLeft;
+    bool CliffCenter;
+    bool CliffRight;
+    // padnutie kolies
+    bool WheelDropLeft;
+    bool WheelDropRight;
+    //tocenie kolies
+    unsigned short EncoderRight;
+    unsigned short EncoderLeft;
+    unsigned char PWMright;
+    unsigned char PWMleft;
+    //gombiky
+    unsigned char ButtonPress;// 0 nie, 1 2 4 pre button 0 1 2 (7 je ze vsetky tri)
+    //napajanie
+    unsigned char Charger;
+    unsigned char Battery;
+    unsigned char overCurrent;
+    //---docking ir
+    unsigned char IRSensorRight;
+    unsigned char IRSensorCenter;
+    unsigned char IRSensorLeft;
+    //---Inertial Sensor Data
+    signed short GyroAngle;
+    unsigned short GyroAngleRate;
+    //---Cliff Sensor Data
+    unsigned short CliffSensorRight;
+    unsigned short CliffSensorCenter;
+    unsigned short CliffSensorLeft;
+    //---Current
+    unsigned char wheelCurrentLeft;
+    unsigned char wheelCurrentRight;
+    //---Raw Data Of 3D Gyro
+    unsigned char frameId;
+    std::vector<TRawGyroData> gyroData;
+    //---General Purpose Input
+    unsigned short digitalInput;
+    unsigned short analogInputCh0;
+    unsigned short analogInputCh1;
+    unsigned short analogInputCh2;
+    unsigned short analogInputCh3;
+    //---struktura s datami ktore sa nam tam objavia iba na poziadanie
+    TExtraRequestData extraInfo;
 }TKobukiData;
 
 
@@ -124,15 +124,15 @@ typedef long(*src_callback_kobuki_data) (void *user_data, TKobukiData &Kobuki_da
 class CKobuki
 {
 public:
-	CKobuki() { 
+    CKobuki() {
 
-		std::cout << "kobuki instantiated" << std::endl;
+        std::cout << "kobuki instantiated" << std::endl;
 
-	};
-	 virtual ~CKobuki() { 
+    };
+     virtual ~CKobuki() {
 
-	};
-	
+    };
+
 
 
 
@@ -156,12 +156,12 @@ private:
     int parseKobukiMessage(TKobukiData &output, unsigned char *data );
 
     int checkChecksum(unsigned char *data);
-	
-	//--spustenie merania v novom vlakne (vycitavanie bezi v novom vlakne. treba ho stopnut ak chceme poslat request)
+
+    //--spustenie merania v novom vlakne (vycitavanie bezi v novom vlakne. treba ho stopnut ak chceme poslat request)
 
 
-	long double tickToMeter = 0.000085292090497737556558; // [m/tick]
-	long double b = 0.23; // wheelbase distance in meters, from kobuki manual https://yujinrobot.github.io/kobuki/doxygen/enAppendixProtocolSpecification.html
+    long double tickToMeter = 0.000085292090497737556558; // [m/tick]
+    long double b = 0.23; // wheelbase distance in meters, from kobuki manual https://yujinrobot.github.io/kobuki/doxygen/enAppendixProtocolSpecification.html
 //
 
 

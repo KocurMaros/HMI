@@ -6,7 +6,11 @@
 
 
 
-// obsluha tty pod unixom
+///niektore funkcie maju zakomentovane tela..
+/// je to preto ze povodna trieda je na priamu komunikaciu s robotom
+/// (ano, toto zial bezi na robote. sklamanie,ze?)
+/// vy ale pracujete s udp verziou, ktora pouziva CKobuki len kvoli niektorym pomocnym funkciam
+/// kazdy rozumny programator by urobil novu triedu..ale kto rozumny by robil v skolstve,ze ano
 int set_interface_attribs2 (int fd, int speed, int parity)
 {
   /*  struct termios tty;
@@ -118,7 +122,10 @@ std::vector<unsigned char> CKobuki::setArcSpeed(int mmpersec, int radius)
         return setTranslationSpeed(mmpersec);
 
     }
-
+    //viac o prikaze a jeho tvorbe si mozete precitat napriklad tu
+    //http://yujinrobot.github.io/kobuki/enAppendixProtocolSpecification.html
+    //alebo tu
+    //https://bit.ly/2MWSbcx
     int speedvalue = mmpersec * ((radius + (radius>0? 230:-230) )/ 2 ) / radius;
     unsigned char message[14] = { 0xaa,0x55,0x0A,0x0c,0x02,0xf0,0x00,0x01,0x04,static_cast<unsigned char>(speedvalue % 256),static_cast<unsigned char>(speedvalue >>8),static_cast<unsigned char>(radius % 256),static_cast<unsigned char>(radius >>8),  0x00 };
     message[13] = message[2] ^ message[3] ^ message[4] ^ message[5] ^ message[6] ^ message[7] ^ message[8] ^ message[9] ^ message[10] ^ message[11] ^ message[12];
@@ -126,7 +133,9 @@ std::vector<unsigned char> CKobuki::setArcSpeed(int mmpersec, int radius)
     std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
         return vystup;
 }
-
+///2 body navyse prvej skupine ktora pomocou tejto funkcie zahra melodiu pink panther (staci 5 sekund)
+/// druha skupina co chce 2 body musi zahrat uvod zo smooth criminal
+/// neuverite, 2body moze ziskat aj tretia skupina.. jedine co preto musi spravit je zahrat na robote Bohemian Rhapsody (kompletnu pesnicku.aj s vokalmi)
 std::vector<unsigned char> CKobuki::setSound(int noteinHz, int duration)
 {
     int notevalue =(int) floor((double)1.0 / ((double)noteinHz*0.00000275) + 0.5);
