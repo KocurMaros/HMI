@@ -10,8 +10,10 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 include ($$PWD/../QJoysticks-master/QJoysticks.pri)
 TARGET = demoRMR
 TEMPLATE = app
+win32 {
 LIBS += -lws2_32
 LIBS += -lWinmm
+}
 INCLUDEPATH += ../robot
 LIBS += -L../bin -lrobot
     INCLUDEPATH += C:/opencv/include/
@@ -54,6 +56,27 @@ win32 {
         LIBS +=-LC:/opencv_vc16/lib/ -lopencv_shape440
         LIBS +=-LC:/opencv_vc16/lib/ -lopencv_video440
     }
+}
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+unix {
+    PKGCONFIG += opencv4
+
+INCLUDEPATH += /usr/local/include/opencv4/
+
+    LIBS += -L/usr/local/lib/        \
+        -l:libopencv_core.so       \
+        -l:libopencv_highgui.so    \
+        -l:libopencv_imgcodecs.so  \
+        -l:libopencv_imgproc.so    \
+        -l:libopencv_features2d.so\
+        -l:libopencv_calib3d.so    \
+        -l:libopencv_videoio.so    \
+        -l:libopencv_ml.so         \
+        -l:libopencv_dnn.so        \
+        -l:libopencv_flann.so      \
+        -l:libopencv_objdetect.so \
+        -l:libopencv_photo.so      \
+        -l:libopencv_video.so
 }
 
 
