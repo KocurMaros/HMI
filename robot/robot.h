@@ -70,6 +70,9 @@ public:
         camera_callback=callback;
         wasCameraSet=1;
     }
+    long double tickToMeter = 0.000085292090497737556558; // [m/tick]
+    long double b = 0.23; // wheelbase distance in meters, from kobuki manual https://yujinrobot.github.io/kobuki/doxygen/enAppendixProtocolSpecification.html
+
 private:
      std::promise<void> ready_promise;
     std::shared_future<void> readyFuture;
