@@ -81,8 +81,10 @@ INCLUDEPATH += /usr/local/include/opencv4/
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
 
-HEADERS  += mainwindow.h
+RESOURCES = demoRMR.qrc
 
-FORMS    += mainwindow.ui
+HEADERS  += mainwindow.h \
+
+FORMS    += mainwindow.ui \
