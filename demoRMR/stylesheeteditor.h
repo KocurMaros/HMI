@@ -22,14 +22,14 @@
 ** modification, are permitted provided that the following conditions are
 ** met:
 **   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
+**	 notice, this list of conditions and the following disclaimer.
 **   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
+**	 notice, this list of conditions and the following disclaimer in
+**	 the documentation and/or other materials provided with the
+**	 distribution.
 **   * Neither the name of The Qt Company Ltd nor the names of its
-**     contributors may be used to endorse or promote products derived
-**     from this software without specific prior written permission.
+**	 contributors may be used to endorse or promote products derived
+**	 from this software without specific prior written permission.
 **
 **
 ** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -57,21 +57,21 @@
 
 class StyleSheetEditor : public QDialog
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    StyleSheetEditor(QWidget *parent = nullptr);
+	StyleSheetEditor(QWidget *parent = nullptr);
 
 private slots:
-    void on_styleCombo_activated(const QString &styleName);
-    void on_styleSheetCombo_activated(const QString &styleSheetName);
-    void on_styleTextEdit_textChanged();
-    void on_applyButton_clicked();
+	void on_styleCombo_activated(const QString &styleName);
+	void on_styleSheetCombo_activated(const QString &styleSheetName);
+	void on_styleTextEdit_textChanged();
+	void on_applyButton_clicked();
 
 private:
-    void loadStyleSheet(const QString &sheetName);
+	void loadStyleSheet(const QString &sheetName);
 
-    Ui::StyleSheetEditor ui;
+	Ui::StyleSheetEditor ui;
 };
 
 #endif

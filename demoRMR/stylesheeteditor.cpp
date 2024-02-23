@@ -22,14 +22,14 @@
 ** modification, are permitted provided that the following conditions are
 ** met:
 **   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
+**	 notice, this list of conditions and the following disclaimer.
 **   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
+**	 notice, this list of conditions and the following disclaimer in
+**	 the documentation and/or other materials provided with the
+**	 distribution.
 **   * Neither the name of The Qt Company Ltd nor the names of its
-**     contributors may be used to endorse or promote products derived
-**     from this software without specific prior written permission.
+**	 contributors may be used to endorse or promote products derived
+**	 from this software without specific prior written permission.
 **
 **
 ** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -55,16 +55,16 @@
 #include <QStyleFactory>
 
 StyleSheetEditor::StyleSheetEditor(QWidget *parent)
-    : QDialog(parent)
+	: QDialog(parent)
 {
-    ui.setupUi(this);
+	ui.setupUi(this);
 
-    QRegularExpression regExp("^.(.*)\\+?Style$");
-    QString defaultStyle = QApplication::style()->metaObject()->className();
-    QRegularExpressionMatch match = regExp.match(defaultStyle);
+	QRegularExpression regExp("^.(.*)\\+?Style$");
+	QString defaultStyle = QApplication::style()->metaObject()->className();
+	QRegularExpressionMatch match = regExp.match(defaultStyle);
 
-    if (match.hasMatch())
-        defaultStyle = match.captured(1);
+	if (match.hasMatch())
+		defaultStyle = match.captured(1);
 
 	ui.styleCombo->addItems(QStyleFactory::keys());
 	ui.styleCombo->setCurrentIndex(ui.styleCombo->findText(defaultStyle, Qt::MatchContains));
@@ -74,33 +74,33 @@ StyleSheetEditor::StyleSheetEditor(QWidget *parent)
 
 void StyleSheetEditor::on_styleCombo_activated(const QString &styleName)
 {
-    qApp->setStyle(styleName);
-    ui.applyButton->setEnabled(false);
+	qApp->setStyle(styleName);
+	ui.applyButton->setEnabled(false);
 }
 
 void StyleSheetEditor::on_styleSheetCombo_activated(const QString &sheetName)
 {
-    loadStyleSheet(sheetName);
+	loadStyleSheet(sheetName);
 }
 
 void StyleSheetEditor::on_styleTextEdit_textChanged()
 {
-    ui.applyButton->setEnabled(true);
+	ui.applyButton->setEnabled(true);
 }
 
 void StyleSheetEditor::on_applyButton_clicked()
 {
-    qApp->setStyleSheet(ui.styleTextEdit->toPlainText());
-    ui.applyButton->setEnabled(false);
+	qApp->setStyleSheet(ui.styleTextEdit->toPlainText());
+	ui.applyButton->setEnabled(false);
 }
 
 void StyleSheetEditor::loadStyleSheet(const QString &sheetName)
 {
-    QFile file(":/qss/" + sheetName.toLower() + ".qss");
-    file.open(QFile::ReadOnly);
-    QString styleSheet = QString::fromLatin1(file.readAll());
+	QFile file(":/qss/" + sheetName.toLower() + ".qss");
+	file.open(QFile::ReadOnly);
+	QString styleSheet = QString::fromLatin1(file.readAll());
 
-    ui.styleTextEdit->setPlainText(styleSheet);
-    qApp->setStyleSheet(styleSheet);
-    ui.applyButton->setEnabled(false);
+	ui.styleTextEdit->setPlainText(styleSheet);
+	qApp->setStyleSheet(styleSheet);
+	ui.applyButton->setEnabled(false);
 }
