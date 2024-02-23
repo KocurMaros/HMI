@@ -48,7 +48,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	pero.setColor(Qt::green);//farba je zelena
 	QRect rect;
 	rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
-	rect.translate(0,15);
+	rect.translate(0,37);
 	painter.drawRect(rect);
 
 	if(useCamera1==true && actIndex>-1)/// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
