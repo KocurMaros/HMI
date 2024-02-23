@@ -82,9 +82,12 @@ INCLUDEPATH += /usr/local/include/opencv4/
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+        stylesheeteditor.cpp
 
 RESOURCES = demoRMR.qrc
 
 HEADERS  += mainwindow.h \
+            stylesheeteditor.h
 
 FORMS    += mainwindow.ui \
+            stylesheeteditor.ui
