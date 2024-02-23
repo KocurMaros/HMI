@@ -21,7 +21,7 @@ QPushButton {
 }
 
 QPushButton:hover {
-   background-color: khaki;
+	background-color: khaki;
 }
 
 /* Increase the padding, so the text is shifted when the button is
@@ -43,7 +43,7 @@ QLabel, QAbstractButton {
 
 /* Bold text on status bar looks awful. */
 QStatusBar QLabel {
-   font: normal;
+	font: normal;
 }
 
 QStatusBar::item {

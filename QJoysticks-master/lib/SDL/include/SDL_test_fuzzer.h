@@ -60,7 +60,7 @@ extern "C" {
  * \param execKey Execution "Key" that initializes the random number generator uniquely for the test.
  *
  */
-void SDLTest_FuzzerInit (Uint64 execKey);
+void SDLTest_FuzzerInit(Uint64 execKey);
 
 
 /**
@@ -164,8 +164,7 @@ double SDLTest_RandomDouble();
  *
  * \returns Random boundary value for the given range and domain or 0 with error set
  */
-Uint8 SDLTest_RandomUint8BoundaryValue (Uint8 boundary1, Uint8 boundary2,
-                                        SDL_bool validDomain);
+Uint8 SDLTest_RandomUint8BoundaryValue(Uint8 boundary1, Uint8 boundary2, SDL_bool validDomain);
 
 /**
  * Returns a random boundary value for Uint16 within the given boundaries.
@@ -186,8 +185,7 @@ Uint8 SDLTest_RandomUint8BoundaryValue (Uint8 boundary1, Uint8 boundary2,
  *
  * \returns Random boundary value for the given range and domain or 0 with error set
  */
-Uint16 SDLTest_RandomUint16BoundaryValue (Uint16 boundary1, Uint16 boundary2,
-                                          SDL_bool validDomain);
+Uint16 SDLTest_RandomUint16BoundaryValue(Uint16 boundary1, Uint16 boundary2, SDL_bool validDomain);
 
 /**
  * Returns a random boundary value for Uint32 within the given boundaries.
@@ -208,8 +206,7 @@ Uint16 SDLTest_RandomUint16BoundaryValue (Uint16 boundary1, Uint16 boundary2,
  *
  * \returns Random boundary value for the given range and domain or 0 with error set
  */
-Uint32 SDLTest_RandomUint32BoundaryValue (Uint32 boundary1, Uint32 boundary2,
-                                          SDL_bool validDomain);
+Uint32 SDLTest_RandomUint32BoundaryValue(Uint32 boundary1, Uint32 boundary2, SDL_bool validDomain);
 
 /**
  * Returns a random boundary value for Uint64 within the given boundaries.
@@ -230,8 +227,7 @@ Uint32 SDLTest_RandomUint32BoundaryValue (Uint32 boundary1, Uint32 boundary2,
  *
  * \returns Random boundary value for the given range and domain or 0 with error set
  */
-Uint64 SDLTest_RandomUint64BoundaryValue (Uint64 boundary1, Uint64 boundary2,
-                                          SDL_bool validDomain);
+Uint64 SDLTest_RandomUint64BoundaryValue(Uint64 boundary1, Uint64 boundary2, SDL_bool validDomain);
 
 /**
  * Returns a random boundary value for Sint8 within the given boundaries.
@@ -252,8 +248,7 @@ Uint64 SDLTest_RandomUint64BoundaryValue (Uint64 boundary1, Uint64 boundary2,
  *
  * \returns Random boundary value for the given range and domain or SINT8_MIN with error set
  */
-Sint8 SDLTest_RandomSint8BoundaryValue (Sint8 boundary1, Sint8 boundary2,
-                                        SDL_bool validDomain);
+Sint8 SDLTest_RandomSint8BoundaryValue(Sint8 boundary1, Sint8 boundary2, SDL_bool validDomain);
 
 
 /**
@@ -275,8 +270,7 @@ Sint8 SDLTest_RandomSint8BoundaryValue (Sint8 boundary1, Sint8 boundary2,
  *
  * \returns Random boundary value for the given range and domain or SINT16_MIN with error set
  */
-Sint16 SDLTest_RandomSint16BoundaryValue (Sint16 boundary1, Sint16 boundary2,
-                                          SDL_bool validDomain);
+Sint16 SDLTest_RandomSint16BoundaryValue(Sint16 boundary1, Sint16 boundary2, SDL_bool validDomain);
 
 /**
  * Returns a random boundary value for Sint32 within the given boundaries.
@@ -297,8 +291,7 @@ Sint16 SDLTest_RandomSint16BoundaryValue (Sint16 boundary1, Sint16 boundary2,
  *
  * \returns Random boundary value for the given range and domain or SINT32_MIN with error set
  */
-Sint32 SDLTest_RandomSint32BoundaryValue (Sint32 boundary1, Sint32 boundary2,
-                                          SDL_bool validDomain);
+Sint32 SDLTest_RandomSint32BoundaryValue(Sint32 boundary1, Sint32 boundary2, SDL_bool validDomain);
 
 /**
  * Returns a random boundary value for Sint64 within the given boundaries.
@@ -319,8 +312,7 @@ Sint32 SDLTest_RandomSint32BoundaryValue (Sint32 boundary1, Sint32 boundary2,
  *
  * \returns Random boundary value for the given range and domain or SINT64_MIN with error set
  */
-Sint64 SDLTest_RandomSint64BoundaryValue (Sint64 boundary1, Sint64 boundary2,
-                                          SDL_bool validDomain);
+Sint64 SDLTest_RandomSint64BoundaryValue(Sint64 boundary1, Sint64 boundary2, SDL_bool validDomain);
 
 
 /**
@@ -334,7 +326,7 @@ Sint64 SDLTest_RandomSint64BoundaryValue (Sint64 boundary1, Sint64 boundary2,
  *
  * \returns Generated random integer in range
  */
-Sint32 SDLTest_RandomIntegerInRange (Sint32 min, Sint32 max);
+Sint32 SDLTest_RandomIntegerInRange(Sint32 min, Sint32 max);
 
 
 /**
@@ -346,7 +338,7 @@ Sint32 SDLTest_RandomIntegerInRange (Sint32 min, Sint32 max);
  *
  * \returns Newly allocated random string; or NULL if length was invalid or string could not be allocated.
  */
-char* SDLTest_RandomAsciiString();
+char *SDLTest_RandomAsciiString();
 
 
 /**
@@ -360,7 +352,7 @@ char* SDLTest_RandomAsciiString();
  *
  * \returns Newly allocated random string; or NULL if maxLength was invalid or string could not be allocated.
  */
-char* SDLTest_RandomAsciiStringWithMaximumLength (int maxLength);
+char *SDLTest_RandomAsciiStringWithMaximumLength(int maxLength);
 
 
 /**
@@ -374,7 +366,7 @@ char* SDLTest_RandomAsciiStringWithMaximumLength (int maxLength);
  *
  * \returns Newly allocated random string; or NULL if size was invalid or string could not be allocated.
  */
-char* SDLTest_RandomAsciiStringOfSize (int size);
+char *SDLTest_RandomAsciiStringOfSize(int size);
 
 /**
  * Returns the invocation count for the fuzzer since last ...FuzzerInit.

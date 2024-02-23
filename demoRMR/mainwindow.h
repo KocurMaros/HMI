@@ -6,18 +6,16 @@
 #include <QTimer>
 
 #ifdef _WIN32
-#include<windows.h>
+#include <windows.h>
 #endif
 
-#include "mainwindow.h"
-
-#include <sys/types.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "robot.h"
 #include "stylesheeteditor.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <sys/types.h>
 
 #include <QJoysticks.h>
 
@@ -45,7 +43,7 @@ public:
 
 	int processThisRobot(TKobukiData robotdata);
 
-int processThisCamera(cv::Mat cameraData);
+	int processThisCamera(cv::Mat cameraData);
 
 private slots:
 	void on_pushButton_9_clicked();
@@ -64,14 +62,13 @@ private slots:
 
 	void on_changeStyleSheet_triggered();
 
-//protected:
-//	void contextMenuEvent(QContextMenuEvent *event) override;
+	//protected:
+	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
-
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
 	Ui::MainWindow *ui;
-	void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
+	void paintEvent(QPaintEvent *event); // Q_DECL_OVERRIDE;
 	int updateLaserPicture;
 	LaserMeasurement copyOfLaserData;
 	std::string ipaddress;
@@ -82,18 +79,16 @@ private:
 
 	QJoysticks *instance;
 
-	double forwardspeed;//mm/s
-	double rotationspeed;//omega/s
+	double forwardspeed;  //mm/s
+	double rotationspeed; //omega/s
 
 	StyleSheetEditor *m_styleSheetEditor;
 
 public slots:
-	void setUiValues(double robotX,double robotY,double robotFi);
+	void setUiValues(double robotX, double robotY, double robotFi);
 
 signals:
-	void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
-
-
+	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 };
 
 #endif // MAINWINDOW_H

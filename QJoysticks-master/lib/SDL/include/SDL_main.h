@@ -31,16 +31,16 @@
  */
 
 #ifndef SDL_MAIN_HANDLED
-    #if defined(__WIN32__)
-        /* On Windows SDL provides WinMain(), which parses the command line and passes
+#if defined(__WIN32__)
+/* On Windows SDL provides WinMain(), which parses the command line and passes
         the arguments to your main function.
 
         If you provide your own WinMain(), you may define SDL_MAIN_HANDLED
         */
-        #define SDL_MAIN_AVAILABLE
+#define SDL_MAIN_AVAILABLE
 
-    #elif defined(__WINRT__)
-        /* On WinRT, SDL provides a main function that initializes CoreApplication,
+#elif defined(__WINRT__)
+/* On WinRT, SDL provides a main function that initializes CoreApplication,
         creating an instance of IFrameworkView in the process.
 
         Please note that #include'ing SDL_main.h is not enough to get a main()
@@ -49,40 +49,40 @@
         into the app itself.  In XAML apps, the function, SDL_WinRTRunApp must be
         called, with a pointer to the Direct3D-hosted XAML control passed in.
         */
-        #define SDL_MAIN_NEEDED
+#define SDL_MAIN_NEEDED
 
-    #elif defined(__IPHONEOS__)
-        /* On iOS SDL provides a main function that creates an application delegate
+#elif defined(__IPHONEOS__)
+/* On iOS SDL provides a main function that creates an application delegate
         and starts the iOS application run loop.
 
         See src/video/uikit/SDL_uikitappdelegate.m for more details.
         */
-        #define SDL_MAIN_NEEDED
+#define SDL_MAIN_NEEDED
 
-    #elif defined(__ANDROID__)
-        /* On Android SDL provides a Java class in SDLActivity.java that is the
+#elif defined(__ANDROID__)
+/* On Android SDL provides a Java class in SDLActivity.java that is the
         main activity entry point.
 
         See README-android.md for more details on extending that class.
         */
-        #define SDL_MAIN_NEEDED
+#define SDL_MAIN_NEEDED
 
-    #elif defined(__NACL__)
-        /* On NACL we use ppapi_simple to set up the application helper code,
+#elif defined(__NACL__)
+/* On NACL we use ppapi_simple to set up the application helper code,
         then wait for the first PSE_INSTANCE_DIDCHANGEVIEW event before
         starting the user main function.
         All user code is run in a separate thread by ppapi_simple, thus
         allowing for blocking io to take place via nacl_io
         */
-        #define SDL_MAIN_NEEDED
+#define SDL_MAIN_NEEDED
 
-    #endif
+#endif
 #endif /* SDL_MAIN_HANDLED */
 
 #ifdef __cplusplus
-    #define C_LINKAGE   "C"
+#define C_LINKAGE "C"
 #else
-    #define C_LINKAGE
+#define C_LINKAGE
 #endif /* __cplusplus */
 
 /**
@@ -101,13 +101,13 @@
  */
 
 #if defined(SDL_MAIN_NEEDED) || defined(SDL_MAIN_AVAILABLE)
-    #define main    SDL_main
+#define main SDL_main
 #endif
 
 /**
  *  The prototype for the application's main() function
  */
-extern C_LINKAGE int SDL_main (int argc, char* argv[]);
+extern C_LINKAGE int SDL_main(int argc, char *argv[]);
 
 
 #include "begin_code.h"
@@ -122,16 +122,15 @@ extern "C" {
  *  Calling this yourself without knowing what you're doing can cause
  *  crashes and hard to diagnose problems with your application.
  */
-extern DECLSPEC void SDLCALL SDL_SetMainReady (void);
+extern DECLSPEC void SDLCALL SDL_SetMainReady(void);
 
 #ifdef __WIN32__
 
 /**
  *  This can be called to set the application class at startup
  */
-extern DECLSPEC int SDLCALL SDL_RegisterApp (char* name, Uint32 style,
-                                             void* hInst);
-extern DECLSPEC void SDLCALL SDL_UnregisterApp (void);
+extern DECLSPEC int SDLCALL SDL_RegisterApp(char *name, Uint32 style, void *hInst);
+extern DECLSPEC void SDLCALL SDL_UnregisterApp(void);
 
 #endif /* __WIN32__ */
 
@@ -146,8 +145,7 @@ extern DECLSPEC void SDLCALL SDL_UnregisterApp (void);
  *  \return 0 on success, -1 on failure.  On failure, use SDL_GetError to retrieve more
  *      information on the failure.
  */
-extern DECLSPEC int SDLCALL SDL_WinRTRunApp (int (*mainFunction) (int, char**),
-                                             void* reserved);
+extern DECLSPEC int SDLCALL SDL_WinRTRunApp(int (*mainFunction)(int, char **), void *reserved);
 
 #endif /* __WINRT__ */
 

@@ -38,11 +38,9 @@ extern "C" {
 
 /* Public functions */
 /* SDL_SetError() unconditionally returns -1. */
-extern DECLSPEC int SDLCALL SDL_SetError (SDL_PRINTF_FORMAT_STRING const char*
-                                          fmt,
-                                          ...) SDL_PRINTF_VARARG_FUNC (1);
-extern DECLSPEC const char* SDLCALL SDL_GetError (void);
-extern DECLSPEC void SDLCALL SDL_ClearError (void);
+extern DECLSPEC int SDLCALL SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...) SDL_PRINTF_VARARG_FUNC(1);
+extern DECLSPEC const char *SDLCALL SDL_GetError(void);
+extern DECLSPEC void SDLCALL SDL_ClearError(void);
 
 /**
  *  \name Internal error functions
@@ -51,20 +49,13 @@ extern DECLSPEC void SDLCALL SDL_ClearError (void);
  *  Private error reporting function - used internally.
  */
 /* @{ */
-#define SDL_OutOfMemory()   SDL_Error(SDL_ENOMEM)
-#define SDL_Unsupported()   SDL_Error(SDL_UNSUPPORTED)
-#define SDL_InvalidParamError(param)    SDL_SetError("Parameter '%s' is invalid", (param))
-typedef enum {
-    SDL_ENOMEM,
-    SDL_EFREAD,
-    SDL_EFWRITE,
-    SDL_EFSEEK,
-    SDL_UNSUPPORTED,
-    SDL_LASTERROR
-} SDL_errorcode;
+#define SDL_OutOfMemory() SDL_Error(SDL_ENOMEM)
+#define SDL_Unsupported() SDL_Error(SDL_UNSUPPORTED)
+#define SDL_InvalidParamError(param) SDL_SetError("Parameter '%s' is invalid", (param))
+typedef enum { SDL_ENOMEM, SDL_EFREAD, SDL_EFWRITE, SDL_EFSEEK, SDL_UNSUPPORTED, SDL_LASTERROR } SDL_errorcode;
 /* SDL_Error() unconditionally returns -1. */
-extern DECLSPEC int SDLCALL SDL_Error (SDL_errorcode code);
-/* @} *//* Internal error functions */
+extern DECLSPEC int SDLCALL SDL_Error(SDL_errorcode code);
+/* @} */ /* Internal error functions */
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
