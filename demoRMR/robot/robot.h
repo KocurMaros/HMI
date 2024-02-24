@@ -43,6 +43,7 @@ public:
 
 
 	void robotStart();
+	void robotStop();
 	void setLaserParameters(std::string ipaddress, int laserportRobot, int laserportMe, std::function<int(LaserMeasurement)> callback)
 	{
 		laser_ip_portOut = laserportRobot;
@@ -71,6 +72,9 @@ public:
 		camera_callback = callback;
 		wasCameraSet = 1;
 	}
+
+	bool isConnected() const { return m_connected; };
+
 	long double tickToMeter = 0.000085292090497737556558; // [m/tick]
 	long double b = 0.23; // wheelbase distance in meters, from kobuki manual https://yujinrobot.github.io/kobuki/doxygen/enAppendixProtocolSpecification.html
 
@@ -131,6 +135,9 @@ private:
 	unsigned int las_slen;
 	unsigned int ske_slen;
 #endif
+
+	// Supplied additional parameters.
+	bool m_connected;
 };
 
 #endif // ROBOT_H

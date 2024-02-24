@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "QLed.h"
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTimer>
@@ -65,6 +66,12 @@ private slots:
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
+public slots:
+	void setUiValues(double robotX, double robotY, double robotFi);
+
+signals:
+	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
+
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
 	Ui::MainWindow *ui;
@@ -72,7 +79,7 @@ private:
 	int updateLaserPicture;
 	LaserMeasurement copyOfLaserData;
 	std::string ipaddress;
-	Robot robot;
+	Robot *robot;
 	TKobukiData robotdata;
 	int datacounter;
 	QTimer *timer;
@@ -84,11 +91,7 @@ private:
 
 	StyleSheetEditor *m_styleSheetEditor;
 
-public slots:
-	void setUiValues(double robotX, double robotY, double robotFi);
-
-signals:
-	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
+	QLed *m_connectionLed;
 };
 
 #endif // MAINWINDOW_H

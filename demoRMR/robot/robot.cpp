@@ -11,6 +11,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include "signal.h"
+#include "sys/types.h"
 #endif
 
 std::function<int(TKobukiData)> Robot::do_nothing_robot = [](TKobukiData data) {
@@ -38,6 +40,7 @@ Robot::Robot(std::string ipaddressLaser, int laserportRobot, int laserportMe, st
 	: wasLaserSet(0)
 	, wasRobotSet(0)
 	, wasCameraSet(0)
+	, m_connected(false)
 {
 	setLaserParameters(ipaddressLaser, laserportRobot, laserportMe, lascallback);
 	setRobotParameters(ipaddressRobot, robotportRobot, robotportMe, robcallback);
@@ -87,6 +90,9 @@ void Robot::robotprocess()
 	mess = robot.setSound(440, 1000);
 	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) { }
 	unsigned char buff[50000];
+
+	m_connected = true;
+
 	while (1) {
 		if (readyFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 			break;
@@ -212,6 +218,26 @@ void Robot::robotStart()
 	}
 }
 
+void Robot::robotStop()
+{
+	ready_promise.set_value();
+
+	close(las_s);
+	close(rob_s);
+
+	int pid = getpid();
+	auto stopThread = [&pid](std::thread &thread) {
+		if (thread.joinable())
+			thread.join();
+		else {
+			tgkill(pid, thread.native_handle(), SIGKILL);
+		}
+	};
+
+	stopThread(robotthreadHandle);
+	stopThread(laserthreadHandle);
+	stopThread(camerathreadhandle);
+}
 
 void Robot::imageViewer()
 {
