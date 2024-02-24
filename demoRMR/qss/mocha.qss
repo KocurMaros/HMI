@@ -1,6 +1,6 @@
 /* Dark theme */
 QWidget {
-	background-color: rgba(34, 34, 34, 25); // Dark background
+	background-color: rgba(34, 34, 34, 25);
 	color: rgb(204, 204, 204); /* Light text */
 }
 
