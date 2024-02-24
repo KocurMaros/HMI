@@ -1,7 +1,7 @@
 /* Dark theme */
 QWidget {
-    background-color: rgb(34, 34, 34); /* Dark background */
-    color: rgb(204, 204, 204); /* Light text */
+	background-color: rgba(34, 34, 34, 25); // Dark background
+	color: rgb(204, 204, 204); /* Light text */
 }
 
 /* Password character */

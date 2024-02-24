@@ -1,5 +1,5 @@
 .QWidget {
-   background-color: beige;
+	background-color: rgba(245, 245, 220, 25);
 }
 
 /* Nice Windows-XP-style password character. */
