@@ -29,8 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
-	ui->topRightLayout->addWidget(m_connectionLed, 1);
-	// ui->topGridLayout->addWidget(m_connectionLed, 0, 3);
+	ui->topRightLayout->insertWidget(0, m_connectionLed);
 }
 
 MainWindow::~MainWindow()
@@ -159,6 +158,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		delete robot;
 		m_connectionLed->setToDisconnectedState();
 		ui->pushButton_9->setText("Connect");
+		ui->pushButton_9->setStyleSheet("background-color: green");
 
 		robot = nullptr;
 		return;
@@ -190,6 +190,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	m_connectionLed->setToConnectedState(QString::fromStdString(ipaddress));
 	ui->pushButton_9->setText("Disconnect");
+	ui->pushButton_9->setStyleSheet("background-color: red");
 
 
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
