@@ -29,7 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
-	ui->topGridLayout->addWidget(m_connectionLed, 0, 2);
+	ui->topRightLayout->addWidget(m_connectionLed, 1);
+	// ui->topGridLayout->addWidget(m_connectionLed, 0, 3);
 }
 
 MainWindow::~MainWindow()

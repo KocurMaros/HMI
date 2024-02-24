@@ -18,15 +18,7 @@
 #include "CKobuki.h"
 #include <thread>
 #include <functional>
-#include <list>
-#include <algorithm>
-#include <utility>
-#include <atomic>
-#include <mutex>
 #include <future>
-#include <random>
-#include <iostream>
-#include <memory>
 
 class ROBOT_EXPORT Robot
 {

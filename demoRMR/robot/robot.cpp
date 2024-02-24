@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include "signal.h"
-#include "sys/types.h"
 #endif
 
 std::function<int(TKobukiData)> Robot::do_nothing_robot = [](TKobukiData data) {
