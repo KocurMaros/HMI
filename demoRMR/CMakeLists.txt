@@ -14,6 +14,7 @@ find_package(SDL REQUIRED)
 
 add_subdirectory(robot)
 add_subdirectory(QJoysticks-master)
+add_subdirectory(QLed)
 
 set(HEADERS
 	mainwindow.h
@@ -51,5 +52,6 @@ PUBLIC
 	${OpenCV_LIBS}
 	robot
 	qjoysticks
+	qled
 )
 
