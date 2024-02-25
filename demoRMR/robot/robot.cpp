@@ -40,6 +40,7 @@ Robot::Robot(std::string ipaddressLaser, int laserportRobot, int laserportMe, st
 	, wasRobotSet(0)
 	, wasCameraSet(0)
 	, m_connected(false)
+	, m_emgStop(false)
 {
 	setLaserParameters(ipaddressLaser, laserportRobot, laserportMe, lascallback);
 	setRobotParameters(ipaddressRobot, robotportRobot, robotportMe, robcallback);
@@ -58,7 +59,10 @@ void Robot::robotprocess()
 #else
 #endif
 	rob_slen = sizeof(las_si_other);
-	if ((rob_s = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) { }
+	if ((rob_s = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
+	}
 
 	char rob_broadcastene = 1;
 #ifdef _WIN32
@@ -77,10 +81,17 @@ void Robot::robotprocess()
 	rob_si_posli.sin_port = htons(robot_ip_portIn);
 	rob_si_posli.sin_addr.s_addr = inet_addr(robot_ipaddress.data()); //inet_addr("10.0.0.1");// htonl(INADDR_BROADCAST);
 	rob_slen = sizeof(rob_si_me);
-	::bind(rob_s, (struct sockaddr *)&rob_si_me, sizeof(rob_si_me));
+	if (::bind(rob_s, (struct sockaddr *)&rob_si_me, sizeof(rob_si_me)) != 0) {
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
+	}
+
 
 	std::vector<unsigned char> mess = robot.setDefaultPID();
-	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) { }
+	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) {
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
+	}
 #ifdef _WIN32
 	Sleep(100);
 #else
@@ -89,8 +100,6 @@ void Robot::robotprocess()
 	mess = robot.setSound(440, 1000);
 	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) { }
 	unsigned char buff[50000];
-
-	m_connected = true;
 
 	while (1) {
 		if (readyFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
@@ -112,6 +121,7 @@ void Robot::robotprocess()
 
 			std::chrono::steady_clock::time_point timestampf = std::chrono::steady_clock::now();
 
+			m_connected = true;
 
 			///---toto je callback funkcia...
 			std::async(
@@ -119,24 +129,34 @@ void Robot::robotprocess()
 		}
 	}
 
+	close(rob_s);
 	std::cout << "koniec thread2" << std::endl;
 }
 
 
 void Robot::setTranslationSpeed(int mmpersec)
 {
+	if (m_emgStop) {
+		return;
+	}
 	std::vector<unsigned char> mess = robot.setTranslationSpeed(mmpersec);
 	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) { }
 }
 
 void Robot::setRotationSpeed(double radpersec) //left
 {
+	if (m_emgStop) {
+		return;
+	}
 	std::vector<unsigned char> mess = robot.setRotationSpeed(radpersec);
 	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) { }
 }
 
 void Robot::setArcSpeed(int mmpersec, int radius)
 {
+	if (m_emgStop) {
+		return;
+	}
 	std::vector<unsigned char> mess = robot.setArcSpeed(mmpersec, radius);
 	if (::sendto(rob_s, (char *)mess.data(), sizeof(char) * mess.size(), 0, (struct sockaddr *)&rob_si_posli, rob_slen) == -1) { }
 }
@@ -153,7 +173,10 @@ void Robot::laserprocess()
 #else
 #endif
 	las_slen = sizeof(las_si_other);
-	if ((las_s = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) { }
+	if ((las_s = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
+	}
 
 	char las_broadcastene = 1;
 #ifdef _WIN32
@@ -175,7 +198,11 @@ void Robot::laserprocess()
 	las_si_posli.sin_port = htons(laser_ip_portIn);
 	las_si_posli.sin_addr.s_addr = inet_addr(laser_ipaddress.data());
 	; //htonl(INADDR_BROADCAST);
-	::bind(las_s, (struct sockaddr *)&las_si_me, sizeof(las_si_me));
+	if (::bind(las_s, (struct sockaddr *)&las_si_me, sizeof(las_si_me)) != 0) {
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
+	}
+
 	char command = 0x00;
 	//najskor posleme prazdny prikaz
 	//preco?
@@ -197,6 +224,7 @@ void Robot::laserprocess()
 			std::launch::async, [this](LaserMeasurement sensdata) { laser_callback(sensdata); }, measure);
 		///ako som vravel,toto vas nemusi zaujimat
 	}
+	close(las_s);
 	std::cout << "koniec thread" << std::endl;
 }
 
@@ -217,31 +245,14 @@ void Robot::robotStart()
 	}
 }
 
-void Robot::robotStop()
-{
-	ready_promise.set_value();
-
-	close(las_s);
-	close(rob_s);
-
-	int pid = getpid();
-	auto stopThread = [&pid](std::thread &thread) {
-		if (thread.joinable())
-			thread.join();
-		else {
-			tgkill(pid, thread.native_handle(), SIGKILL);
-		}
-	};
-
-	stopThread(robotthreadHandle);
-	stopThread(laserthreadHandle);
-	stopThread(camerathreadhandle);
-}
-
 void Robot::imageViewer()
 {
 	cv::VideoCapture cap;
-	cap.open(camera_link);
+	if (!cap.open(camera_link)) {
+		std::cerr << "Error opening video stream or file" << std::endl;
+		return;
+	}
+
 	cv::Mat frameBuf;
 	while (1) {
 		if (readyFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
@@ -249,7 +260,7 @@ void Robot::imageViewer()
 		cap >> frameBuf;
 
 
-		std::cout << "doslo toto " << frameBuf.rows << " " << frameBuf.cols << std::endl;
+		// std::cout << "doslo toto " << frameBuf.rows << " " << frameBuf.cols << std::endl;
 
 
 		// tu sa vola callback..
