@@ -184,6 +184,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		ui->pushButton_9->setText("Connect");
 		ui->pushButton_9->setStyleSheet("");
 
+		copyOfLaserData.numberOfScans = 0;
+
 		return;
 	}
 
