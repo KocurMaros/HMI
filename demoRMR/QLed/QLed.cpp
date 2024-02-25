@@ -2,10 +2,11 @@
 #include <QPainter>
 #include <QBrush>
 #include <QLinearGradient>
+#include <qnamespace.h>
 
 QLed::QLed(QWidget *parent)
 	: QToolButton(parent)
-	, m_ledColor(QColor(Qt::red))
+	, m_ledColor(QColor(COLOR_DISCONNECTED))
 	, m_label(EMPTY_IP_ADDRESS)
 	, m_label2(DISCONNECTED)
 	, m_Width(LED_WIDTH)
@@ -18,16 +19,24 @@ QLed::~QLed()
 
 void QLed::setToConnectedState(const QString &ip)
 {
-	setLedColor(Qt::green);
-	setText(ip);
+	m_ip = ip;
+	setLedColor(COLOR_CONNECTED);
+	setText(m_ip);
 	setText2(CONNECTED);
 }
 
 void QLed::setToDisconnectedState()
 {
-	setLedColor(Qt::red);
+	setLedColor(COLOR_DISCONNECTED);
 	setText(EMPTY_IP_ADDRESS);
 	setText2(DISCONNECTED);
+}
+
+void QLed::setToEmgStopState()
+{
+	setLedColor(COLOR_EMG_STOP);
+	setText(m_ip);
+	setText2("EMG Stop");
 }
 
 void QLed::paintEvent(QPaintEvent *e)

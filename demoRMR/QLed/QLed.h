@@ -10,6 +10,11 @@
 #define EMPTY_IP_ADDRESS "0.0.0.0"
 #define DISCONNECTED "Disconnected"
 #define CONNECTED "Connected      "
+#define EMG_STOP "EMG STOP      "
+
+#define COLOR_CONNECTED Qt::green
+#define COLOR_DISCONNECTED Qt::red
+#define COLOR_EMG_STOP Qt::darkYellow
 
 
 class QLed : public QToolButton
@@ -20,7 +25,8 @@ public:
 
 	void setToConnectedState(const QString &ip);
 	void setToDisconnectedState();
-	bool isInConnectedState() const { return m_label2 == CONNECTED; }
+	void setToEmgStopState();
+	bool isInConnectedState() const { return m_ledColor != COLOR_DISCONNECTED; }
 
 private:
 	inline void setLedColor(const QColor &c) { m_ledColor = c; }
@@ -33,7 +39,9 @@ private:
 
 private:
 	QColor m_ledColor;
-	QString m_label, m_label2;
+	QString m_label;
+	QString m_label2;
+	QString m_ip;
 	double m_Width;
 };
 
