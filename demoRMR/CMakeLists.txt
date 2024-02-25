@@ -36,7 +36,6 @@ set(QRC
 	demoRMR.qrc
 )
 
-
 add_executable(rmr
 	${HEADERS}
 	${SOURCES}
