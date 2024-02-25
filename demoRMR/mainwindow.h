@@ -46,6 +46,9 @@ public:
 
 	int processThisCamera(cv::Mat cameraData);
 
+private:
+	void disableAllButtons(bool disable);
+
 private slots:
 	void on_pushButton_9_clicked();
 
@@ -60,6 +63,8 @@ private slots:
 	void on_pushButton_4_clicked();
 
 	void on_pushButton_clicked();
+
+	void on_emgStopButton_clicked();
 
 	void on_changeStyleSheet_triggered();
 

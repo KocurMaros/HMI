@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QPainter>
 #include <math.h>
+#include <qdebug.h>
 ///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
 /// AK HO MAS Z GITU A ROBIS NA LABAKOVOM PC, TAK SI HO VLOZ DO FOLDERA KTORY JE JASNE ODLISITELNY OD TVOJICH KOLEGOV
 /// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
@@ -15,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 	, ui(new Ui::MainWindow)
 	, m_connectionLed(new QLed(this))
+	, robot(nullptr)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	ipaddress = "127.0.0.1"; //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -30,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
 	ui->topRightLayout->insertWidget(0, m_connectionLed);
+	ui->pushButton_9->setStyleSheet("background-color: green");
 }
 
 MainWindow::~MainWindow()
@@ -152,15 +155,35 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
 	updateLaserPicture = 1;
 	return 0;
 }
+
+void MainWindow::disableAllButtons(bool disable)
+{
+	QList<QPushButton *> buttons = findChildren<QPushButton *>();
+	for (auto button : buttons) {
+		if (button->objectName() == "emgStopButton"
+			|| button->objectName() == "pushButton") {
+			continue;
+		}
+
+		button->setDisabled(disable);
+	}
+}
+
 void MainWindow::on_pushButton_9_clicked() //start button
 {
+	if (robot != nullptr && robot->isInEmgStop()) {
+		return;
+	}
+
 	if (m_connectionLed->isInConnectedState()) {
+
 		delete robot;
+		robot = nullptr;
+
 		m_connectionLed->setToDisconnectedState();
 		ui->pushButton_9->setText("Connect");
-		ui->pushButton_9->setStyleSheet("background-color: green");
+		ui->pushButton_9->setStyleSheet("");
 
-		robot = nullptr;
 		return;
 	}
 
@@ -169,8 +192,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	instance = QJoysticks::getInstance();
 	forwardspeed = 0;
 	rotationspeed = 0;
-	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
-	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
 
 	///setovanie veci na komunikaciu s robotom/lidarom/kamerou.. su tam adresa porty a callback.. laser ma ze sa da dat callback aj ako lambda.
 	/// lambdy su super, setria miesto a ak su rozumnej dlzky,tak aj prehladnost... ak ste o nich nic nepoculi poradte sa s vasim doktorom alebo lekarnikom...
@@ -184,14 +205,26 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
 	robot->robotStart();
 
-	while (robot->isConnected() == false) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	int i = 0;
+	for (; i < 3; i++) {
+		if (robot->isConnected()) {
+			break;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::cout << "waiting for connection" << std::endl;
+	}
+	if (i == 3) {
+		std::cerr << "Connection failed" << std::endl;
+		delete robot;
+		return;
 	}
 
 	m_connectionLed->setToConnectedState(QString::fromStdString(ipaddress));
 	ui->pushButton_9->setText("Disconnect");
 	ui->pushButton_9->setStyleSheet("background-color: red");
 
+	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
+	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
 
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
 	/// co vas vlastne zaujima? citanie komentov asi nie, inak by ste citali toto a ze tu je blbosti
@@ -261,6 +294,30 @@ void MainWindow::on_pushButton_clicked()
 
 		ui->pushButton->setText("use laser");
 	}
+}
+
+void MainWindow::on_emgStopButton_clicked()
+{
+	if (robot == nullptr) {
+		return;
+	}
+
+	if (robot->isInEmgStop()) {
+		robot->setEmgStop(false);
+		m_connectionLed->setToConnectedState(QString::fromStdString(ipaddress));
+
+		disableAllButtons(false);
+		setStyleSheet("");
+
+		return;
+	}
+
+	robot->setTranslationSpeed(0);
+	robot->setEmgStop(true);
+	m_connectionLed->setToEmgStopState();
+
+	disableAllButtons(true);
+	setStyleSheet("background-color: rgba(255,164,0,25)");
 }
 
 void MainWindow::on_changeStyleSheet_triggered()
