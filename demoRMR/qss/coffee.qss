@@ -25,6 +25,11 @@ QPushButton#pushButton_9 {
 	color: rgb(255, 255, 255); /* White text */
 }
 
+QPushButton#emgStopButton {
+	background-color: rgba(245, 245, 220, 25);
+	border-style: none;
+}
+
 QPushButton:hover {
 	background-color: khaki;
 }
