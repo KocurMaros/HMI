@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, robot(nullptr)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-	ipaddress = "127.0.0.1"; //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+	m_ipaddress = "127.0.0.1"; //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
 							 //  cap.open("http://192.168.1.11:8000/stream.mjpg");
 	ui->setupUi(this);
 	datacounter = 0;
@@ -169,6 +169,17 @@ void MainWindow::disableAllButtons(bool disable)
 	}
 }
 
+bool MainWindow::isIPValid(const QString &ip)
+{
+	QRegularExpression ipRegex(
+		"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+
+	return ipRegex.match(ip).hasMatch();
+}
+
 void MainWindow::on_pushButton_9_clicked() //start button
 {
 	if (robot != nullptr && robot->isInEmgStop()) {
@@ -189,6 +200,20 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		return;
 	}
 
+	QString tmpIP = ui->ipHintLineEdit->text();
+	if (tmpIP.isEmpty()) {
+		tmpIP = "127.0.0.1";
+		ui->ipHintLineEdit->setText(tmpIP);
+	}
+
+	if (!isIPValid(tmpIP)) {
+		ui->ipHintLineEdit->clear();
+		QMessageBox::warning(this, "Invalid IP", tmpIP + " is an invalid IP address");
+		return;
+	}
+
+	m_ipaddress = tmpIP.toStdString();
+
 	robot = new Robot();
 	//ziskanie joystickov
 	instance = QJoysticks::getInstance();
@@ -198,11 +223,11 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	///setovanie veci na komunikaciu s robotom/lidarom/kamerou.. su tam adresa porty a callback.. laser ma ze sa da dat callback aj ako lambda.
 	/// lambdy su super, setria miesto a ak su rozumnej dlzky,tak aj prehladnost... ak ste o nich nic nepoculi poradte sa s vasim doktorom alebo lekarnikom...
 	robot->setLaserParameters(
-		ipaddress, 52999, 5299,
+		m_ipaddress, 52999, 5299,
 		/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/ std::bind(&MainWindow::processThisLidar, this, std::placeholders::_1));
-	robot->setRobotParameters(ipaddress, 53000, 5300, std::bind(&MainWindow::processThisRobot, this, std::placeholders::_1));
+	robot->setRobotParameters(m_ipaddress, 53000, 5300, std::bind(&MainWindow::processThisRobot, this, std::placeholders::_1));
 	//---simulator ma port 8889, realny robot 8000
-	robot->setCameraParameters("http://" + ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+	robot->setCameraParameters("http://" + m_ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
 
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
 	robot->robotStart();
@@ -221,7 +246,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		return;
 	}
 
-	m_connectionLed->setToConnectedState(QString::fromStdString(ipaddress));
+	m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
 	ui->pushButton_9->setText("Disconnect");
 	ui->pushButton_9->setStyleSheet("background-color: red");
 
@@ -306,7 +331,7 @@ void MainWindow::on_emgStopButton_clicked()
 
 	if (robot->isInEmgStop()) {
 		robot->setEmgStop(false);
-		m_connectionLed->setToConnectedState(QString::fromStdString(ipaddress));
+		m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
 
 		disableAllButtons(false);
 		setStyleSheet("");

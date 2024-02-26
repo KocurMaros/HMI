@@ -48,6 +48,7 @@ public:
 
 private:
 	void disableAllButtons(bool disable);
+	bool isIPValid(const QString &ip);
 
 private slots:
 	void on_pushButton_9_clicked();
@@ -83,7 +84,7 @@ private:
 	void paintEvent(QPaintEvent *event); // Q_DECL_OVERRIDE;
 	int updateLaserPicture;
 	LaserMeasurement copyOfLaserData;
-	std::string ipaddress;
+	std::string m_ipaddress;
 	Robot *robot;
 	TKobukiData robotdata;
 	int datacounter;

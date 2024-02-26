@@ -22,6 +22,31 @@
         <item>
          <layout class="QVBoxLayout" name="topRightLayout">
           <item alignment="Qt::AlignHCenter">
+           <widget class="QLineEdit" name="ipHintLineEdit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>162</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="inputMethodHints">
+             <set>Qt::ImhNone</set>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="placeholderText">
+             <string extracomment="Robot's IP address">127.0.0.1</string>
+            </property>
+           </widget>
+          </item>
+          <item alignment="Qt::AlignHCenter">
            <widget class="QPushButton" name="pushButton_9">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -37,22 +62,6 @@
             </property>
             <property name="text">
              <string>Connect</string>
-            </property>
-           </widget>
-          </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QLineEdit" name="lineEdit">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>162</width>
-              <height>0</height>
-             </size>
             </property>
            </widget>
           </item>
