@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
-
+    distanceFromWall = {lidarDistance::FAR};
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
@@ -60,6 +60,11 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		std::cout << actIndex << std::endl;
 		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
+        parse_lidar_data(copyOfLaserData, distanceFromWall);
+        uint16_t width = image.width();
+        uint16_t height = image.height();
+        uint16_t x = width / 2;
+        uint16_t y = height / 2;    
 		painter.drawImage(rect, image.rgbSwapped());
 	}
 	else {
@@ -351,4 +356,31 @@ void MainWindow::on_changeStyleSheet_triggered()
 {
 	m_styleSheetEditor->show();
 	m_styleSheetEditor->activateWindow();
+}
+
+void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance){
+    //distance [4] = {lidarDistance::FAR}
+    for(size_t i = 0; i < laserData.numberOfScans; i++){
+        if(i >= lidarDirection::FRONT_LEFT && i < lidarDirection::FRONT_RIGHT){
+            if(laserData.Data[i].scanDistance < distance[0])
+                distance[0] = lidarDistance::MEDIUM;
+            if(laserData.Data[i].scanDistance < distance[0])
+                distance[0] = lidarDistance::CLOSE;
+        }else if(i <= lidarDirection::REAR_RIGHT){
+            if(laserData.Data[i].scanDistance < distance[1])
+                distance[1] = lidarDistance::MEDIUM;
+            if(laserData.Data[i].scanDistance < distance[1])
+                distance[1] = lidarDistance::CLOSE;
+        }else if(i <= lidarDirection::REAR_LEFT){
+            if(laserData.Data[i].scanDistance < distance[2])
+                distance[2] = lidarDistance::MEDIUM;
+            if(laserData.Data[i].scanDistance < distance[2])
+                distance[2] = lidarDistance::CLOSE;
+        }else{
+            if(laserData.Data[i].scanDistance < distance[3])
+                distance[3] = lidarDistance::MEDIUM;
+            if(laserData.Data[i].scanDistance < distance[3])
+                distance[3] = lidarDistance::CLOSE;
+        }
+    }
 }

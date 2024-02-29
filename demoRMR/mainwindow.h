@@ -69,6 +69,7 @@ private slots:
 
 	void on_changeStyleSheet_triggered();
 
+    void parse_lidar_data(LaserMeasurement laserData, uint8t_t *distance);
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -98,6 +99,8 @@ private:
 	StyleSheetEditor *m_styleSheetEditor;
 
 	QLed *m_connectionLed;
+
+    uint16_t distanceFromWall[4];
 };
 
 #endif // MAINWINDOW_H
