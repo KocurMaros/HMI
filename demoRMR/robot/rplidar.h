@@ -53,18 +53,25 @@ typedef struct
 	LaserData Data[1000];
 } LaserMeasurement;
 
+// typedef enum
+// {
+//     FRONT_LEFT = 230,
+//     FRONT_RIGHT = 60,
+//     REAR_LEFT = 160,
+//     REAR_RIGHT = 140
+// }lidarDirection;
 typedef enum
 {
-    FRONT_LEFT = 0,
-    FRONT_RIGHT = 80,
-    REAR_LEFT = 160,
-    REAR_RIGHT = 240
+    FRONT_LEFT = 260,
+    FRONT_RIGHT = 10,
+    REAR_LEFT = 140,
+    REAR_RIGHT = 130
 }lidarDirection;
 typedef enum
 {
-    FAR =   ,
-    MEDIUM = 300,
-    CLOSE = 200
+    FAR = 1050,
+    MEDIUM = 900,
+    CLOSE = 500
 }lidarDistance;
 
 class rplidar

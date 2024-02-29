@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QPainter>
+#include <QPoint>
 #include <math.h>
 #include <qdebug.h>
 ///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
@@ -27,7 +28,6 @@ MainWindow::MainWindow(QWidget *parent)
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
-    distanceFromWall = {lidarDistance::FAR};
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
@@ -54,18 +54,71 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	rect = ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
 	rect.translate(0, 37);
 	painter.drawRect(rect);
-
+	// if(useCamera1){
+	// 	parse_lidar_data(copyOfLaserData, distanceFromWall);
+	// 	for(size_t i=0;i<4;i++)    
+	// 		if(distanceFromWall[i] != lidarDistance::FAR)
+	// 			printf("Distance from wall %d: %ld\n",i, distanceFromWall[i]);
+	// }
 	if (useCamera1 == true && actIndex > -1) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
 	{
 		std::cout << actIndex << std::endl;
 		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
         parse_lidar_data(copyOfLaserData, distanceFromWall);
-        uint16_t width = image.width();
-        uint16_t height = image.height();
-        uint16_t x = width / 2;
-        uint16_t y = height / 2;    
 		painter.drawImage(rect, image.rgbSwapped());
+		for(size_t i=0;i<4;i++){
+			if(distanceFromWall[i] == lidarDistance::MEDIUM){
+				QImage source_image = QImage("img/warning.png");
+				QPoint dest_pos;
+				if(i == 0){
+					uint16_t width = image.width();
+					uint16_t height = image.height();
+					uint16_t x = width / 2;
+					uint16_t y = height / 2;
+					dest_pos = QPoint(x, y);
+				}else if(i == 1){
+					uint16_t width = image.width();
+					uint16_t height = image.height();
+					uint16_t x = width / 4;
+					uint16_t y = height / 2;
+					dest_pos = QPoint(x, y);
+				}else if(i == 3){
+					uint16_t width = image.width();
+					uint16_t height = image.height();
+					uint16_t x = width / 2 + width / 4;
+					uint16_t y = height / 2;
+					dest_pos = QPoint(x, y);
+				}
+				if(i != 2)
+					painter.drawImage(dest_pos, source_image);
+			}
+			if(distanceFromWall[i] == lidarDistance::CLOSE){
+				QImage source_image = QImage("img/attention.png");
+				QPoint dest_pos;
+				if(i == 0){
+					uint16_t width = image.width();
+					uint16_t height = image.height();
+					uint16_t x = width / 2;
+					uint16_t y = height / 2;
+					dest_pos = QPoint(x, y);
+				}else if(i == 1){
+					uint16_t width = image.width();
+					uint16_t height = image.height();
+					uint16_t x = width / 4;
+					uint16_t y = height / 2;
+					dest_pos = QPoint(x, y);
+				}else if(i == 3){
+					uint16_t width = image.width();
+					uint16_t height = image.height();
+					uint16_t x = width / 2 + width / 4;
+					uint16_t y = height / 2;
+					dest_pos = QPoint(x, y);
+				}
+				if(i != 2)
+					painter.drawImage(dest_pos, source_image);
+			}
+		}	
 	}
 	else {
 		if (updateLaserPicture == 1) ///ak mam nove data z lidaru
@@ -76,6 +129,17 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			//teraz tu kreslime random udaje... vykreslite to co treba... t.j. data z lidaru
 			//   std::cout<<copyOfLaserData.numberOfScans<<std::endl;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
+				if(k == lidarDirection::FRONT_LEFT)
+					painter.setPen(QPen(Qt::red, 3));
+				else if(k == lidarDirection::FRONT_RIGHT)
+					painter.setPen(QPen(Qt::blue, 3));
+				else if(k == lidarDirection::REAR_LEFT)
+					painter.setPen(QPen(Qt::yellow, 3));
+				else if(k == lidarDirection::REAR_RIGHT)
+					painter.setPen(QPen(Qt::magenta, 3));
+				else
+					painter.setPen(QPen(Qt::green, 3));
+				
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 					+ rect.topLeft().x(); //prepocet do obrazovky
@@ -360,27 +424,60 @@ void MainWindow::on_changeStyleSheet_triggered()
 
 void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance){
     //distance [4] = {lidarDistance::FAR}
+	double avg_dist[4] = {0};
+	uint8_t num_of_scans[4] = {0};
+	// printf("Number of scans: %d\n",laserData.numberOfScans);
     for(size_t i = 0; i < laserData.numberOfScans; i++){
-        if(i >= lidarDirection::FRONT_LEFT && i < lidarDirection::FRONT_RIGHT){
-            if(laserData.Data[i].scanDistance < distance[0])
-                distance[0] = lidarDistance::MEDIUM;
-            if(laserData.Data[i].scanDistance < distance[0])
-                distance[0] = lidarDistance::CLOSE;
-        }else if(i <= lidarDirection::REAR_RIGHT){
-            if(laserData.Data[i].scanDistance < distance[1])
-                distance[1] = lidarDistance::MEDIUM;
-            if(laserData.Data[i].scanDistance < distance[1])
-                distance[1] = lidarDistance::CLOSE;
-        }else if(i <= lidarDirection::REAR_LEFT){
-            if(laserData.Data[i].scanDistance < distance[2])
-                distance[2] = lidarDistance::MEDIUM;
-            if(laserData.Data[i].scanDistance < distance[2])
-                distance[2] = lidarDistance::CLOSE;
-        }else{
-            if(laserData.Data[i].scanDistance < distance[3])
-                distance[3] = lidarDistance::MEDIUM;
-            if(laserData.Data[i].scanDistance < distance[3])
-                distance[3] = lidarDistance::CLOSE;
+        if(i >= lidarDirection::FRONT_LEFT || i <= lidarDirection::FRONT_RIGHT){	// front side
+            avg_dist[0] += laserData.Data[i].scanDistance;
+			num_of_scans[0]++;
         }
+		if(i > lidarDirection::FRONT_RIGHT && i < lidarDirection::REAR_RIGHT){ //right side
+            avg_dist[1] += laserData.Data[i].scanDistance;
+			num_of_scans[1]++;
+		}
+		if(i >= lidarDirection::REAR_RIGHT && i <= lidarDirection::REAR_LEFT){ //back side
+            avg_dist[2] += laserData.Data[i].scanDistance;
+			num_of_scans[2]++;
+		}
+        if(i > lidarDirection::REAR_LEFT && i < lidarDirection::FRONT_LEFT){  //left side
+            avg_dist[3] += laserData.Data[i].scanDistance;
+			num_of_scans[3]++;
+		}
     }
+	for(size_t i = 0; i < 4; i++){
+		avg_dist[i] /= num_of_scans[i];
+		if(avg_dist[i] < lidarDistance::CLOSE)
+			distance[i] = lidarDistance::CLOSE;
+		else if(avg_dist[i] < lidarDistance::MEDIUM)
+			distance[i] = lidarDistance::MEDIUM;
+		else
+			distance[i] = lidarDistance::FAR;
+	}
+ // for(size_t i = 0; i < laserData.numberOfScans; i++){
+    //     if(i >= lidarDirection::FRONT_LEFT || i <= lidarDirection::FRONT_RIGHT){	// front side
+    //         if(laserData.Data[i].scanDistance < distance[0])
+    //             distance[0] = lidarDistance::MEDIUM;
+    //         if(laserData.Data[i].scanDistance < distance[0])
+    //             distance[0] = lidarDistance::CLOSE;
+    //     }
+	// 	if(i > lidarDirection::FRONT_RIGHT && i < lidarDirection::REAR_RIGHT){ //right side
+    //         if(laserData.Data[i].scanDistance < distance[1])
+    //             distance[1] = lidarDistance::MEDIUM;
+    //         if(laserData.Data[i].scanDistance < distance[1])
+    //             distance[1] = lidarDistance::CLOSE;
+    //     }
+	// 	if(i >= lidarDirection::REAR_RIGHT && i <= lidarDirection::REAR_LEFT){ //back side
+    //         if(laserData.Data[i].scanDistance < distance[2])
+    //             distance[2] = lidarDistance::MEDIUM;
+    //         if(laserData.Data[i].scanDistance < distance[2])
+    //             distance[2] = lidarDistance::CLOSE;
+	// 	}
+    //     if(i > lidarDirection::REAR_LEFT && i < lidarDirection::FRONT_LEFT){  //left side
+    //         if(laserData.Data[i].scanDistance < distance[3])
+    //             distance[3] = lidarDistance::MEDIUM;
+    //         if(laserData.Data[i].scanDistance < distance[3])
+    //             distance[3] = lidarDistance::CLOSE;
+    //     }
+    // }
 }
