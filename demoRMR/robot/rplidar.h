@@ -52,21 +52,21 @@ typedef struct
 	int numberOfScans;
 	LaserData Data[1000];
 } LaserMeasurement;
-
-// typedef enum
-// {
-//     FRONT_LEFT = 230,
-//     FRONT_RIGHT = 60,
-//     REAR_LEFT = 160,
-//     REAR_RIGHT = 140
-// }lidarDirection;
 typedef enum
 {
-    FRONT_LEFT = 260,
-    FRONT_RIGHT = 10,
-    REAR_LEFT = 140,
-    REAR_RIGHT = 130
+    FRONT_LEFT = 338,
+    FRONT_RIGHT = 13,
+    REAR_LEFT = 182,
+    REAR_RIGHT = 170,
+	THRESHOLD = 5
 }lidarDirection;
+typedef enum
+{
+    LEFT = 210,
+    MIDLE_LEFT = 190,
+    MIDLE_RIGHT = 160,
+    RIGHT = 140,
+}lidarReverse;
 typedef enum
 {
     FAR = 1050,

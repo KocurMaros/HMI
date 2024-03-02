@@ -100,7 +100,8 @@ private:
 
 	QLed *m_connectionLed;
 
-    uint16_t distanceFromWall[4] = {lidarDistance::FAR};;
+    uint16_t distanceFromWall[4] = {lidarDistance::FAR};
+	bool reverse_robot = false;
 };
 
 #endif // MAINWINDOW_H
