@@ -14,7 +14,7 @@
 
 #define COLOR_CONNECTED Qt::green
 #define COLOR_DISCONNECTED Qt::red
-#define COLOR_EMG_STOP Qt::darkYellow
+#define COLOR_EMG_STOP Qt::yellow
 
 
 class QLed : public QToolButton
