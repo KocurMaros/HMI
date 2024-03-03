@@ -128,8 +128,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if(	copyOfLaserData.Data[k].scanAngle <= (float)(lidarReverse::MIDLE_LEFT) && 
-					copyOfLaserData.Data[k].scanAngle >= (float)(lidarReverse::RIGHT)){
+				if(	copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REVERSE_LEFT) && 
+					copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REVERSE_RIGHT)){
 					if(min_dist > copyOfLaserData.Data[k].scanDistance)
 						min_dist = copyOfLaserData.Data[k].scanDistance;
 					if(copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
@@ -139,30 +139,15 @@ void MainWindow::paintEvent(QPaintEvent *event)
 					else
 						painter.setPen(QPen(Qt::green, 3));
 				}else{
-					continue;
+					painter.setPen(QPen(QColor(0,255,0,40), 3));
 				}
-				CKobuki kobuki;
-				if(min_dist < lidarDistance::CLOSE){
-					kobuki.setSound(1000,1);
-				}else if(min_dist < lidarDistance::MEDIUM){
-					kobuki.setSound(100,1);
-				}
-				// if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarReverse::MIDLE_LEFT) &&
-				//    copyOfLaserData.Data[k].scanAngle <= (float)(lidarReverse::LEFT)){
-				// 	// cout << "Front left: " << copyOfLaserData.Data[k].scanAngle << endl;
-				// 	painter.setPen(QPen(Qt::red, 3));
+				// CKobuki kobuki;
+				// if(min_dist < lidarDistance::CLOSE){
+				// 	kobuki.setSound(1000,1);
+				// }else if(min_dist < lidarDistance::MEDIUM){
+				// 	kobuki.setSound(100,1);
 				// }
-				// else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarReverse::MIDLE_RIGHT) &&
-				// 		copyOfLaserData.Data[k].scanAngle <= (float)(lidarReverse::MIDLE_LEFT)){
-				// 	// cout << "Front right: " << copyOfLaserData.Data[k].scanAngle << endl;
-				// 	painter.setPen(QPen(Qt::blue, 3));
-				// }
-				// else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarReverse::RIGHT) &&
-				// 		copyOfLaserData.Data[k].scanAngle <= (float)(lidarReverse::MIDLE_RIGHT)){
-				// 	// cout << "Rear left: " << copyOfLaserData.Data[k].scanAngle << endl;
-				// 	painter.setPen(QPen(Qt::yellow, 3));
-				// }else
-				// 	continue;
+
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 					+ rect.topLeft().x(); //prepocet do obrazovky
@@ -171,37 +156,40 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
 					painter.drawEllipse(QPoint(xp, yp), 2, 2);
 			}
+			pero.setColor(Qt::magenta);
+			painter.setPen(pero);
+			int xrobot=rect.width()/2;
+			int yrobot=rect.height()/2;
+			int xpolomer=20;
+			int ypolomer=20;
+
+			painter.drawEllipse(QPoint(rect.x()+xrobot,rect.y()+yrobot),xpolomer,ypolomer);
+			painter.drawLine(rect.x()+xrobot,rect.y()+yrobot,rect.x()+xrobot+xpolomer*cos((360-90)*3.14159/180),rect.y()+((yrobot+ypolomer*sin((360-90)*3.14159/180))));
 		}else if (updateLaserPicture == 1) ///ak mam nove data z lidaru
 		{
 			updateLaserPicture = 0;
 
 			painter.setPen(pero);
-			//teraz tu kreslime random udaje... vykreslite to co treba... t.j. data z lidaru
-			//   std::cout<<copyOfLaserData.numberOfScans<<std::endl << "______"<<copyOfLaserData.Data[copyOfLaserData.numberOfScans-1].scanAngle <<"________"<<std::endl;
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::FRONT_LEFT) - (float)(lidarDirection::THRESHOLD/den) &&
-				   copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::FRONT_LEFT) + (float)(lidarDirection::THRESHOLD/den)){
-					// cout << "Front left: " << copyOfLaserData.Data[k].scanAngle << endl;
-					painter.setPen(QPen(Qt::red, 3));
-				}
-				else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::FRONT_RIGHT) - (float)(lidarDirection::THRESHOLD/den) &&
-						copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) + (float)(lidarDirection::THRESHOLD/den)){
-					// cout << "Front right: " << copyOfLaserData.Data[k].scanAngle << endl;
-					painter.setPen(QPen(Qt::blue, 3));
-				}
-				else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REAR_LEFT) - (float)(lidarDirection::THRESHOLD/den) &&
-						copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REAR_LEFT) + (float)(lidarDirection::THRESHOLD/den)){
-					// cout << "Rear left: " << copyOfLaserData.Data[k].scanAngle << endl;
-					painter.setPen(QPen(Qt::yellow, 3));
-				}
-				else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REAR_RIGHT) - (float)(lidarDirection::THRESHOLD/den) &&
-						copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REAR_RIGHT) + (float)(lidarDirection::THRESHOLD/den)){
-					// cout << "Rear right: " << copyOfLaserData.Data[k].scanAngle << endl;
-					painter.setPen(QPen(Qt::magenta, 3));
-				}
-				else
-					painter.setPen(QPen(Qt::green, 3));
+				// if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::FRONT_LEFT) - (float)(lidarDirection::THRESHOLD/den) &&
+				//    copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::FRONT_LEFT) + (float)(lidarDirection::THRESHOLD/den)){
+				// 	painter.setPen(QPen(Qt::red, 3));
+				// }
+				// else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::FRONT_RIGHT) - (float)(lidarDirection::THRESHOLD/den) &&
+				// 		copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) + (float)(lidarDirection::THRESHOLD/den)){
+				// 	painter.setPen(QPen(Qt::blue, 3));
+				// }
+				// else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REAR_LEFT) - (float)(lidarDirection::THRESHOLD/den) &&
+				// 		copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REAR_LEFT) + (float)(lidarDirection::THRESHOLD/den)){
+				// 	painter.setPen(QPen(Qt::yellow, 3));
+				// }
+				// else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REAR_RIGHT) - (float)(lidarDirection::THRESHOLD/den) &&
+				// 		copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REAR_RIGHT) + (float)(lidarDirection::THRESHOLD/den)){
+				// 	painter.setPen(QPen(Qt::magenta, 3));
+				// }
+				// else
+				// 	painter.setPen(QPen(Qt::green, 3));
 				
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
