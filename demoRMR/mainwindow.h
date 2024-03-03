@@ -102,6 +102,9 @@ private:
 
     uint16_t distanceFromWall[4] = {lidarDistance::FAR};
 	bool reverse_robot = false;
+
+	QImage attention_image;
+	QImage warning_image;
 };
 
 #endif // MAINWINDOW_H

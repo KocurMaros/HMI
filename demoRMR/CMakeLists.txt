@@ -10,7 +10,6 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(SDL_INCLUDE_DIRS /usr/include/SDL2)
 set(SDL_LIBRARIES /usr/lib/x86_64-linux-gnu/libSDL2.so)
-
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(OpenCV REQUIRED)
 find_package(SDL2 REQUIRED)
@@ -21,7 +20,8 @@ add_subdirectory(QLed)
 
 message("SDL_LIBRARIES: ${SDL_LIBRARIES}")
 message("SDL_INCLUDE_DIRS: ${SDL_INCLUDE_DIRS}")
-
+message("OpenCV_LIBS: ${OpenCV_LIBS}")
+message("OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 set(HEADERS
 	mainwindow.h
 	stylesheeteditor.h
