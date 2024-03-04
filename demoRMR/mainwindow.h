@@ -23,7 +23,10 @@
 namespace Ui {
 class MainWindow;
 }
-
+// typedef enum{
+// 	LEFT = 330,
+// 	RIGHT = 28,
+// }cameraAngles;
 ///toto je trieda s oknom.. ktora sa spusti ked sa spusti aplikacia.. su tu vsetky gombiky a spustania...
 class MainWindow : public QMainWindow
 {
@@ -70,6 +73,7 @@ private slots:
 	void on_changeStyleSheet_triggered();
 
     void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
+	void calc_colisions_points(LaserMeasurement laserData,bool *colisions);
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -101,6 +105,7 @@ private:
 	QLed *m_connectionLed;
 
     uint16_t distanceFromWall[4] = {lidarDistance::FAR};
+	bool colisionDetected[2] = {false};
 	bool reverse_robot = false;
 
 	QImage attention_image;

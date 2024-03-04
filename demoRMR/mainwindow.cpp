@@ -78,12 +78,19 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
         parse_lidar_data(copyOfLaserData, distanceFromWall);
+		calc_colisions_points(copyOfLaserData, colisionDetected);
+		
 		painter.drawImage(rect, image.rgbSwapped());
 		
 		QPoint dest_pos;
 		uint16_t width = rect.width();
 		uint16_t height = rect.height();
 		uint16_t x,y;
+		if(colisionDetected[0] || colisionDetected[1]){
+			painter.drawImage(QPoint(width - warning_image.width(), height/2 - warning_image.height()/2),attention_image);
+			colisionDetected[0] = false;
+			colisionDetected[1] = false;
+		}
 		for(size_t i=0;i<4;i++){
 			if(distanceFromWall[i] != lidarDistance::FAR){
 				if(i == 0){
@@ -92,7 +99,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				}else if(i == 1){
 					x = width/2+width/4 - attention_image.width()/2;
 					y = height/2 - attention_image.height()/2;
-				}else if(i == 3){
+				}else if(i == 3){ 
 					x = width/2-width/4 - attention_image.width()/2;
 					y = height/2 - attention_image.height()/2;
 				}
@@ -159,21 +166,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::FRONT_LEFT) - (float)(lidarDirection::THRESHOLD/den) &&
-				   copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::FRONT_LEFT) + (float)(lidarDirection::THRESHOLD/den)){
+				if(copyOfLaserData.Data[k].scanAngle >= (float)(330) - (float)(lidarDirection::THRESHOLD/den) &&
+				   copyOfLaserData.Data[k].scanAngle <= (float)(330) + (float)(lidarDirection::THRESHOLD/den)){
 					painter.setPen(QPen(Qt::red, 3));
-				}
-				else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::FRONT_RIGHT) - (float)(lidarDirection::THRESHOLD/den) &&
-						copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) + (float)(lidarDirection::THRESHOLD/den)){
-					painter.setPen(QPen(Qt::blue, 3));
-				}
-				else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REAR_LEFT) - (float)(lidarDirection::THRESHOLD/den) &&
-						copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REAR_LEFT) + (float)(lidarDirection::THRESHOLD/den)){
-					painter.setPen(QPen(Qt::yellow, 3));
-				}
-				else if(copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REAR_RIGHT) - (float)(lidarDirection::THRESHOLD/den) &&
-						copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REAR_RIGHT) + (float)(lidarDirection::THRESHOLD/den)){
-					painter.setPen(QPen(Qt::magenta, 3));
 				}
 				else
 					painter.setPen(QPen(Qt::green, 3));
@@ -477,6 +472,7 @@ void MainWindow::on_changeStyleSheet_triggered()
 void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance){
 	double avg_dist[4] = {0};
 	uint8_t num_of_scans[4] = {0};
+
     for(size_t i = 0; i < laserData.numberOfScans; i++){
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_LEFT) ||
 			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT)){// front side
@@ -485,17 +481,12 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
         }
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT) &&
 			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::REAR_RIGHT)){ //right side
-            avg_dist[1] += laserData.Data[i].scanDistance;
+			avg_dist[1] += laserData.Data[i].scanDistance;
 			num_of_scans[1]++;
 		}
-		// if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::REAR_RIGHT) &&
-		// 	copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::REAR_LEFT)){//back side
-        //     avg_dist[2] += laserData.Data[i].scanDistance;
-		// 	num_of_scans[2]++;
-		// }
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::REAR_LEFT) &&
 			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT)){//left side
-            avg_dist[3] += laserData.Data[i].scanDistance;
+			avg_dist[3] += laserData.Data[i].scanDistance;
 			num_of_scans[3]++;
 		}
     }
@@ -507,5 +498,26 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 			distance[i] = lidarDistance::MEDIUM;
 		else
 			distance[i] = lidarDistance::FAR;
+	}
+}
+
+void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colisions){
+
+	static const double dist = 400;
+
+	for(size_t i = 0; i < laserData.numberOfScans; i++){
+
+		if(	copyOfLaserData.Data[i].scanAngle >= (float)(0) ||
+			copyOfLaserData.Data[i].scanAngle <= (float)(90)){
+			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
+				colisions[0] = true;
+			}
+		}
+		if(	copyOfLaserData.Data[i].scanAngle >= (float)(360) ||
+			copyOfLaserData.Data[i].scanAngle <= (float)(270)){
+			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
+				colisions[1] = true;
+			}
+		}
 	}
 }
