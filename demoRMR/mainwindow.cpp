@@ -3,6 +3,11 @@
 #include <QPainter>
 #include <math.h>
 #include <qdebug.h>
+#include "CKobuki.h"
+
+static QString IP_ADDRESSES[2] {"127.0.0.1", "192.168.1."};
+// 11-15
+
 ///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
 /// AK HO MAS Z GITU A ROBIS NA LABAKOVOM PC, TAK SI HO VLOZ DO FOLDERA KTORY JE JASNE ODLISITELNY OD TVOJICH KOLEGOV
 /// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
@@ -17,11 +22,16 @@ MainWindow::MainWindow(QWidget *parent)
 	, ui(new Ui::MainWindow)
 	, m_connectionLed(new QLed(this))
 	, robot(nullptr)
+	, m_ipaddress(IP_ADDRESSES[0].toStdString())
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-	m_ipaddress = "127.0.0.1"; //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+	 //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
 							 //  cap.open("http://192.168.1.11:8000/stream.mjpg");
 	ui->setupUi(this);
+	ui->ipComboBox->addItem(IP_ADDRESSES[0]);
+	for (size_t i = 11; i < 15; i++) {
+		ui->ipComboBox->addItem(IP_ADDRESSES[1]+QString::number(i));
+	}
 	datacounter = 0;
 	//  timer = new QTimer(this);
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
@@ -200,19 +210,10 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		return;
 	}
 
-	QString tmpIP = ui->ipHintLineEdit->text();
-	if (tmpIP.isEmpty()) {
-		tmpIP = "127.0.0.1";
-		ui->ipHintLineEdit->setText(tmpIP);
-	}
-
-	if (!isIPValid(tmpIP)) {
-		ui->ipHintLineEdit->clear();
-		QMessageBox::warning(this, "Invalid IP", tmpIP + " is an invalid IP address");
-		return;
-	}
-
+	QString tmpIP = ui->ipComboBox->currentText();
+	qDebug() << "Connecting to " << tmpIP;
 	m_ipaddress = tmpIP.toStdString();
+	qDebug() << "Address " << tmpIP << " " << isIPValid(tmpIP);
 
 	robot = new Robot();
 	//ziskanie joystickov
