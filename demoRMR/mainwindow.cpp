@@ -91,6 +91,17 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			}
 		}
 	}
+	if(updateSkeletonPicture==1 )
+	{
+		painter.setPen(Qt::red);
+		for(int i=0;i<75;i++)
+		{
+			int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
+			int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
+			if(rect.contains(xp,yp))
+				painter.drawEllipse(QPoint(xp, yp),2,2);
+		}
+	}
 }
 
 
@@ -190,6 +201,14 @@ bool MainWindow::isIPValid(const QString &ip)
 	return ipRegex.match(ip).hasMatch();
 }
 
+int MainWindow::processThisSkeleton(skeleton skeledata)
+{
+	memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
+
+	updateSkeletonPicture=1;
+	return 0;
+}
+
 void MainWindow::on_pushButton_9_clicked() //start button
 {
 	if (robot != nullptr && robot->isInEmgStop()) {
@@ -228,7 +247,15 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/ std::bind(&MainWindow::processThisLidar, this, std::placeholders::_1));
 	robot->setRobotParameters(m_ipaddress, 53000, 5300, std::bind(&MainWindow::processThisRobot, this, std::placeholders::_1));
 	//---simulator ma port 8889, realny robot 8000
-	robot->setCameraParameters("http://" + m_ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+
+	if (m_ipaddress == "127.0.0.1") {
+		robot->setCameraParameters("http://" + m_ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+	}
+	else {
+		robot->setCameraParameters("http://" + m_ipaddress + ":8000/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+	}
+
+	robot->setSkeletonParameters(m_ipaddress, 23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
 
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
 	robot->robotStart();

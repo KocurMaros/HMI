@@ -45,6 +45,7 @@ public:
 	int processThisRobot(TKobukiData robotdata);
 
 	int processThisCamera(cv::Mat cameraData);
+	int processThisSkeleton(skeleton skeledata);
 
 private:
 	void disableAllButtons(bool disable);
@@ -88,6 +89,8 @@ private:
 	Robot *robot;
 	TKobukiData robotdata;
 	int datacounter;
+	int updateSkeletonPicture;
+	skeleton skeleJoints;
 	QTimer *timer;
 
 	QJoysticks *instance;

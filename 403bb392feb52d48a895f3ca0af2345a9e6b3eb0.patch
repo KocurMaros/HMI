@@ -1,0 +1,316 @@
+From 403bb392feb52d48a895f3ca0af2345a9e6b3eb0 Mon Sep 17 00:00:00 2001
+From: dekdekan <dekdekan@gmail.com>
+Date: Wed, 15 Feb 2023 16:52:43 +0100
+Subject: [PATCH] add support for skeleton tracking
+
+---
+ demoRMR/mainwindow.cpp |  24 ++++++++-
+ demoRMR/mainwindow.h   |   3 ++
+ robot/robot.cpp        |  66 ++++++++++++++++++++++++-
+ robot/robot.h          | 107 +++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 198 insertions(+), 2 deletions(-)
+
+diff --git a/demoRMR/mainwindow.cpp b/demoRMR/mainwindow.cpp
+index 1b96d0c..7263396 100644
+--- a/demoRMR/mainwindow.cpp
++++ b/demoRMR/mainwindow.cpp
+@@ -79,6 +79,17 @@ void MainWindow::paintEvent(QPaintEvent *event)
+             }
+         }
+     }
++    if(updateSkeletonPicture==1 )
++    {
++        painter.setPen(Qt::red);
++        for(int i=0;i<75;i++)
++        {
++            int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
++            int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
++            if(rect.contains(xp,yp))
++                painter.drawEllipse(QPoint(xp, yp),2,2);
++        }
++    }
+ }
+ 
+ 
+@@ -162,6 +173,17 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
+     updateLaserPicture=1;
+     return 0;
+ }
++
++///toto je calback na data zo skeleton trackera, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
++/// vola sa ked dojdu nove data z trackera
++int MainWindow::processThisSkeleton(skeleton skeledata)
++{
++
++    memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
++
++    updateSkeletonPicture=1;
++    return 0;
++}
+ void MainWindow::on_pushButton_9_clicked() //start button
+ {
+ 
+@@ -176,7 +198,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
+     robot.setRobotParameters(ipaddress,53000,5300,std::bind(&MainWindow::processThisRobot,this,std::placeholders::_1));
+     //---simulator ma port 8889, realny robot 8000
+     robot.setCameraParameters("http://"+ipaddress+":8889/stream.mjpg",std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
+-
++    robot.setSkeletonParameters("127.0.0.1",23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
+     ///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
+     robot.robotStart();
+ 
+diff --git a/demoRMR/mainwindow.h b/demoRMR/mainwindow.h
+index 69f12e8..f0d9334 100644
+--- a/demoRMR/mainwindow.h
++++ b/demoRMR/mainwindow.h
+@@ -52,6 +52,7 @@ class MainWindow : public QMainWindow
+     int processThisRobot(TKobukiData robotdata);
+ 
+ int processThisCamera(cv::Mat cameraData);
++int processThisSkeleton(skeleton skeledata);
+ 
+ private slots:
+     void on_pushButton_9_clicked();
+@@ -79,6 +80,8 @@ private slots:
+      std::string ipaddress;
+      Robot robot;
+      TKobukiData robotdata;
++     int updateSkeletonPicture;
++     skeleton skeleJoints;
+      int datacounter;
+      QTimer *timer;
+ 
+diff --git a/robot/robot.cpp b/robot/robot.cpp
+index 7c70316..573445a 100644
+--- a/robot/robot.cpp
++++ b/robot/robot.cpp
+@@ -23,12 +23,13 @@ Robot::~Robot()
+     robotthreadHandle.join();
+     laserthreadHandle.join();
+     camerathreadhandle.join();
++    skeletonthreadHandle.join();
+ #ifdef _WIN32
+ WSACleanup();
+ #endif
+ }
+ 
+-Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std::function<int(LaserMeasurement)> &lascallback,std::string ipaddressRobot,int robotportRobot, int robotportMe,std::function<int(TKobukiData)> &robcallback): wasLaserSet(0),wasRobotSet(0),wasCameraSet(0)
++Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std::function<int(LaserMeasurement)> &lascallback,std::string ipaddressRobot,int robotportRobot, int robotportMe,std::function<int(TKobukiData)> &robcallback): wasLaserSet(0),wasRobotSet(0),wasCameraSet(0),wasSkeletonSet(0)
+ {
+ 
+     setLaserParameters(ipaddressLaser,laserportRobot,laserportMe,lascallback);
+@@ -223,6 +224,64 @@ void Robot::laserprocess()
+     std::cout<<"koniec thread"<<std::endl;
+ }
+ 
++void Robot::skeletonprocess()
++{
++
++    std::cout<<"init skeleton"<<std::endl;
++#ifdef _WIN32
++    WSADATA wsaData = {0};
++    int iResult = 0;
++    // Initialize Winsock
++    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
++#else
++#endif
++    ske_slen = sizeof(ske_si_other);
++    if ((ske_s=::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
++    {
++
++    }
++
++    char ske_broadcastene=1;
++#ifdef _WIN32
++    DWORD timeout=100;
++
++    std::cout<<::setsockopt(ske_s, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof timeout)<<std::endl;
++    std::cout<<::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST,&ske_broadcastene,sizeof(ske_broadcastene))<<std::endl;
++#else
++    ::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST,&ske_broadcastene,sizeof(ske_broadcastene));
++#endif
++    // zero out the structure
++    memset((char *) &ske_si_me, 0, sizeof(ske_si_me));
++
++    ske_si_me.sin_family = AF_INET;
++    ske_si_me.sin_port = htons(skeleton_ip_portOut);
++    ske_si_me.sin_addr.s_addr = htonl(INADDR_ANY);
++
++    ske_si_posli.sin_family = AF_INET;
++    ske_si_posli.sin_port = htons(skeleton_ip_portIn);
++    ske_si_posli.sin_addr.s_addr = inet_addr(skeleton_ipaddress.data());;//htonl(INADDR_BROADCAST);
++    std::cout<<::bind(ske_s , (struct sockaddr*)&ske_si_me, sizeof(ske_si_me) )<<std::endl;;
++    char command=0x00;
++
++    skeleton bbbk;
++    double measure[225];
++    while(1)
++    {
++        if(readyFuture.wait_for(std::chrono::seconds(0))==std::future_status::ready)
++            break;
++        if ((ske_recv_len = ::recvfrom(ske_s, (char *)&bbbk.joints, sizeof(char)*1800, 0, (struct sockaddr *) &ske_si_other, &ske_slen)) == -1)
++        {
++
++        //    std::cout<<"problem s prijatim"<<std::endl;
++            continue;
++        }
++
++
++        std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
++    }
++    std::cout<<"koniec thread"<<std::endl;
++}
++
+ 
+ void Robot::robotStart()
+ {
+@@ -242,6 +301,11 @@ void Robot::robotStart()
+         camerathreadhandle=std::move(std::thread(f3));
+     }
+ 
++    if(wasSkeletonSet==1)
++    {
++        std::function<void(void)> f4=std::bind(&Robot::skeletonprocess, this);
++        skeletonthreadHandle=std::move(std::thread(f4));
++    }
+ }
+ 
+ 
+diff --git a/robot/robot.h b/robot/robot.h
+index e4e62fe..7090045 100644
+--- a/robot/robot.h
++++ b/robot/robot.h
+@@ -27,6 +27,96 @@
+ #include <random>
+ #include <iostream>
+ #include <memory>
++static const char *klby[]={{"left_wrist"},{"left_thumb_cmc"},{"left_thumb_mcp"},{"left_thumb_ip"},{"left_thumb_tip"},{"left_index_cmc"},{"left_index_mcp"},{"left_index_ip"},{"left_index_tip"},{"left_middle_cmc"},{"left_middle_mcp"},{"left_middle_ip"},{"left_middle_tip"},{"left_ring_cmc"},{"left_ring_mcp"},{"left_ring_ip"},{"left_ringy_tip"},{"left_pinky_cmc"},{"left_pink_mcp"},{"left_pink_ip"},{"left_pink_tip"},{"right_wrist"},{"right_thumb_cmc"},{"right_thumb_mcp"},{"right_thumb_ip"},{"right_thumb_tip"},{"right_index_cmc"},{"right_index_mcp"},{"right_index_ip"},{"right_index_tip"},{"right_middle_cmc"},{"right_middle_mcp"},{"right_middle_ip"},{"right_middle_tip"},{"right_ring_cmc"},{"right_ring_mcp"},{"right_ring_ip"},{"right_ringy_tip"},{"right_pinky_cmc"},{"right_pink_mcp"},{"right_pink_ip"},{"right_pink_tip"},{"nose"},{"left_eye_in"},{"left_eye"},{"left_eye_out"},{"right_eye_in"},{"right_eye"},{"right_eye_out"},{"left_ear"},{"right_ear"},{"mounth_left"},{"mounth_right"},{"left_shoulder"},{"right_shoulder"},{"left_elbow"},{"right_elbow"},{"left_wrist"},{"right_wrist"},{"left_pinky"},{"right_pinky"},{"left_index"},{"right_index"},{"left_thumb"},{"right_thumb"},{"left_hip"},{"right_hip"},{"left_knee"},{"right_knee"},{"left_ankle"},{"right_ankle"},{"left_heel"},{"righ_heel"},{"left+foot_index"},{"right_foot_index"}};
++enum jointnames
++{
++    left_wrist,
++   left_thumb_cmc,
++   left_thumb_mcp,
++   left_thumb_ip,
++   left_thumb_tip,
++   left_index_cmc,
++   left_index_mcp,
++   left_index_ip,
++   left_index_tip,
++   left_middle_cmc,
++   left_middle_mcp,
++   left_middle_ip,
++   left_middle_tip,
++   left_ring_cmc,
++   left_ring_mcp,
++   left_ring_ip,
++   left_ringy_tip,
++   left_pinky_cmc,
++   left_pink_mcp,
++   left_pink_ip,
++   left_pink_tip,
++   right_wrist,
++   right_thumb_cmc,
++   right_thumb_mcp,
++   right_thumb_ip,
++   right_thumb_tip,
++   right_index_cmc,
++   right_index_mcp,
++   right_index_ip,
++   right_index_tip,
++   right_middle_cmc,
++   right_middle_mcp,
++   right_middle_ip,
++   right_middle_tip,
++   right_ring_cmc,
++   right_ring_mcp,
++   right_ring_ip,
++   right_ringy_tip,
++   right_pinky_cmc,
++   right_pink_mcp,
++   right_pink_ip,
++   right_pink_tip,
++   nose,left_eye_in,
++   left_eye,
++   left_eye_out,
++   right_eye_in,
++   right_eye,
++   right_eye_out,
++   left_ear,
++   right_ear,
++   mounth_left,
++   mounth_right,
++   left_shoulder,
++   right_shoulder,
++   left_elbow,
++   right_elbow,
++   left_wrist_glob,
++   right_wrist_glob,
++   left_pinky,
++   right_pinky,
++   left_index,
++   right_index,
++   left_thumb,
++   right_thumb,
++   left_hip,
++   right_hip,
++   left_knee,
++   right_knee,
++   left_ankle,
++   right_ankle,
++   left_heel,
++   righ_heel,
++   left_foot_index,
++   right_foot_index
++};
++typedef struct
++{
++    double x;
++    double y;
++    double z;
++}klb;
++
++typedef struct
++{
++    klb joints[75];
++}skeleton;
++
+ 
+ class ROBOT_EXPORT Robot
+ {
+@@ -70,12 +160,22 @@ class ROBOT_EXPORT Robot
+         camera_callback=callback;
+         wasCameraSet=1;
+     }
++
++    void setSkeletonParameters(std::string ipaddress,int skeletonportRobot, int skeletonportMe,std::function<int(skeleton)> callback )
++    {
++        skeleton_ip_portOut=skeletonportRobot;
++        skeleton_ip_portIn=skeletonportMe;
++        skeleton_ipaddress=ipaddress;
++        skeleton_callback=callback;
++        wasSkeletonSet=1;
++    }
+ private:
+      std::promise<void> ready_promise;
+     std::shared_future<void> readyFuture;
+     int wasLaserSet;
+     int wasRobotSet;
+     int wasCameraSet;
++    int wasSkeletonSet;
+     //veci na laser
+     LaserMeasurement copyOfLaserData;
+     void laserprocess();
+@@ -96,6 +196,13 @@ class ROBOT_EXPORT Robot
+     std::function<int(TKobukiData)> robot_callback=nullptr;
+ 
+ 
++    //veci na skeleton
++    std::thread skeletonthreadHandle;
++    std::string skeleton_ipaddress;
++    int skeleton_ip_portOut;
++    int skeleton_ip_portIn;
++    void skeletonprocess();
++    std::function<int(skeleton)> skeleton_callback=nullptr;
+     //veci pre kameru -- pozor na kameru, neotvarat ak nahodou chcete kameru pripojit na detekciu kostry...
+ 
+     std::string camera_link;
