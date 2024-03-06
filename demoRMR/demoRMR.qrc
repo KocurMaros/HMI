@@ -6,5 +6,6 @@
         <file>img/emergency_stop_button.png</file>
         <file>img/attention.png</file>
         <file>img/warning.png</file>
+        <file>img/colision.png</file>
     </qresource>
 </RCC>

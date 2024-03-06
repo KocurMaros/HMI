@@ -14,7 +14,6 @@
 /// AZ POTOM ZACNI ROBIT... AK TO NESPRAVIS, POJDU BODY DOLE... A NIE JEDEN,ALEBO DVA ALE BUDES RAD
 /// AK SA DOSTANES NA SKUSKU
 
-
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 	, ui(new Ui::MainWindow)
@@ -51,6 +50,15 @@ MainWindow::MainWindow(QWidget *parent)
 	else
 		qDebug() << "Image loaded";
 	warning_image = warning_image.scaled(150, 150, Qt::KeepAspectRatio);
+
+	QImageReader reader2 = QImageReader(":/img/colision.png");
+
+	colision_image = reader2.read();
+	if(colision_image.isNull())
+		qDebug() << "Error: Cannot load image. " << reader.errorString();
+	else
+		qDebug() << "Image loaded";
+	colision_image = colision_image.scaled(150, 150, Qt::KeepAspectRatio);
 }
 
 MainWindow::~MainWindow()
@@ -87,33 +95,34 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		uint16_t height = rect.height();
 		uint16_t x,y;
 		if(colisionDetected[0] || colisionDetected[1]){
-			painter.drawImage(QPoint(width - warning_image.width(), height/2 - warning_image.height()/2),attention_image);
+			painter.drawImage(QPoint(width/2 - colision_image.width()/2, height/2 - colision_image.height()/2),colision_image);
 			colisionDetected[0] = false;
 			colisionDetected[1] = false;
-		}
-		for(size_t i=0;i<4;i++){
-			if(distanceFromWall[i] != lidarDistance::FAR){
-				if(i == 0){
-					x = width/2 - attention_image.width()/2;
-					y = height/2 - attention_image.height()/2;
-				}else if(i == 1){
-					x = width/2+width/4 - attention_image.width()/2;
-					y = height/2 - attention_image.height()/2;
-				}else if(i == 3){ 
-					x = width/2-width/4 - attention_image.width()/2;
-					y = height/2 - attention_image.height()/2;
+		}else{
+			for(size_t i=0;i<4;i++){
+				if(distanceFromWall[i] != lidarDistance::FAR){
+					if(i == 0){
+						x = width/2 - attention_image.width()/2;
+						y = height/2 - attention_image.height()/2;
+					}else if(i == 1){
+						x = width/2+width/4 - attention_image.width()/2;
+						y = height/2 - attention_image.height()/2;
+					}else if(i == 3){ 
+						x = width/2-width/4 - attention_image.width()/2;
+						y = height/2 - attention_image.height()/2;
+					}
+					dest_pos = QPoint(x, y);
 				}
-				dest_pos = QPoint(x, y);
-			}
-			if(distanceFromWall[i] == lidarDistance::MEDIUM){
-				if(i != 2)
-					painter.drawImage(dest_pos,warning_image);
-			}
-			if(distanceFromWall[i] == lidarDistance::CLOSE){
-				if(i != 2)
-					painter.drawImage(dest_pos,attention_image);
-			}
-		}	
+				if(distanceFromWall[i] == lidarDistance::MEDIUM){
+					if(i != 2)
+						painter.drawImage(dest_pos,warning_image);
+				}
+				if(distanceFromWall[i] == lidarDistance::CLOSE){
+					if(i != 2)
+						painter.drawImage(dest_pos,attention_image);
+				}
+			}	
+		}
 	}
 	else {
 		if(reverse_robot){
@@ -162,17 +171,17 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}else if (updateLaserPicture == 1) ///ak mam nove data z lidaru
 		{
 			updateLaserPicture = 0;
-
+			
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if(copyOfLaserData.Data[k].scanAngle >= (float)(330) - (float)(lidarDirection::THRESHOLD/den) &&
-				   copyOfLaserData.Data[k].scanAngle <= (float)(330) + (float)(lidarDirection::THRESHOLD/den)){
-					painter.setPen(QPen(Qt::red, 3));
-				}
-				else
-					painter.setPen(QPen(Qt::green, 3));
-				
+				// if(copyOfLaserData.Data[k].scanAngle >= (float)(330) - (float)(lidarDirection::THRESHOLD/den) &&
+				//    copyOfLaserData.Data[k].scanAngle <= (float)(330) + (float)(lidarDirection::THRESHOLD/den)){
+				// 	painter.setPen(QPen(Qt::red, 3));
+				// }
+				// else
+				painter.setPen(QPen(Qt::green, 3));
+
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 					+ rect.topLeft().x(); //prepocet do obrazovky

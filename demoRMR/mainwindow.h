@@ -23,10 +23,7 @@
 namespace Ui {
 class MainWindow;
 }
-// typedef enum{
-// 	LEFT = 330,
-// 	RIGHT = 28,
-// }cameraAngles;
+
 ///toto je trieda s oknom.. ktora sa spusti ked sa spusti aplikacia.. su tu vsetky gombiky a spustania...
 class MainWindow : public QMainWindow
 {
@@ -110,6 +107,9 @@ private:
 
 	QImage attention_image;
 	QImage warning_image;
+	QImage colision_image;
+
+	
 };
 
 #endif // MAINWINDOW_H
