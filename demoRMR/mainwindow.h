@@ -86,7 +86,7 @@ private:
 	int updateLaserPicture;
 	LaserMeasurement copyOfLaserData;
 	std::string m_ipaddress;
-	Robot *robot;
+	std::unique_ptr<Robot> robot;
 	TKobukiData robotdata;
 	int datacounter;
 	int updateSkeletonPicture;

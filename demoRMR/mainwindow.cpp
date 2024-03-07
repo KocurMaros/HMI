@@ -217,8 +217,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	if (m_connectionLed->isInConnectedState()) {
 
-		delete robot;
-		robot = nullptr;
+		qDebug() << "Disconnecting the UI";
+		robot.reset();
 
 		m_connectionLed->setToDisconnectedState();
 		ui->pushButton_9->setText("Connect");
@@ -234,7 +234,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	m_ipaddress = tmpIP.toStdString();
 	qDebug() << "Address " << tmpIP << " " << isIPValid(tmpIP);
 
-	robot = new Robot();
+	robot = std::make_unique<Robot>(m_ipaddress);
 	//ziskanie joystickov
 	instance = QJoysticks::getInstance();
 	forwardspeed = 0;
@@ -270,7 +270,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	}
 	if (i == 3) {
 		std::cerr << "Connection failed" << std::endl;
-		delete robot;
+		robot.reset();
 		return;
 	}
 
