@@ -1,9 +1,11 @@
+#include "CKobuki.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QComboBox>
+#include <QDebug>
 #include <QPainter>
-#include <math.h>
-#include <qdebug.h>
-#include "CKobuki.h"
+#include <cmath>
+#include <memory>
 
 static QString IP_ADDRESSES[2] {"127.0.0.1", "192.168.1."};
 // 11-15
