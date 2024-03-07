@@ -129,7 +129,7 @@ void Robot::robotprocess()
 			m_connected = true;
 
 			///---toto je callback funkcia...
-			std::async(
+			auto thread = std::async(
 				std::launch::async, [this](TKobukiData sensdata) { robot_callback(sensdata); }, sens);
 		}
 	}
@@ -225,7 +225,7 @@ void Robot::laserprocess()
 		measure.numberOfScans = las_recv_len / sizeof(LaserData);
 		//tu mame data..zavolame si funkciu-- vami definovany callback
 
-		std::async(
+		auto t = std::async(
 			std::launch::async, [this](LaserMeasurement sensdata) { laser_callback(sensdata); }, measure);
 		///ako som vravel,toto vas nemusi zaujimat
 	}
@@ -286,9 +286,9 @@ void Robot::skeletonprocess()
         }
 
 
-        std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
     }
     std::cout<<"koniec thread"<<std::endl;
+		auto t = std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
 }
 
 void Robot::robotStart()
@@ -331,7 +331,7 @@ void Robot::imageViewer()
 
 
 		// tu sa vola callback..
-		std::async(
+		auto t = std::async(
 			std::launch::async, [this](cv::Mat camdata) { camera_callback(camdata.clone()); }, frameBuf);
 #ifdef _WIN32
 		cv::waitKey(1);
