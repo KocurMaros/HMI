@@ -289,6 +289,8 @@ void Robot::skeletonprocess()
     }
     std::cout<<"koniec thread"<<std::endl;
 		auto t = std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
+	}
+	std::cout<<"koniec skeleton thread"<<std::endl;
 }
 
 void Robot::robotStart()
@@ -339,5 +341,7 @@ void Robot::imageViewer()
 		usleep(1 * 1000);
 #endif
 	}
+
+	std::cout << "Koniec imageViewer" << std::endl;
 	cap.release();
 }
