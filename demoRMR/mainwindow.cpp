@@ -93,6 +93,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			}
 		}
 	}
+
 	if(updateSkeletonPicture==1 )
 	{
 		painter.setPen(Qt::red);
@@ -165,7 +166,6 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
 	updateLaserPicture = 1;
 	update(); //tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 
-
 	return 0;
 }
 
@@ -181,6 +181,7 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
 
 void MainWindow::disableAllButtons(bool disable)
 {
+	// Disable all the buttons.
 	QList<QPushButton *> buttons = findChildren<QPushButton *>();
 	for (auto button : buttons) {
 		if (button->objectName() == "emgStopButton"
@@ -190,6 +191,10 @@ void MainWindow::disableAllButtons(bool disable)
 
 		button->setDisabled(disable);
 	}
+
+	// Disable the combo box for choosing the IP address.
+	QComboBox *comboBox = findChild<QComboBox *>();
+	comboBox->setDisabled(disable);
 }
 
 bool MainWindow::isIPValid(const QString &ip)
