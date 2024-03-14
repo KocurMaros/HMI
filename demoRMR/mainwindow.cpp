@@ -342,7 +342,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/ std::bind(&MainWindow::processThisLidar, this, std::placeholders::_1));
 	robot->setRobotParameters(m_ipaddress, 53000, 5300, std::bind(&MainWindow::processThisRobot, this, std::placeholders::_1));
 	//---simulator ma port 8889, realny robot 8000
-	robot->setCameraParameters("http://" + m_ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+	robot->setCameraParameters("http://" + m_ipaddress + ":8000/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
 
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
 	robot->robotStart();
@@ -478,18 +478,21 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 	uint8_t num_of_scans[4] = {0};
 
     for(size_t i = 0; i < laserData.numberOfScans; i++){
+        if(copyOfLaserData.Data[i].scanDistance < 0.1)
+            continue    ;
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_LEFT) ||
 			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){// front side
             avg_dist[0] += laserData.Data[i].scanDistance;
 			num_of_scans[0]++;
         }
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT) &&
+		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT_1) &&
 			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){ //right side
+            // cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
 			avg_dist[1] += laserData.Data[i].scanDistance;
 			num_of_scans[1]++;
 		}
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::LEFT) &&
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){//left side
+			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT_1) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){//left side
 			avg_dist[3] += laserData.Data[i].scanDistance;
 			num_of_scans[3]++;
 		}
@@ -513,7 +516,7 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colision
 		if(	(laserData.Data[i].scanAngle >= (float)(0) ||
 			laserData.Data[i].scanAngle <= (float)(90)) && laserData.Data[i].scanDistance >= 150){
 			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
-                cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " "<< laserData.Data[i].scanQuality << endl;
+                // cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " "<< laserData.Data[i].scanQuality << endl;
 				colisions[0] = true;
 			}
 		}
@@ -521,7 +524,7 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colision
 			laserData.Data[i].scanAngle <= (float)(270)) && laserData.Data[i].scanDistance >= 150){
 
 			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
-                cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
+                // cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
 				colisions[1] = true;
 			}
 		}

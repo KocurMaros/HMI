@@ -55,7 +55,9 @@ typedef struct
 typedef enum
 {
     FRONT_LEFT = 338,
+    FRONT_LEFT_1 = 310,
     FRONT_RIGHT = 13,
+    FRONT_RIGHT_1 = 50,
     REAR_LEFT = 182,
     REAR_RIGHT = 170,
 	THRESHOLD = 5,
@@ -68,7 +70,7 @@ typedef enum
 typedef enum
 {
     FAR = 1050,
-    MEDIUM = 900,
+    MEDIUM = 800,
     CLOSE = 500
 }lidarDistance;
 
