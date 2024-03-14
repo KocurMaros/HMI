@@ -35,25 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->topRightLayout->insertWidget(0, m_connectionLed);
 	ui->pushButton_9->setStyleSheet("background-color: green");
 
-	QImageReader reader = QImageReader(":/img/attention.png");
-	attention_image = reader.read();
-	if(attention_image.isNull()) 
-		qDebug() << "Error: Cannot load image. " << reader.errorString();
-	else
-		qDebug() << "Image loaded";
-	attention_image = attention_image.scaled(150, 150, Qt::KeepAspectRatio);
-	QImageReader reader1 = QImageReader(":/img/warning.png");
+	QImageReader reader = QImageReader(":/img/warning.png");
 
-	warning_image = reader1.read();
-	if(warning_image.isNull())
-		qDebug() << "Error: Cannot load image. " << reader.errorString();
-	else
-		qDebug() << "Image loaded";
-	warning_image = warning_image.scaled(150, 150, Qt::KeepAspectRatio);
-
-	QImageReader reader2 = QImageReader(":/img/colision.png");
-
-	colision_image = reader2.read();
+	colision_image = reader.read();
 	if(colision_image.isNull())
 		qDebug() << "Error: Cannot load image. " << reader.errorString();
 	else
@@ -65,7 +49,10 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 }
-
+uint8_t MAP(int x, int in_min, int in_max, int out_min, int out_max)
+{
+    return (uint8_t)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 void MainWindow::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
@@ -99,27 +86,34 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			colisionDetected[0] = false;
 			colisionDetected[1] = false;
 		}else{
+            QRectF border_rect;
+            QBrush brush;
 			for(size_t i=0;i<4;i++){
 				if(distanceFromWall[i] != lidarDistance::FAR){
 					if(i == 0){
-						x = width/2 - attention_image.width()/2;
-						y = height/2 - attention_image.height()/2;
-					}else if(i == 1){
-						x = width/2+width/4 - attention_image.width()/2;
-						y = height/2 - attention_image.height()/2;
-					}else if(i == 3){ 
-						x = width/2-width/4 - attention_image.width()/2;
-						y = height/2 - attention_image.height()/2;
-					}
+                        border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height()/20);
+                    }else if(i == 1){
+                        border_rect = QRect(rect.x()+rect.width()-rect.width()/50, rect.y(), rect.width()/50, rect.height());
+                    }else if(i == 3){
+                        border_rect = QRect(rect.x(), rect.y(), rect.width()/50, rect.height());
+                        // border_rect = QRect(rect.x(c), rect.y(), rect.width(), rect.height()/20);
+                    }
 					dest_pos = QPoint(x, y);
 				}
 				if(distanceFromWall[i] == lidarDistance::MEDIUM){
+                    brush.setStyle(Qt::SolidPattern);
+                    brush.setColor(QColor(255,255,0,MAP(copyOfLaserData.Data[i].scanDistance, lidarDistance::CLOSE, lidarDistance::MEDIUM, 255, 0)));
+                    painter.setBrush(brush);
 					if(i != 2)
-						painter.drawImage(dest_pos,warning_image);
+                        painter.drawRect(border_rect);
 				}
 				if(distanceFromWall[i] == lidarDistance::CLOSE){
+                    brush.setStyle(Qt::SolidPattern);
+                    brush.setColor(QColor(255,0,0,MAP(copyOfLaserData.Data[i].scanDistance, 0, lidarDistance::CLOSE, 255, 0)));
+                    painter.setBrush(brush);
+                    // painter.setPen(QPen(QColor(0,255,0,0), 3));
 					if(i != 2)
-						painter.drawImage(dest_pos,attention_image);
+                        painter.drawRect(border_rect);
 				}
 			}	
 		}
@@ -180,7 +174,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				// 	painter.setPen(QPen(Qt::red, 3));
 				// }
 				// else
-				painter.setPen(QPen(Qt::green, 3));
+                painter.setPen(QPen(Qt::green, 3));
+                    // break;
 
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
@@ -391,7 +386,7 @@ void MainWindow::on_pushButton_2_clicked() //forward
 	if (robot == nullptr) {
 		return;
 	}
-	robot->setTranslationSpeed(500);
+	robot->setTranslationSpeed(250);
 	reverse_robot = false;
 }
 
@@ -400,7 +395,7 @@ void MainWindow::on_pushButton_3_clicked() //back
 	if (robot == nullptr) {
 		return;
 	}
-	robot->setTranslationSpeed(-250);
+	robot->setTranslationSpeed(-150);
 	reverse_robot = true;
 }
 
@@ -409,7 +404,7 @@ void MainWindow::on_pushButton_6_clicked() //left
 	if (robot == nullptr) {
 		return;
 	}
-	robot->setRotationSpeed(3.14159 / 2);
+	robot->setRotationSpeed(3.14159 / 6);
 	reverse_robot = false;
 }
 
@@ -418,7 +413,7 @@ void MainWindow::on_pushButton_5_clicked() //right
 	if (robot == nullptr) {
 		return;
 	}
-	robot->setRotationSpeed(-3.14159 / 2);
+	robot->setRotationSpeed(-3.14159 / 6);
 	reverse_robot = false;
 }
 
@@ -484,17 +479,17 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 
     for(size_t i = 0; i < laserData.numberOfScans; i++){
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_LEFT) ||
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT)){// front side
+			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){// front side
             avg_dist[0] += laserData.Data[i].scanDistance;
 			num_of_scans[0]++;
         }
 		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT) &&
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::REAR_RIGHT)){ //right side
+			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){ //right side
 			avg_dist[1] += laserData.Data[i].scanDistance;
 			num_of_scans[1]++;
 		}
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::REAR_LEFT) &&
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT)){//left side
+		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::LEFT) &&
+			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){//left side
 			avg_dist[3] += laserData.Data[i].scanDistance;
 			num_of_scans[3]++;
 		}
@@ -512,19 +507,21 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 
 void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colisions){
 
-	static const double dist = 400;
+	static const double dist = 300;
 
 	for(size_t i = 0; i < laserData.numberOfScans; i++){
-
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(0) ||
-			copyOfLaserData.Data[i].scanAngle <= (float)(90)){
+		if(	(laserData.Data[i].scanAngle >= (float)(0) ||
+			laserData.Data[i].scanAngle <= (float)(90)) && laserData.Data[i].scanDistance >= 150){
 			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
+                cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " "<< laserData.Data[i].scanQuality << endl;
 				colisions[0] = true;
 			}
 		}
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(360) ||
-			copyOfLaserData.Data[i].scanAngle <= (float)(270)){
+		if(	(laserData.Data[i].scanAngle >= (float)(360) ||
+			laserData.Data[i].scanAngle <= (float)(270)) && laserData.Data[i].scanDistance >= 150){
+
 			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
+                cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
 				colisions[1] = true;
 			}
 		}

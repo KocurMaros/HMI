@@ -59,13 +59,12 @@ typedef enum
     REAR_LEFT = 182,
     REAR_RIGHT = 170,
 	THRESHOLD = 5,
+    LEFT = 270,
+    RIGHT = 90,
 	REVERSE_LEFT = 220,
 	REVERSE_RIGHT = 130
 }lidarDirection;
-typedef enum{
-	LEFT = 330,
-	RIGHT = 28,
-}cameraAngles;
+
 typedef enum
 {
     FAR = 1050,
