@@ -54,3 +54,4 @@ compile_commands.json
 build
 .cache/clangd/index
 .build
+skeleton/__pycache__

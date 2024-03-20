@@ -12,6 +12,8 @@ pushd ./../../../../RMR/build-kobukiSIM-Desktop-Debug/
 ./kobukiSIM > /dev/null &
 popd
 
+python3 ./skeleton/main.py &
+
 pushd build
 ./rmr &
 popd
