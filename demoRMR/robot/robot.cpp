@@ -14,6 +14,8 @@
 #include "signal.h"
 #endif
 
+#include <iostream>
+
 std::function<int(TKobukiData)> Robot::do_nothing_robot = [](TKobukiData data) {
 	std::cout << "data z kobuki " << std::endl;
 	return 0;
@@ -289,8 +291,7 @@ void Robot::skeletonprocess()
     }
     std::cout<<"koniec thread"<<std::endl;
 		auto t = std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
-	}
-	std::cout<<"koniec skeleton thread"<<std::endl;
+	std::cout << "koniec skeleton thread" << std::endl;
 }
 
 void Robot::robotStart()
