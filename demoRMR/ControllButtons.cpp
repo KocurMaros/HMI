@@ -7,6 +7,7 @@
 ControllButtons::ControllButtons(MainWindow *parent)
 	: QWidget(parent)
 	, m_parent(parent)
+	, m_isLeftHand(false)
 {
 	m_parent->ui->actionAdd_motion_buttons->setText("Remove motion buttons");
 
@@ -32,7 +33,28 @@ ControllButtons::ControllButtons(MainWindow *parent)
 	m_buttonGridlayout->addWidget(m_stopButtons, 1, 1, 1, 1);
 	connect(m_stopButtons, &QPushButton::clicked, this, &ControllButtons::on_stopButtons_clicked);
 
-	m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
+	if (!m_isLeftHand) {
+		m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
+		m_buttonGridlayout->removeItem(m_spacer);
+		return;
+	}
+
+	m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 0);
+	m_buttonGridlayout->addItem(m_spacer, 2, 2);
+}
+
+void ControllButtons::switchHand()
+{
+	m_isLeftHand = !m_isLeftHand;
+	if (!m_isLeftHand) {
+		m_spacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+		m_buttonGridlayout->addItem(m_spacer, 2, 2);
+		m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
+		return;
+	}
+
+	m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 0);
+	m_buttonGridlayout->removeItem(m_spacer);
 }
 
 void ControllButtons::on_forwardButtons_clicked()

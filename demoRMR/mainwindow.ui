@@ -283,6 +283,7 @@
     </property>
     <addaction name="changeStyleSheet"/>
     <addaction name="actionAdd_motion_buttons"/>
+    <addaction name="actionChangeHand"/>
    </widget>
    <addaction name="menuSettings"/>
   </widget>
@@ -303,6 +304,11 @@
   <action name="actionAdd_motion_buttons">
    <property name="text">
     <string>Add motion buttons</string>
+   </property>
+  </action>
+  <action name="actionChangeHand">
+   <property name="text">
+    <string>Switch to left hand</string>
    </property>
   </action>
  </widget>

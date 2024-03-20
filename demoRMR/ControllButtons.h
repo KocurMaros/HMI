@@ -8,6 +8,7 @@ class ControllButtons
 public:
 
 	explicit ControllButtons(MainWindow *parent = nullptr);
+	void switchHand();
 
 public slots:
 	void on_forwardButtons_clicked();
@@ -24,4 +25,8 @@ private:
 	QPushButton *m_leftButtons;
 	QPushButton *m_rigthButtons;
 	QPushButton *m_stopButtons;
+
+	QSpacerItem *m_spacer;
+
+	bool m_isLeftHand;
 };

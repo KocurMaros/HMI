@@ -67,6 +67,7 @@ private slots:
 
 	void on_changeStyleSheet_triggered();
 	void on_actionAdd_motion_buttons_triggered();
+	void on_actionChangeHand_toggled();
 
     void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData,bool *colisions);

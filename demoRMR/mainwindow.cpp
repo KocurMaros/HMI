@@ -607,3 +607,13 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 	m_controllButtons->deleteLater();
 }
 
+
+void MainWindow::on_actionChangeHand_toggled()
+{
+	if (m_controllButtons == nullptr) {
+		return;
+	}
+
+	m_controllButtons->switchHand();
+}
+
