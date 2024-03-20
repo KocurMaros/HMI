@@ -282,6 +282,7 @@
      <string>Settings</string>
     </property>
     <addaction name="changeStyleSheet"/>
+    <addaction name="actionAdd_motion_buttons"/>
    </widget>
    <addaction name="menuSettings"/>
   </widget>
@@ -297,6 +298,11 @@
   <action name="changeStyleSheet">
    <property name="text">
     <string>Change Style Sheet</string>
+   </property>
+  </action>
+  <action name="actionAdd_motion_buttons">
+   <property name="text">
+    <string>Add motion buttons</string>
    </property>
   </action>
  </widget>

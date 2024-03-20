@@ -25,9 +25,12 @@ namespace Ui {
 class MainWindow;
 }
 
+class ControllButtons;
+
 ///toto je trieda s oknom.. ktora sa spusti ked sa spusti aplikacia.. su tu vsetky gombiky a spustania...
 class MainWindow : public QMainWindow
 {
+	friend class ControllButtons;
 	Q_OBJECT
 
 public:
@@ -63,6 +66,7 @@ private slots:
 	void on_emgStopButton_clicked();
 
 	void on_changeStyleSheet_triggered();
+	void on_actionAdd_motion_buttons_triggered();
 
     void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData,bool *colisions);
@@ -106,7 +110,8 @@ private:
 	QImage warning_image;
 	QImage colision_image;
 
-	
+	bool m_motionButtonsVisible;
+	ControllButtons *m_controllButtons;
 };
 
 #endif // MAINWINDOW_H

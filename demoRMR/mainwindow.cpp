@@ -6,6 +6,10 @@
 #include <QPainter>
 #include <cmath>
 #include <memory>
+#include <qgridlayout.h>
+#include <qnamespace.h>
+
+#include "ControllButtons.h"
 
 
 #include <QImageReader>
@@ -30,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_connectionLed(new QLed(this))
 	, robot(nullptr)
 	, m_ipaddress(IP_ADDRESSES[0].toStdString())
+	, m_motionButtonsVisible(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	 //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -584,3 +589,21 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colision
 		}
 	}
 }
+
+void MainWindow::on_actionAdd_motion_buttons_triggered()
+{
+	if (!m_motionButtonsVisible) {
+		m_motionButtonsVisible = true;
+
+		m_controllButtons = new ControllButtons(this);
+		ui->topGridLayout->addWidget(m_controllButtons, 4, 4, 1, 1);
+		update();
+		return;
+	}
+
+	m_motionButtonsVisible = false;
+	ui->actionAdd_motion_buttons->setText("Add motion buttons");
+	ui->topGridLayout->removeWidget(m_controllButtons);
+	m_controllButtons->deleteLater();
+}
+

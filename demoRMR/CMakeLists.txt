@@ -25,12 +25,14 @@ message("OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 set(HEADERS
 	mainwindow.h
 	stylesheeteditor.h
+	ControllButtons.h
 )
 
 set(SOURCES
 	main.cpp
 	mainwindow.cpp
 	stylesheeteditor.cpp
+	ControllButtons.cpp
 )
 
 set(UI
