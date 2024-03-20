@@ -336,6 +336,65 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 	return 0;
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+	if (robot == nullptr) {
+		qDebug() << "Robot is not connected";
+		return;
+	}
+
+	auto key = event->key();
+	switch (key) {
+		case Qt::Key_W:
+		case Qt::Key_Up:
+			robot->setTranslationSpeed(500);
+			break;
+
+		case Qt::Key_S:
+		case Qt::Key_Down:
+			robot->setTranslationSpeed(-250);
+			break;
+
+		case Qt::Key_A:
+		case Qt::Key_Left:
+			robot->setRotationSpeed(3.14159 / 2);
+			break;
+
+		case Qt::Key_D:
+		case Qt::Key_Right:
+			robot->setRotationSpeed(-3.14159 / 2);
+			break;
+
+		case Qt::Key_R:
+			robot->setTranslationSpeed(0);
+			break;
+
+		case Qt::Key_Escape: {
+			if (robot->isInEmgStop()) {
+				robot->setEmgStop(false);
+				m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
+
+				disableAllButtons(false);
+				setStyleSheet("");
+
+				return;
+			}
+
+			robot->setTranslationSpeed(0);
+			robot->setEmgStop(true);
+			m_connectionLed->setToEmgStopState();
+
+			disableAllButtons(true);
+			setStyleSheet("background-color: rgba(255,164,0,25)");
+			break;
+		}
+
+		default:
+			qDebug() << "Key not recognized";
+			break;
+	}
+}
+
 void MainWindow::on_pushButton_9_clicked() //start button
 {
 	if (robot != nullptr && robot->isInEmgStop()) {

@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTimer>
+#include <QKeyEvent>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -50,6 +51,9 @@ public:
 private:
 	void disableAllButtons(bool disable);
 	bool isIPValid(const QString &ip);
+
+protected:
+	void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
 	void on_pushButton_9_clicked();
