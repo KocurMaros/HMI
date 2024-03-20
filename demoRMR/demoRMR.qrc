@@ -4,5 +4,6 @@
         <file>qss/default.qss</file>
         <file>qss/mocha.qss</file>
         <file>img/emergency_stop_button.png</file>
+        <file>img/warning.png</file>
     </qresource>
 </RCC>

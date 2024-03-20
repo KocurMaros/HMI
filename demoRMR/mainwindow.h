@@ -70,6 +70,8 @@ private slots:
 
 	void on_changeStyleSheet_triggered();
 
+    void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
+	void calc_colisions_points(LaserMeasurement laserData,bool *colisions);
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -101,6 +103,16 @@ private:
 	StyleSheetEditor *m_styleSheetEditor;
 
 	QLed *m_connectionLed;
+
+    uint16_t distanceFromWall[4] = {lidarDistance::FAR};
+	bool colisionDetected[2] = {false};
+	bool reverse_robot = false;
+
+	QImage attention_image;
+	QImage warning_image;
+	QImage colision_image;
+
+	
 };
 
 #endif // MAINWINDOW_H
