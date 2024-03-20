@@ -108,6 +108,9 @@ void Robot::robotprocess()
 		if ((rob_recv_len = ::recvfrom(rob_s, (char *)&buff, sizeof(char) * 50000, 0, (struct sockaddr *)&rob_si_other, &rob_slen)) == -1) {
 			continue;
 		}
+		if (rob_si_other.sin_addr.s_addr != inet_addr(robot_ipaddress.data())) {
+			continue;
+		}
 		//https://i.pinimg.com/236x/1b/91/34/1b9134e6a5d2ea2e5447651686f60520--lol-funny-funny-shit.jpg
 		//tu mame data..zavolame si funkciu
 
