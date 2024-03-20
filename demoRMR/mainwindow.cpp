@@ -479,51 +479,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	});
 }
 
-void MainWindow::on_pushButton_2_clicked() //forward
-{
-	//pohyb dopredu
-	if (robot == nullptr) {
-		return;
-	}
-	robot->setTranslationSpeed(250);
-	reverse_robot = false;
-}
-
-void MainWindow::on_pushButton_3_clicked() //back
-{
-	if (robot == nullptr) {
-		return;
-	}
-	robot->setTranslationSpeed(-150);
-	reverse_robot = true;
-}
-
-void MainWindow::on_pushButton_6_clicked() //left
-{
-	if (robot == nullptr) {
-		return;
-	}
-	robot->setRotationSpeed(3.14159 / 6);
-	reverse_robot = false;
-}
-
-void MainWindow::on_pushButton_5_clicked() //right
-{
-	if (robot == nullptr) {
-		return;
-	}
-	robot->setRotationSpeed(-3.14159 / 6);
-	reverse_robot = false;
-}
-
-void MainWindow::on_pushButton_4_clicked() //stop
-{
-	if (robot == nullptr) {
-		return;
-	}
-	robot->setTranslationSpeed(0);
-}
-
 void MainWindow::on_pushButton_clicked()
 {
 	if (robot == nullptr) {
