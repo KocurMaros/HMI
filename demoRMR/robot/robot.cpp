@@ -259,7 +259,11 @@ void Robot::skeletonprocess()
     std::cout<<::setsockopt(ske_s, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof timeout)<<std::endl;
     std::cout<<::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST,&ske_broadcastene,sizeof(ske_broadcastene))<<std::endl;
 #else
-    ::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST,&ske_broadcastene,sizeof(ske_broadcastene));
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 500000;
+    ::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST, &ske_broadcastene,sizeof(ske_broadcastene));
+    ::setsockopt(ske_s,SOL_SOCKET,SO_RCVTIMEO, (const char *)&tv,sizeof(tv));
 #endif
     // zero out the structure
     memset((char *) &ske_si_me, 0, sizeof(ske_si_me));
