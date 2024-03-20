@@ -39,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
+	updateSkeletonPicture=1;
 
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
