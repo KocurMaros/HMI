@@ -1,136 +1,133 @@
-\section{Ukážka glossaries}
-\noindent Verzia FEIstyle 1.5 používa glossary\footnote{\url{https://www.ctan.org/pkg/glossaries?lang=en}} balík.
-\acrfull{cdma} je dlhá skratka naopak \acrshort{gsm} je skratka v krátkej forme.
+\section{Užívateľské okno}
 
-\subsection{Lorem Ipsum}
-Tento text bol prevzaty zo stranky \url{www.lipsum.com} \cite{lipsum}, preto ho treba riadne odcitovat.
+\subsection{Pôvodný dizajn}
 
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum \cite{lipsum}.
+V prvej časti prvého zadania bolo našou úlohou upraviť užívateľské rozhranie, tak aby spĺňalo normy zaoberajúce sa
+rozhraním človeka a stroja (HMI). Na začiatku sme začínali s existujúcim rozhraním zobrazeným na obrázku \ref{fig:oldUI}.
 
-Why do we use it? It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English \cite{lipsum}. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
-
-Where does it come from? Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source \cite{lipsum}. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32 \cite{lipsum}.
-
-\section{Recitácia}
-Citujem všetky zdroje v \textbf{bibliography.bib}, \cite{t00, t01, t02, t03, kniha, kniha2, kniha3, small, big, cs, koll, kap, tug, knuth, zbornik, prispevok}. \newline Good luck.
-
-\section{Rovnice}
-Pytagorova veta je definovana vztahom:
-\begin{equation}
-    a^2 + b^2 = c^2
-    \label{eq:pyth}
-\end{equation}
-Dosadenim \eqref{eq:pyth} do linearneho modelu
-\begin{align}
-    \dot{\mathbf{x}} &= \mathbf{A} \mathbf{x} + \mathbf{B} \mathbf{u} \\
-    \mathbf{y} &= \mathbf{C} \mathbf{x} + \mathbf{D} \mathbf{u}
-    \label{eq:model}
-\end{align}
-zistime, ze tento \LaTeX template funguje, dokonca mozeme vkladat aj inline rovnice $D = b^2 - 4ac$.
-
-% \subsection{Podsekcia}
-% \begin{equation}
-%     E = m c^2
-%     \label{eq:emc2}
-% \end{equation}
-
-\section{Možnosti anonymizácie}
-\noindent Anonymizácia znamená zmena alebo úprava údajov tak, aby sa podľa nich nedala jednoznačne určiť osoba, ktorej tieto údaje patria \cite{t01}. Existuje niekoľko spôsobov, ktorými môžeme dosiahnuť rôznu úroveň anonymizácie na internete: od mazania cookies súborov po ukončení prehliadania webových stránok až po používanie operačných systémov, ktoré sú na anonymite založené; od bezplatných možností až po komerčné verzie.  
-\newline Nasleduje priblíženie niektorých možnosti anonymizácie.
-
-\subsection{Súkromné prehliadanie}
-\noindent Najpoužívanejšie internetové prehliadače súčasnosti majú v sebe zabudovanú funkcionalitu, ktorá dokáže čiastočne anonymizovať prístup na internet. Táto funkcionalita blokuje ukladanie navštívených stránok do histórie a nezaznamenáva súbory, ktoré sa stiahnu z~internetu. \acrshort{sw} a \acrlong{hw} sú skratky.
-
-\begin{table}[!htbp]
-\caption{Moduly a ich funkcie pri anonymizácii}
-\label{modulyVlastnosti}
-\begin{center}
-\begin{tabular}{p{4cm}|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c}
-& \multicolumn{14}{c}%
-	 {\textbf{Funkcia}}\\ \hline
-&&&& & &\multicolumn{8}{c}%
-	 {Modifikácia}\\ 
-\textbf{Modul} &\begin{sideways} zobrazenie hlavičky \end{sideways} &\begin{sideways} blokovanie skriptov \end{sideways} &\begin{sideways} zmena IP \end{sideways} & \begin{sideways} zmena lokalizácie \end{sideways} & \begin{sideways} zmazanie/blokovanie cookies \end{sideways} & \begin{sideways} blokovanie trackerov \end{sideways}  & \begin{sideways} popis \end{sideways} & \begin{sideways}používateľský agent\end{sideways} & \begin{sideways} kódové označenie prehliadača \end{sideways} & \begin{sideways} názov prehliadača \end{sideways} & \begin{sideways} verzia prehliadača \end{sideways} & \begin{sideways} platforma \end{sideways} & \begin{sideways} výrobca prehliadača \end{sideways} & \begin{sideways} označenie výrobcu prehliadača \end{sideways} \\ \hline
-User agent switcher & & & & & &  & X & X & X & X & X & X & X & X  \\ \hline
-Ghostery &  && & & X & X &  &  & & & & & & \\  \hline
-Better privacy && &  & & X &  &  &  & & & & & & \\  \hline
-Anonymox &  && X & X & X &  & X & X & & & & & & \\  \hline
-Modify headers & & &  &  & X &  &  & X &  &  &  & & &  \\  \hline
-Request policy & & &  &  & & X  &  &  &  &  &  & & &   \\  \hline
-Live HTTP headers & X& &  &  & &  &  &  &  &  &  & & &   \\  \hline
-User agent awitcher for chrome & & &  &  & &  & X & X &  &  &  & & &   \\  \hline
-Header hacker & & &  &  & &  & X & X & X & X & X & X & X & X    \\  \hline
-Mod header & & &  &  & &  & X & X & X & X & X & X & X & X    \\  \hline
-Script no & &X &  &  & &  &  &  &  &  &  &  &  &     \\  \hline
-No script & &X &  &  & &  &  &  &  &  &  &  &  &     \\  \hline
-Proxify it & & &X  & X & &  &  &  &  &  &  &  &  &     \\  \hline
-I'm not here & & &  & X & &  &  &  &  &  &  &  &  &     \\  \hline
-Get anonymous personal edition & &X &X &X &X&X &  &  &  &  &  &  &  &     \\  \hline
-Anonymous browsing toolbar & & & X & X & &  &  &  &  &  &  &  &  &     \\  \hline
-Easy hide your IP and surf anonymously & & & X & X& &  &  & X & X & X & X &  &  &     \\  \hline
-\end{tabular}
-\end{center}
-\end{table}
-
-\subsection{Anonymná sieť}
-\noindent Anonymná sieť je sieť serverov, medzi ktorými dáta prechádzajú šifrované. V anonymných sieťach dáta prechádzajú z počítača používateľa, odkiaľ bola požiadavka poslaná, cez viaceré proxy smerovače, z ktorých každý správu doplní o smerovanie a zašifruje vlastným kľúčom. Cesta od ...
-
-
-\subsection{Funkcionalita}
-\noindent  Rozšírenie tiež okrem splnenia špecifikácie malo pre prehľadnosť a overenie funkčnosti zobrazovať údaje, ktoré boli na server odoslané. Zoznam údajov odoslaných na server, sa mal ukladať do krátkodobej histórie, aby nemal používateľ k dispozícií len najnovšie údaje, ale aj údaje odoslané v nejakom časovom období. Nejaky listing z priloh \ref{lst:sublime}.
-
-\subsubsection{Funkcionalita2}
-\noindent Samozrejmosťou bolo nastavenie zapnutia rozšírenia pri štarte, prípadne interval zmeny odosielaných údajov.
-
-\subsection{Vzhľad}
-\noindent Dôležitou požiadavkou kladenou na rozšírenie bolo príjemné používateľské rozhranie. Z~tohto dôvodu malo rozšírenie obsahovať zoznam modifikovaných vlastností a tlačidlo pre prístup k nastaveniam rozšírenia v jednoduchej a praktickej forme. Predpokladaný vzhľad je zobrazený na obrázku č. \ref{vzhladobr}.
 \begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=8cm]{img/vzhlad.png}
-  \caption{Predpokladaný vzhľad rozšírenia}
-  \label{vzhladobr}
-\end{figure}	 
-\noindent Dôležitou požiadavkou kladenou na rozšírenie bolo príjemné používateľské rozhranie.\cite{t00} Z~tohto dôvodu malo rozšírenie obsahovať zoznam modifikovaných vlastností a tlačidlo pre prístup k nastaveniam rozšírenia v jednoduchej a praktickej forme. Predpokladaný vzhľad je zobrazený na obrázku č. \ref{vzhladobr}.
+	\begin{center}
+		\includegraphics[width=0.5\textwidth]{img/oldUI.png}
+	\end{center}
+	\caption{Povodni výzor aplikácie a ovládanie robota.}\label{fig:oldUI}
+\end{figure}
 
-\begin{algorithm}
-\scriptsize
-\begin{algorithmic}
- \STATE <text>
- \IF{<condition>} \STATE {<text>} \ELSE \STATE{<text>} \ENDIF
- \IF{<condition>} \STATE {<text>} \ELSIF{<condition>} \STATE{<text>} \ENDIF
- \FOR{<condition>} \STATE {<text>} \ENDFOR
- \FOR{<condition> \TO <condition> } \STATE {<text>} \ENDFOR
- \FORALL{<condition>} \STATE{<text>} \ENDFOR
- \WHILE{<condition>} \STATE{<text>} \ENDWHILE
- \REPEAT \STATE{<text>} \UNTIL{<condition>}
- \LOOP \STATE{<text>} \ENDLOOP
- \REQUIRE <text>
- \ENSURE <text>
- \RETURN <text>
- \PRINT <text>
- \COMMENT{<text>}
- \AND, \OR, \XOR, \NOT, \TO, \TRUE, \FALSE
-\end{algorithmic}
-\caption{Ukážka príkazov pre algorithmic}  
-\label{alg:preview}  
-\end{algorithm}
+Tento dizajn ma niekoľko nedostatkov, ktoré sme mali za úlohu identifikovať a opraviť. Prvým problémom je,
+že tlačidlá pre ovládanie robota sa nachádzajú nad zobrazovacou plochou. Toto umiestnenie je nevhodné, pretože
+blokuje užívateľovi vo výhľade na robota. Druhým problémom je, že tlačidlá pre ovládanie robota sú príliš malé a
+neprehľadné. Tretím problémom je, že tlačidlá pre ovládanie robota sú príliš blízko k sebe, čo môže spôsobiť
+neúmyselné stlačenie viacerých tlačidiel naraz.
 
-\begin{lstlisting}[
-  caption={Ukážka algoritmu},
-  label={lst:main-c},
-  language=c
-]
-/* Hello World program */
+Ďalšie chybne prvky sa nachádzajú v samotnej funkcionalite aplikácie. Užívateľ sa vie pripojiť len na jedného robota
+a to toho ktorý je v simulácii. Na pripojenie robota, ktorý je v reálnom svete je potrebné zmeniť IP adresu robota v kóde
+a ten následne prekompilovať. Ak sa tlačidlo \textbf{Start} stlačí viackrát ako raz, tak aplikácia spadne. Tlačidlá
+\textbf{Reset robot} a \textbf{Reset Laser} sú nepotrebné, pretože nemajú žiadnu funkcionalitu.
 
-#include<stdio.h>
+Následne poloha zobrazenia súradníc robota je nevhodná, pretože na ňu užívateľ nebude vidieť, keďže sú tlačidla na
+ovládanie robota lokalizované nad obrazovkou zobrazujúcou dáta z lidaru alebo kamery.
 
-struct cpu_info {
-    long unsigned utime, ntime, stime, itime;
-    long unsigned iowtime, irqtime, sirqtime;
-};
+Nedostatky tejto aplikácie sú ďalej len samotná implementácia zobrazenia dát z lidaru a kamery. Tieto dáta nie sú
+spracované na vzájomné prepojenie.
 
-main()
-{
-    printf("Hello World");
-}
-\end{lstlisting}
+\subsection{Nový dizajn}
+
+Na základe identifikovaných problémov sme navrhli nový dizajn aplikácie. Tento dizajn je zobrazený na obrázkoch
+\ref{fig:newUI}. Na obrázku \ref{fig:newUI} a je zobrazený základný dizajn aplikácie. Tento dizajn sa dá zmeniť cez
+nastavenia \textit{Settings > Change style sheet}. Tlačidlá pre ovládanie robota boli v základnej verzii vymazane.
+Robot sa ovláda pomocou klávesnice. A to klávesami W, A, S, D alebo šípkami. Pre zastavenie robota je potrebne stlačiť
+klávesu R. Tato klávesa bola zvolená preto, aby sa zabránilo nežiadanému tlačeniu klávesy a tým zastavením robota.
+Ďalej bol pridaný prvok na zmenu IP adresy robota.
+
+\begin{figure}[!htbp]
+	\centering
+
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/default-app.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/coffee-app.png}
+	\end{subfigure}
+
+	\vspace{\baselineskip}
+
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/mocha-app.png}
+	\end{subfigure}
+	\caption{ Nove dizajny aplikácie zobrazujú základný (a), kávový (b) a mokka (c) mód.}
+	\label{fig:newUI}
+\end{figure}
+
+Ako ďalšie prvky bol pridaný identifikátor stavu robota, ktorý zobrazuje či je robot pripojený, odpojený alebo v
+núdzovom zastavení. Tieto stavy sú zobrazené na obrázkoch \ref{fig:led}
+
+\begin{figure}[!htbp]
+	\begin{subfigure}{0.3\textwidth}
+		\includegraphics[width=\textwidth]{img/led-connected.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.3\textwidth}
+		\includegraphics[width=\textwidth]{img/led-disconnected.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.3\textwidth}
+		\includegraphics[width=\textwidth]{img/led-emg-stop.png}
+	\end{subfigure}
+	\caption{ Ledka zobrazujúca stav pripojenia k robotu (a), odpojenia od robota (b) a núdzového zastavenia (c).}
+	\label{fig:led}
+\end{figure}
+
+Ďalší zmenený prvok je farebné zobrazenie tlačidla pripojenia a odpojenia robota. Keďže sú červena a zelená zlé farby na
+kombináciu, bola zvolená aj zmena textu zobrazeného na tlačidle. Pri pripojení robota je zobrazený text \textbf{Connect}
+a pri odpojení robota je zobrazený text \textbf{Disconnect}.
+
+Taktiež bolo pridané softvérové tlačidlo pre núdzové zastavenie robota. Toto tlačidlo podľa normy HMI musí byť
+umiestnene na viditeľnom mieste a musí byť veľké. Taktiež nemôže byť softvérové ale inú možnosť sme v tomto prípade
+nemali (a taktiež to bolo v zadaní).
+
+Pri stlačení tohto núdzového tlačidla sa zablokujú všetky vstupy z tlačidiel, klávesnice, a kamery. Jedinými
+povolenými funkciami sú prepnutie medzi kamerou a lidarom a zrušenie núdzového stavu. Zobrazenie núdzového zastavenia
+je zobrazený na obrázku \ref{fig:emergency}
+
+\begin{figure}[!htbp]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{img/app-emg-stop.png}
+	\end{center}
+	\caption{}\label{fig:emergency}
+\end{figure}
+
+Na obrázku \ref{fig:emergency} je zobrazené už aj zobrazenie dát z lidaru. Taktiež môžeme jednoznačne identifikovať
+nezablokované tlačidla.
+
+Ak by užívateľ používal túto aplikáciu na dotykovom displeji a chcel by ovláda robot pomocou tlačidiel, tak si môže
+zobraziť tlačidlá pre ovládanie robota. Tieto tlačidla sú zobrazené na obrázku \ref{fig:touch}
+
+\begin{figure}[!htbp]
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/left-hand.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/right-hand.png}
+	\end{subfigure}
+	\caption{ Dynamické zobrazenie tlačidiel pre ovládanie robota na dotykovom displeji. }
+	\label{fig:touch}
+\end{figure}
+
+Ako vidine na obrázku \ref{fig:touch} tak sa tlačidla pre ovládanie robota zobrazujú len vtedy keď je v nastavení
+zvolený mód s tlačidlami. Taktiež si užívateľ môže zvoliť, či chce mať tlačidlá na ľavej alebo pravej strane obrazovky.
+Tieto tlačidla sú dostatočne veľké na to, aby ich užívateľ mohol ovládať aj na dotykovom displeji.
+
+Pre jednoduchosť používania aplikácie a plochej krivke učenia sme pridali možnosť zobrazenia pomoci.
+Tato pomoc je zobrazená na obrázku \ref{fig:help}. V tejto nápovede sme zvýraznili tie najdôležitejšie prvky,
+aby si ich užívateľ vedel nájsť a vedel ich použivať v čo najkratšom čase.
+
+\begin{figure}[!htbp]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{img/help.png}
+	\end{center}
+	\caption{Pomoc pre užívateľa na zorientovanie sa v používaní aplikácie.}
+	\label{fig:help}
+\end{figure}
+
+
