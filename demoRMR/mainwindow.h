@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "HelpWindow.h"
 #include "QLed.h"
 #include <QMainWindow>
 #include <QMessageBox>
@@ -68,6 +69,7 @@ private slots:
 	void on_changeStyleSheet_triggered();
 	void on_actionAdd_motion_buttons_triggered();
 	void on_actionChangeHand_toggled();
+	void on_actionShowHelp_triggered();
 
 	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
@@ -100,6 +102,7 @@ private:
 	double rotationspeed; //omega/s
 
 	StyleSheetEditor *m_styleSheetEditor;
+	HelpWindow *m_helpWindow;
 
 	QLed *m_connectionLed;
 

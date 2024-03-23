@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_ipaddress(IP_ADDRESSES[0].toStdString())
 	, m_motionButtonsVisible(false)
 	, m_leftHandedMode(false)
+	, m_helpWindow(nullptr)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -641,3 +642,15 @@ void MainWindow::on_actionChangeHand_toggled()
 	m_controllButtons->switchHand(m_leftHandedMode);
 	update();
 }
+
+void MainWindow::on_actionShowHelp_triggered()
+{
+	m_helpWindow = new HelpWindow(this);
+	m_helpWindow->setWindowFlags(Qt::Window);
+	m_helpWindow->show();
+
+	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() {
+		m_helpWindow->close();
+	});
+}
+

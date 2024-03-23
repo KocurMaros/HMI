@@ -27,6 +27,7 @@ set(HEADERS
 	mainwindow.h
 	stylesheeteditor.h
 	ControllButtons.h
+	HelpWindow.h
 )
 
 set(SOURCES
@@ -34,11 +35,13 @@ set(SOURCES
 	mainwindow.cpp
 	stylesheeteditor.cpp
 	ControllButtons.cpp
+	HelpWindow.cpp
 )
 
 set(UI
 	mainwindow.ui
 	stylesheeteditor.ui
+	HelpWindow.ui
 )
 
 set(QRC
