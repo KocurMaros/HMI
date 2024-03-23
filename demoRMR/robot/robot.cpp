@@ -300,9 +300,9 @@ void Robot::skeletonprocess()
             continue;
         }
 
-		std::cout<<"koniec thread"<<std::endl;
+		// std::cout<<"koniec thread"<<std::endl;
 		auto t = std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
-		std::cout << "koniec skeleton thread" << std::endl;
+		// std::cout << "koniec skeleton thread" << std::endl;
     }
 
 	close(ske_s);

@@ -216,14 +216,27 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 	if(updateSkeletonPicture==1 )
 	{
-		painter.setPen(Qt::red);
-		for(int i=0;i<75;i++)
-		{
-			int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
-			int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
-			if(rect.contains(xp,yp))
-				painter.drawEllipse(QPoint(xp, yp),2,2);
-		}
+        double left_zero = -M_PI/2 + M_PI/4;
+        double right_zero = - M_PI/4;
+        double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y, skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);   
+        double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y, skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+        cout << angle_left << " " << angle_right << endl;   
+        cout << skeleJoints.joints[left_wrist].x << " " << skeleJoints.joints[left_wrist].y << endl;
+        cout <<skeleJoints.joints[left_elbow].x << " " << skeleJoints.joints[left_elbow].y << endl;
+        cout << skeleJoints.joints[right_wrist].x << " " << skeleJoints.joints[right_wrist].y << endl;
+        cout <<skeleJoints.joints[right_elbow].x << " " << skeleJoints.joints[right_elbow].y << endl << " " << endl;
+
+        // if(angle_left < left_zero)
+        //     angle_left = left_zero;
+
+		// painter.setPen(Qt::red);
+		// for(int i=0;i<75;i++)
+		// {
+		// 	int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
+		// 	int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
+		// 	if(rect.contains(xp,yp))
+		// 		painter.drawEllipse(QPoint(xp, yp),2,2);
+		// }
 	}
 }
 
