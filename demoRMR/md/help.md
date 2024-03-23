@@ -16,7 +16,7 @@ way how to contro l the Kobuki robot is using the keyboard. It is either by usin
 or **arrows**. To **stop** the robo t press **R**, to initiate the **emergency stop**
 press **ESC**.
 
-### Application structure:
+### Application structure
 
 In the top menu bar we can see two sections. First are the Settings and the seco nd one is
 this Help message. The main window consist of the main screen where all the data are
