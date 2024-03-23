@@ -12,7 +12,8 @@ HelpWindow::HelpWindow(QWidget *parent)
 
 	if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 		m_content = file.readAll();
-	} else {
+	}
+	else {
 		m_content = "Error loading help file.";
 	}
 	file.close();

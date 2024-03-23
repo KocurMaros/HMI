@@ -75,7 +75,7 @@ MainWindow::~MainWindow()
 }
 double MAP(double x, double in_min, double in_max, double out_min, double out_max)
 {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)
@@ -130,7 +130,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				}
 				if (distanceFromWall[i] == lidarDistance::MEDIUM) {
 					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, (double)lidarDistance::CLOSE, (double)lidarDistance::MEDIUM, 255.0, 0.0)));
+					brush.setColor(QColor(
+						255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, (double)lidarDistance::CLOSE, (double)lidarDistance::MEDIUM, 255.0, 0.0)));
 					painter.setBrush(brush);
 					if (i != 2)
 						painter.drawRect(border_rect);
@@ -167,12 +168,13 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				else {
 					painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
 				}
-				if(m_ipaddress != "127.0.0.1"){
+				if (m_ipaddress != "127.0.0.1") {
 					CKobuki kobuki;
-					if(min_dist < lidarDistance::CLOSE){
-						kobuki.setSound(1000,1);
-					}else if(min_dist < lidarDistance::MEDIUM){
-						kobuki.setSound(100,1);
+					if (min_dist < lidarDistance::CLOSE) {
+						kobuki.setSound(1000, 1);
+					}
+					else if (min_dist < lidarDistance::MEDIUM) {
+						kobuki.setSound(100, 1);
 					}
 				}
 
@@ -202,9 +204,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				
 				painter.setPen(QPen(Qt::green, 3));
-			
+
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 					+ rect.topLeft().x(); //prepocet do obrazovky
@@ -226,40 +227,41 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}
 	}
 
-	if(updateSkeletonPicture==1 )
-	{
-        double left_zero = -M_PI/2 - M_PI/4;
-        double right_zero = - M_PI/4;
-        double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y, skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);   
-        double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y, skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
-        double speed = 0;
-        double rotation= 0;
-        if((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0) || 
-            (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
-            angle_left = left_zero;
-        if((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0) || 
-            (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
-            angle_right = right_zero;
-        if(angle_left < left_zero - M_PI/4 || angle_left > 0)
-            angle_left = left_zero - M_PI/4;
-        else if (angle_left > left_zero + M_PI/4)
-            angle_left = left_zero + M_PI/4;
+	if (updateSkeletonPicture == 1) {
+		double left_zero = -M_PI / 2 - M_PI / 4;
+		double right_zero = -M_PI / 4;
+		double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
+								   skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
+		double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
+								  skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+		double speed = 0;
+		double rotation = 0;
+		if ((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0)
+			|| (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
+			angle_left = left_zero;
+		if ((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0)
+			|| (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
+			angle_right = right_zero;
+		if (angle_left < left_zero - M_PI / 4 || angle_left > 0)
+			angle_left = left_zero - M_PI / 4;
+		else if (angle_left > left_zero + M_PI / 4)
+			angle_left = left_zero + M_PI / 4;
 
-        if(angle_right < right_zero - M_PI/4)
-            angle_right = right_zero - M_PI/4;
-        else if (angle_right > right_zero + M_PI/4)
-            angle_right = right_zero + M_PI/4;
+		if (angle_right < right_zero - M_PI / 4)
+			angle_right = right_zero - M_PI / 4;
+		else if (angle_right > right_zero + M_PI / 4)
+			angle_right = right_zero + M_PI / 4;
 
-        if(angle_left < left_zero)
-            speed = MAP(angle_left, left_zero - M_PI/4, left_zero, -300, 0);
-        else if(angle_left > left_zero)
-            speed = MAP(angle_left, left_zero, left_zero + M_PI/4, 0, 300);
-        if(angle_right < right_zero)
-            rotation = MAP(angle_right, right_zero - M_PI/4, right_zero, -3.14159/4, 0);
-        else if(angle_right > right_zero)
-            rotation = MAP(angle_right, right_zero, right_zero + M_PI/4, 0, 3.14159/4);
-        forwardspeed = speed;
-        rotationspeed = rotation;
+		if (angle_left < left_zero)
+			speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -300, 0);
+		else if (angle_left > left_zero)
+			speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 300);
+		if (angle_right < right_zero)
+			rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
+		else if (angle_right > right_zero)
+			rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
+		forwardspeed = speed;
+		rotationspeed = rotation;
 	}
 }
 
@@ -604,17 +606,17 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 	}
 }
 
-void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colisions){
-
+void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisions)
+{
 	const double b = 250.0;
-	
-	double d_crit; 
+
+	double d_crit;
 	cout << forward_robot << endl;
-	if(forward_robot){
-		for(size_t i = 0; i < laserData.numberOfScans; i++){
-			d_crit = std::abs(b/sin(laserData.Data[i].scanAngle*M_PI/180.0));
-			if(d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE && 
-				(laserData.Data[i].scanAngle >= 270.0|| laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0){	
+	if (forward_robot) {
+		for (size_t i = 0; i < laserData.numberOfScans; i++) {
+			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
+			if (d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE
+				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
 				// cout << d_crit << " ";
 				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle <<endl;// " " << laserData.Data[i].scanQuality << endl;
 				colisions[0] = true;
@@ -674,8 +676,5 @@ void MainWindow::on_actionShowHelp_triggered()
 	m_helpWindow->setWindowFlags(Qt::Window);
 	m_helpWindow->show();
 
-	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() {
-		m_helpWindow->close();
-	});
+	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() { m_helpWindow->close(); });
 }
-
