@@ -249,7 +249,8 @@ void Robot::skeletonprocess()
     ske_slen = sizeof(ske_si_other);
     if ((ske_s=::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
-
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
     }
 
     char ske_broadcastene=1;
@@ -260,10 +261,10 @@ void Robot::skeletonprocess()
     std::cout<<::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST,&ske_broadcastene,sizeof(ske_broadcastene))<<std::endl;
 #else
 	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = 500000;
+	// tv.tv_sec = 0;
+	// tv.tv_usec = 10000;
     ::setsockopt(ske_s,SOL_SOCKET,SO_BROADCAST, &ske_broadcastene,sizeof(ske_broadcastene));
-    ::setsockopt(ske_s,SOL_SOCKET,SO_RCVTIMEO, (const char *)&tv,sizeof(tv));
+    // ::setsockopt(ske_s,SOL_SOCKET,SO_RCVTIMEO, (const char *)&tv,sizeof(tv));
 #endif
     // zero out the structure
     memset((char *) &ske_si_me, 0, sizeof(ske_si_me));
@@ -275,11 +276,19 @@ void Robot::skeletonprocess()
     ske_si_posli.sin_family = AF_INET;
     ske_si_posli.sin_port = htons(skeleton_ip_portIn);
     ske_si_posli.sin_addr.s_addr = inet_addr(skeleton_ipaddress.data());;//htonl(INADDR_BROADCAST);
-    std::cout<<::bind(ske_s , (struct sockaddr*)&ske_si_me, sizeof(ske_si_me) )<<std::endl;;
+	rob_slen = sizeof(ske_si_me);
+
+    if (::bind(ske_s , (struct sockaddr*)&ske_si_me, sizeof(ske_si_me)) != 0) {
+		std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << strerror(errno) << std::endl;
+		exit(-1);
+	}
     char command=0x00;
 
     skeleton bbbk;
     double measure[225];
+	if (::sendto(ske_s, &command, sizeof(command), 0, (struct sockaddr *)&ske_si_posli, rob_slen)
+		== -1) //podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
+	{ }
     while(1)
     {
         if(readyFuture.wait_for(std::chrono::seconds(0))==std::future_status::ready)
@@ -291,11 +300,12 @@ void Robot::skeletonprocess()
             continue;
         }
 
-
-    }
-    std::cout<<"koniec thread"<<std::endl;
+		std::cout<<"koniec thread"<<std::endl;
 		auto t = std::async(std::launch::async, [this](skeleton skele) { skeleton_callback(skele); },bbbk);
-	std::cout << "koniec skeleton thread" << std::endl;
+		std::cout << "koniec skeleton thread" << std::endl;
+    }
+
+	close(ske_s);
 }
 
 void Robot::robotStart()
