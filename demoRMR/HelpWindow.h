@@ -13,5 +13,10 @@ public:
 	explicit HelpWindow(QWidget *parent = nullptr);
 
 private:
+	void on_anchorClicked_scroll(const QUrl &url);
+
+private:
 	Ui::HelpWindow ui;
+	QString m_content;
 };
+
