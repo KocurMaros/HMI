@@ -112,6 +112,7 @@ private:
 	QImage colision_image;
 
 	bool m_motionButtonsVisible;
+	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
 };
 

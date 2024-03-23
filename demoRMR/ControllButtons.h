@@ -6,8 +6,8 @@ class ControllButtons : public QWidget
 	Q_OBJECT;
 
 public:
-	explicit ControllButtons(MainWindow *parent = nullptr);
-	void switchHand();
+	explicit ControllButtons(bool *reverse, MainWindow *parent = nullptr);
+	void switchHand(bool checked);
 	bool reverse() const { return m_reverseRobot; }
 
 public slots:
@@ -29,5 +29,5 @@ private:
 	QSpacerItem *m_spacer;
 
 	bool m_isLeftHand;
-	bool m_reverseRobot;
+	bool *m_reverseRobot;
 };

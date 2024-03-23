@@ -307,6 +307,9 @@
    </property>
   </action>
   <action name="actionChangeHand">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Switch to left hand</string>
    </property>

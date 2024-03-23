@@ -4,11 +4,11 @@
 #include <QObject>
 #include <QPushButton>
 
-ControllButtons::ControllButtons(MainWindow *parent)
+ControllButtons::ControllButtons(bool *reverse, MainWindow *parent)
 	: QWidget(parent)
 	, m_parent(parent)
 	, m_isLeftHand(false)
-	, m_reverseRobot(false)
+	, m_reverseRobot(reverse)
 {
 	m_parent->ui->actionAdd_motion_buttons->setText("Remove motion buttons");
 
@@ -44,12 +44,13 @@ ControllButtons::ControllButtons(MainWindow *parent)
 	m_buttonGridlayout->addItem(m_spacer, 2, 2);
 }
 
-void ControllButtons::switchHand()
+void ControllButtons::switchHand(bool checked)
 {
-	m_isLeftHand = !m_isLeftHand;
-	if (!m_isLeftHand) {
-		m_spacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-		m_buttonGridlayout->addItem(m_spacer, 2, 2);
+	m_isLeftHand = checked;
+
+	if (m_isLeftHand) {
+		m_spacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
+		m_buttonGridlayout->addItem(m_spacer, 2, 3);
 		m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
 		return;
 	}
@@ -61,25 +62,25 @@ void ControllButtons::switchHand()
 void ControllButtons::on_forwardButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(500);
-	m_reverseRobot = false;
+	*m_reverseRobot = false;
 }
 
 void ControllButtons::on_backButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(-250);
-	m_reverseRobot = true;
+	*m_reverseRobot = true;
 }
 
 void ControllButtons::on_leftButtons_clicked()
 {
 	m_parent->robot->setRotationSpeed(3.14159 / 2);
-	m_reverseRobot = false;
+	*m_reverseRobot = false;
 }
 
 void ControllButtons::on_rigthButtons_clicked()
 {
 	m_parent->robot->setRotationSpeed(-3.14159 / 2);
-	m_reverseRobot = false;
+	*m_reverseRobot = false;
 }
 
 void ControllButtons::on_stopButtons_clicked()

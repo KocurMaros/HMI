@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, robot(nullptr)
 	, m_ipaddress(IP_ADDRESSES[0].toStdString())
 	, m_motionButtonsVisible(false)
+	, m_leftHandedMode(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -71,10 +72,12 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 }
+
 uint8_t MAP(int x, int in_min, int in_max, int out_min, int out_max)
 {
 	return (uint8_t)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+
 void MainWindow::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
@@ -144,7 +147,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}
 	}
 	else {
-		if (reverse_robot || m_controllButtons->reverse()) {
+		if (reverse_robot) {
 			updateLaserPicture = 0;
 			double min_dist = 10000;
 			painter.setPen(pero);
@@ -599,8 +602,14 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 	if (!m_motionButtonsVisible) {
 		m_motionButtonsVisible = true;
 
-		m_controllButtons = new ControllButtons(this);
-		ui->topGridLayout->addWidget(m_controllButtons, 4, 4, 1, 1);
+		m_controllButtons = new ControllButtons(&reverse_robot, this);
+		if (m_leftHandedMode) {
+			ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
+			m_controllButtons->switchHand(m_leftHandedMode);
+		}
+		else {
+			ui->topGridLayout->addWidget(m_controllButtons, 4, 4, 1, 1);
+		}
 		update();
 		return;
 	}
@@ -614,9 +623,21 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 
 void MainWindow::on_actionChangeHand_toggled()
 {
-	if (m_controllButtons == nullptr) {
+	m_leftHandedMode = ui->actionChangeHand->isChecked();
+	ui->actionChangeHand->setChecked(m_leftHandedMode);
+
+	if (m_controllButtons == nullptr || ui->topGridLayout->indexOf(m_controllButtons) == -1) {
 		return;
 	}
 
-	m_controllButtons->switchHand();
+	ui->topGridLayout->removeWidget(m_controllButtons);
+	if (m_leftHandedMode) {
+		ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
+	}
+	else {
+		ui->topGridLayout->addWidget(m_controllButtons, 4, 4, 1, 1);
+	}
+
+	m_controllButtons->switchHand(m_leftHandedMode);
+	update();
 }
