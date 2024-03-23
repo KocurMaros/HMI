@@ -21,6 +21,14 @@ QPushButton {
 	min-height: 2.5ex;
 }
 
+QPushButton:!disabled {
+	color: white
+}
+
+QPushButton:disabled {
+	color: gray
+}
+
 QPushButton#pushButton_9 {
 	background-color: rgb(0, 85, 0); /* Darker green */
 	color: rgb(255, 255, 255); /* White text */
