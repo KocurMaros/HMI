@@ -66,9 +66,9 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 }
-uint8_t MAP(int x, int in_min, int in_max, int out_min, int out_max)
+double MAP(double x, double in_min, double in_max, double out_min, double out_max)
 {
-    return (uint8_t)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 void MainWindow::paintEvent(QPaintEvent *event)
 {
@@ -220,7 +220,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
         double right_zero = - M_PI/4;
         double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y, skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);   
         double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y, skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
-        // cout << angle_left << " " << angle_right << endl;   
+        double speed = 0;
+        double rotation= 0;
+        if((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0) || 
+            (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
+            angle_left = left_zero;
+        if((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0) || 
+            (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
+            angle_right = right_zero;
         if(angle_left < left_zero - M_PI/4 || angle_left > 0)
             angle_left = left_zero - M_PI/4;
         else if (angle_left > left_zero + M_PI/4)
@@ -231,19 +238,28 @@ void MainWindow::paintEvent(QPaintEvent *event)
         else if (angle_right > right_zero + M_PI/4)
             angle_right = right_zero + M_PI/4;
 
-        // cout << angle_left << " " << angle_right << endl;   
-        // cout << skeleJoints.joints[left_wrist].x << " " << skeleJoints.joints[left_wrist].y << endl;
-        // cout <<skeleJoints.joints[left_elbow].x << " " << skeleJoints.joints[left_elbow].y << endl;
-        // cout << skeleJoints.joints[right_wrist].x << " " << skeleJoints.joints[right_wrist].y << endl;
-        // cout <<skeleJoints.joints[right_elbow].x << " " << skeleJoints.joints[right_elbow].y << endl << " " << endl;
-		// painter.setPen(Qt::red);
-		// for(int i=0;i<75;i++)
-		// {
-		// 	int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
-		// 	int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
-		// 	if(rect.contains(xp,yp))
-		// 		painter.drawEllipse(QPoint(xp, yp),2,2);
-		// }
+        if(angle_left < left_zero)
+            speed = MAP(angle_left, left_zero - M_PI/4, left_zero, -300, 0);
+        else if(angle_left > left_zero)
+            speed = MAP(angle_left, left_zero, left_zero + M_PI/4, 0, 300);
+        if(angle_right < right_zero)
+            rotation = MAP(angle_right, right_zero - M_PI/4, right_zero, -3.14159/4, 0);
+        else if(angle_right > right_zero)
+            rotation = MAP(angle_right, right_zero, right_zero + M_PI/4, 0, 3.14159/4);
+        forwardspeed = speed;
+        rotationspeed = rotation;
+        // if (connected_robot) {
+        //     cout << "speed: " << speed << " rotation: " << rotation << endl;
+        //     if (forwardspeed == 0 && rotationspeed != 0)
+        //         robot->setRotationSpeed(rotationspeed);
+        //     else if (forwardspeed != 0 && rotationspeed == 0)
+        //         robot->setTranslationSpeed(forwardspeed);
+        //     else if ((forwardspeed != 0 && rotationspeed != 0))
+        //         robot->setArcSpeed(forwardspeed, forwardspeed / rotationspeed);
+        //     else
+        //         robot->setTranslationSpeed(0);
+        // }
+        // robot->setTranslationSpeed(speed);
 	}
 }
 
@@ -265,7 +281,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
-	if (instance->count() > 0) {
+	// if (instance->count() > 0) {
 		if (forwardspeed == 0 && rotationspeed != 0)
 			robot->setRotationSpeed(rotationspeed);
 		else if (forwardspeed != 0 && rotationspeed == 0)
@@ -274,7 +290,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 			robot->setArcSpeed(forwardspeed, forwardspeed / rotationspeed);
 		else
 			robot->setTranslationSpeed(0);
-	}
+	// }
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
 	if (datacounter % 5) {
@@ -386,7 +402,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	instance = QJoysticks::getInstance();
 	forwardspeed = 0;
 	rotationspeed = 0;
-
+    connected_robot != connected_robot;
 	///setovanie veci na komunikaciu s robotom/lidarom/kamerou.. su tam adresa porty a callback.. laser ma ze sa da dat callback aj ako lambda.
 	/// lambdy su super, setria miesto a ak su rozumnej dlzky,tak aj prehladnost... ak ste o nich nic nepoculi poradte sa s vasim doktorom alebo lekarnikom...
 	robot->setLaserParameters(

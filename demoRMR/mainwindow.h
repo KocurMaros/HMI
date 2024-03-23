@@ -112,7 +112,7 @@ private:
 	QImage warning_image;
 	QImage colision_image;
 
-	
+    bool connected_robot = false;
 };
 
 #endif // MAINWINDOW_H
