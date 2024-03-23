@@ -86,4 +86,3 @@ void ControllButtons::on_stopButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(0);
 }
-

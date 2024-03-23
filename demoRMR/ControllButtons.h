@@ -1,12 +1,11 @@
 #include "mainwindow.h"
 #include <qlayoutitem.h>
 
-class ControllButtons
-	: public QWidget
+class ControllButtons : public QWidget
 {
 	Q_OBJECT;
-public:
 
+public:
 	explicit ControllButtons(MainWindow *parent = nullptr);
 	void switchHand();
 	bool reverse() const { return m_reverseRobot; }

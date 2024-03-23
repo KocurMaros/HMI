@@ -69,8 +69,8 @@ private slots:
 	void on_actionAdd_motion_buttons_triggered();
 	void on_actionChangeHand_toggled();
 
-    void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
-	void calc_colisions_points(LaserMeasurement laserData,bool *colisions);
+	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
+	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -103,8 +103,8 @@ private:
 
 	QLed *m_connectionLed;
 
-    uint16_t distanceFromWall[4] = {lidarDistance::FAR};
-	bool colisionDetected[2] = {false};
+	uint16_t distanceFromWall[4] = { lidarDistance::FAR };
+	bool colisionDetected[2] = { false };
 	bool reverse_robot = false;
 
 	QImage attention_image;

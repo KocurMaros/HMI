@@ -19,7 +19,7 @@
 #include "CKobuki.h"
 
 // 11-15
-static QString IP_ADDRESSES[2] {"127.0.0.1", "192.168.1."};
+static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
 ///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
 /// AK HO MAS Z GITU A ROBIS NA LABAKOVOM PC, TAK SI HO VLOZ DO FOLDERA KTORY JE JASNE ODLISITELNY OD TVOJICH KOLEGOV
 /// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
@@ -37,19 +37,19 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_motionButtonsVisible(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-	 //192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
-							 //  cap.open("http://192.168.1.11:8000/stream.mjpg");
+	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
+	//  cap.open("http://192.168.1.11:8000/stream.mjpg");
 	ui->setupUi(this);
 	ui->ipComboBox->addItem(IP_ADDRESSES[0]);
 	for (size_t i = 11; i < 15; i++) {
-		ui->ipComboBox->addItem(IP_ADDRESSES[1]+QString::number(i));
+		ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
 	datacounter = 0;
 	//  timer = new QTimer(this);
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
-	updateSkeletonPicture=1;
+	updateSkeletonPicture = 1;
 
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
 	QImageReader reader = QImageReader(":/img/warning.png");
 
 	colision_image = reader.read();
-	if(colision_image.isNull())
+	if (colision_image.isNull())
 		qDebug() << "Error: Cannot load image. " << reader.errorString();
 	else
 		qDebug() << "Image loaded";
@@ -73,7 +73,7 @@ MainWindow::~MainWindow()
 }
 uint8_t MAP(int x, int in_min, int in_max, int out_min, int out_max)
 {
-    return (uint8_t)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	return (uint8_t)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 void MainWindow::paintEvent(QPaintEvent *event)
 {
@@ -94,71 +94,75 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	{
 		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
-        parse_lidar_data(copyOfLaserData, distanceFromWall);
+		parse_lidar_data(copyOfLaserData, distanceFromWall);
 		calc_colisions_points(copyOfLaserData, colisionDetected);
-		
+
 		painter.drawImage(rect, image.rgbSwapped());
-		
+
 		QPoint dest_pos;
 		uint16_t width = rect.width();
 		uint16_t height = rect.height();
-		uint16_t x,y;
-		if(colisionDetected[0] || colisionDetected[1]){
-			painter.drawImage(QPoint(width/2 - colision_image.width()/2, height/2 - colision_image.height()/2),colision_image);
+		uint16_t x, y;
+		if (colisionDetected[0] || colisionDetected[1]) {
+			painter.drawImage(QPoint(width / 2 - colision_image.width() / 2, height / 2 - colision_image.height() / 2), colision_image);
 			colisionDetected[0] = false;
 			colisionDetected[1] = false;
-		}else{
-            QRectF border_rect;
-            QBrush brush;
-			for(size_t i=0;i<4;i++){
-				if(distanceFromWall[i] != lidarDistance::FAR){
-					if(i == 0){
-                        border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height()/20);
-                    }else if(i == 1){
-                        border_rect = QRect(rect.x()+rect.width()-rect.width()/50, rect.y(), rect.width()/50, rect.height());
-                    }else if(i == 3){
-                        border_rect = QRect(rect.x(), rect.y(), rect.width()/50, rect.height());
-                        // border_rect = QRect(rect.x(c), rect.y(), rect.width(), rect.height()/20);
-                    }
+		}
+		else {
+			QRectF border_rect;
+			QBrush brush;
+			for (size_t i = 0; i < 4; i++) {
+				if (distanceFromWall[i] != lidarDistance::FAR) {
+					if (i == 0) {
+						border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 20);
+					}
+					else if (i == 1) {
+						border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y(), rect.width() / 50, rect.height());
+					}
+					else if (i == 3) {
+						border_rect = QRect(rect.x(), rect.y(), rect.width() / 50, rect.height());
+						// border_rect = QRect(rect.x(c), rect.y(), rect.width(), rect.height()/20);
+					}
 					dest_pos = QPoint(x, y);
 				}
-				if(distanceFromWall[i] == lidarDistance::MEDIUM){
-                    brush.setStyle(Qt::SolidPattern);
-                    brush.setColor(QColor(255,255,0,MAP(copyOfLaserData.Data[i].scanDistance, lidarDistance::CLOSE, lidarDistance::MEDIUM, 255, 0)));
-                    painter.setBrush(brush);
-					if(i != 2)
-                        painter.drawRect(border_rect);
+				if (distanceFromWall[i] == lidarDistance::MEDIUM) {
+					brush.setStyle(Qt::SolidPattern);
+					brush.setColor(QColor(255, 255, 0, MAP(copyOfLaserData.Data[i].scanDistance, lidarDistance::CLOSE, lidarDistance::MEDIUM, 255, 0)));
+					painter.setBrush(brush);
+					if (i != 2)
+						painter.drawRect(border_rect);
 				}
-				if(distanceFromWall[i] == lidarDistance::CLOSE){
-                    brush.setStyle(Qt::SolidPattern);
-                    brush.setColor(QColor(255,0,0,MAP(copyOfLaserData.Data[i].scanDistance, 0, lidarDistance::CLOSE, 255, 0)));
-                    painter.setBrush(brush);
-                    // painter.setPen(QPen(QColor(0,255,0,0), 3));
-					if(i != 2)
-                        painter.drawRect(border_rect);
+				if (distanceFromWall[i] == lidarDistance::CLOSE) {
+					brush.setStyle(Qt::SolidPattern);
+					brush.setColor(QColor(255, 0, 0, MAP(copyOfLaserData.Data[i].scanDistance, 0, lidarDistance::CLOSE, 255, 0)));
+					painter.setBrush(brush);
+					// painter.setPen(QPen(QColor(0,255,0,0), 3));
+					if (i != 2)
+						painter.drawRect(border_rect);
 				}
-			}	
+			}
 		}
 	}
 	else {
-		if(reverse_robot || m_controllButtons->reverse()){
+		if (reverse_robot || m_controllButtons->reverse()) {
 			updateLaserPicture = 0;
 			double min_dist = 10000;
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if(	copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REVERSE_LEFT) && 
-					copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REVERSE_RIGHT)){
-					if(min_dist > copyOfLaserData.Data[k].scanDistance)
+				if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REVERSE_LEFT)
+					&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REVERSE_RIGHT)) {
+					if (min_dist > copyOfLaserData.Data[k].scanDistance)
 						min_dist = copyOfLaserData.Data[k].scanDistance;
-					if(copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
+					if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
 						painter.setPen(QPen(Qt::red, 3));
-					else if(copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM)
+					else if (copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM)
 						painter.setPen(QPen(Qt::yellow, 3));
 					else
 						painter.setPen(QPen(Qt::green, 3));
-				}else{
-					painter.setPen(QPen(QColor(0,255,0,40), 3));
+				}
+				else {
+					painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
 				}
 				// CKobuki kobuki;
 				// if(min_dist < lidarDistance::CLOSE){
@@ -177,27 +181,29 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			}
 			pero.setColor(Qt::magenta);
 			painter.setPen(pero);
-			int xrobot=rect.width()/2;
-			int yrobot=rect.height()/2;
-			int xpolomer=20;
-			int ypolomer=20;
+			int xrobot = rect.width() / 2;
+			int yrobot = rect.height() / 2;
+			int xpolomer = 20;
+			int ypolomer = 20;
 
-			painter.drawEllipse(QPoint(rect.x()+xrobot,rect.y()+yrobot),xpolomer,ypolomer);
-			painter.drawLine(rect.x()+xrobot,rect.y()+yrobot,rect.x()+xrobot+xpolomer*cos((360-90)*3.14159/180),rect.y()+((yrobot+ypolomer*sin((360-90)*3.14159/180))));
-		}else if (updateLaserPicture == 1) ///ak mam nove data z lidaru
+			painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+			painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+							 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+		}
+		else if (updateLaserPicture == 1) ///ak mam nove data z lidaru
 		{
 			updateLaserPicture = 0;
-			
+
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
 				// if(copyOfLaserData.Data[k].scanAngle >= (float)(330) - (float)(lidarDirection::THRESHOLD/den) &&
-				//    copyOfLaserData.Data[k].scanAngle <= (float)(330) + (float)(lidarDirection::THRESHOLD/den)){
+				//	copyOfLaserData.Data[k].scanAngle <= (float)(330) + (float)(lidarDirection::THRESHOLD/den)){
 				// 	painter.setPen(QPen(Qt::red, 3));
 				// }
 				// else
-                painter.setPen(QPen(Qt::green, 3));
-                    // break;
+				painter.setPen(QPen(Qt::green, 3));
+				// break;
 
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
@@ -209,25 +215,24 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			}
 			pero.setColor(Qt::magenta);
 			painter.setPen(pero);
-			int xrobot=rect.width()/2;
-			int yrobot=rect.height()/2;
-			int xpolomer=20;
-			int ypolomer=20;
+			int xrobot = rect.width() / 2;
+			int yrobot = rect.height() / 2;
+			int xpolomer = 20;
+			int ypolomer = 20;
 
-			painter.drawEllipse(QPoint(rect.x()+xrobot,rect.y()+yrobot),xpolomer,ypolomer);
-			painter.drawLine(rect.x()+xrobot,rect.y()+yrobot,rect.x()+xrobot+xpolomer*cos((360-90)*3.14159/180),rect.y()+((yrobot+ypolomer*sin((360-90)*3.14159/180))));
+			painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+			painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+							 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 		}
 	}
 
-	if(updateSkeletonPicture==1 )
-	{
+	if (updateSkeletonPicture == 1) {
 		painter.setPen(Qt::red);
-		for(int i=0;i<75;i++)
-		{
-			int xp=rect.width()-rect.width() * skeleJoints.joints[i].x+rect.topLeft().x();
-			int yp= (rect.height() *skeleJoints.joints[i].y)+rect.topLeft().y();
-			if(rect.contains(xp,yp))
-				painter.drawEllipse(QPoint(xp, yp),2,2);
+		for (int i = 0; i < 75; i++) {
+			int xp = rect.width() - rect.width() * skeleJoints.joints[i].x + rect.topLeft().x();
+			int yp = (rect.height() * skeleJoints.joints[i].y) + rect.topLeft().y();
+			if (rect.contains(xp, yp))
+				painter.drawEllipse(QPoint(xp, yp), 2, 2);
 		}
 	}
 }
@@ -309,8 +314,7 @@ void MainWindow::disableAllButtons(bool disable)
 	// Disable all the buttons.
 	QList<QPushButton *> buttons = findChildren<QPushButton *>();
 	for (auto button : buttons) {
-		if (button->objectName() == "emgStopButton"
-			|| button->objectName() == "pushButton") {
+		if (button->objectName() == "emgStopButton" || button->objectName() == "pushButton") {
 			continue;
 		}
 
@@ -324,20 +328,19 @@ void MainWindow::disableAllButtons(bool disable)
 
 bool MainWindow::isIPValid(const QString &ip)
 {
-	QRegularExpression ipRegex(
-		"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+	QRegularExpression ipRegex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
 
 	return ipRegex.match(ip).hasMatch();
 }
 
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
-	memcpy(&skeleJoints,&skeledata,sizeof(skeleton));
+	memcpy(&skeleJoints, &skeledata, sizeof(skeleton));
 
-	updateSkeletonPicture=1;
+	updateSkeletonPicture = 1;
 	return 0;
 }
 
@@ -350,57 +353,57 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 	auto key = event->key();
 	switch (key) {
-		case Qt::Key_W:
-		case Qt::Key_Up:
-			robot->setTranslationSpeed(500);
-			reverse_robot = false;
-			break;
+	case Qt::Key_W:
+	case Qt::Key_Up:
+		robot->setTranslationSpeed(500);
+		reverse_robot = false;
+		break;
 
-		case Qt::Key_S:
-		case Qt::Key_Down:
-			robot->setTranslationSpeed(-250);
-			reverse_robot = true;
-			break;
+	case Qt::Key_S:
+	case Qt::Key_Down:
+		robot->setTranslationSpeed(-250);
+		reverse_robot = true;
+		break;
 
-		case Qt::Key_A:
-		case Qt::Key_Left:
-			robot->setRotationSpeed(3.14159 / 2);
-			reverse_robot = false;
-			break;
+	case Qt::Key_A:
+	case Qt::Key_Left:
+		robot->setRotationSpeed(3.14159 / 2);
+		reverse_robot = false;
+		break;
 
-		case Qt::Key_D:
-		case Qt::Key_Right:
-			robot->setRotationSpeed(-3.14159 / 2);
-			reverse_robot = false;
-			break;
+	case Qt::Key_D:
+	case Qt::Key_Right:
+		robot->setRotationSpeed(-3.14159 / 2);
+		reverse_robot = false;
+		break;
 
-		case Qt::Key_R:
-			robot->setTranslationSpeed(0);
-			break;
+	case Qt::Key_R:
+		robot->setTranslationSpeed(0);
+		break;
 
-		case Qt::Key_Escape: {
-			if (robot->isInEmgStop()) {
-				robot->setEmgStop(false);
-				m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
+	case Qt::Key_Escape: {
+		if (robot->isInEmgStop()) {
+			robot->setEmgStop(false);
+			m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
 
-				disableAllButtons(false);
-				setStyleSheet("");
+			disableAllButtons(false);
+			setStyleSheet("");
 
-				return;
-			}
-
-			robot->setTranslationSpeed(0);
-			robot->setEmgStop(true);
-			m_connectionLed->setToEmgStopState();
-
-			disableAllButtons(true);
-			setStyleSheet("background-color: rgba(255,164,0,25)");
-			break;
+			return;
 		}
 
-		default:
-			qDebug() << "Key not recognized";
-			break;
+		robot->setTranslationSpeed(0);
+		robot->setEmgStop(true);
+		m_connectionLed->setToEmgStopState();
+
+		disableAllButtons(true);
+		setStyleSheet("background-color: rgba(255,164,0,25)");
+		break;
+	}
+
+	default:
+		qDebug() << "Key not recognized";
+		break;
 	}
 }
 
@@ -411,7 +414,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	}
 
 	if (m_connectionLed->isInConnectedState()) {
-
 		qDebug() << "Disconnecting the UI";
 		robot.reset();
 
@@ -450,7 +452,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		robot->setCameraParameters("http://" + m_ipaddress + ":8000/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
 	}
 
-	robot->setSkeletonParameters(m_ipaddress, 23432,23432,std::bind(&MainWindow::processThisSkeleton,this,std::placeholders::_1));
+	robot->setSkeletonParameters(m_ipaddress, 23432, 23432, std::bind(&MainWindow::processThisSkeleton, this, std::placeholders::_1));
 
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
 	robot->robotStart();
@@ -536,58 +538,56 @@ void MainWindow::on_changeStyleSheet_triggered()
 	m_styleSheetEditor->activateWindow();
 }
 
-void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance){
-	double avg_dist[4] = {0};
-	uint8_t num_of_scans[4] = {0};
+void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance)
+{
+	double avg_dist[4] = { 0 };
+	uint8_t num_of_scans[4] = { 0 };
 
-    for(size_t i = 0; i < laserData.numberOfScans; i++){
-        if(copyOfLaserData.Data[i].scanDistance < 0.1)
-            continue    ;
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_LEFT) ||
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){// front side
-            avg_dist[0] += laserData.Data[i].scanDistance;
+	for (size_t i = 0; i < laserData.numberOfScans; i++) {
+		if (copyOfLaserData.Data[i].scanDistance < 0.1)
+			continue;
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_LEFT)
+			|| copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR) { // front side
+			avg_dist[0] += laserData.Data[i].scanDistance;
 			num_of_scans[0]++;
-        }
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT_1) &&
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){ //right side
-            // cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
+		}
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT_1) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::RIGHT)
+			&& copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR) { //right side
+			// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
 			avg_dist[1] += laserData.Data[i].scanDistance;
 			num_of_scans[1]++;
 		}
-		if(	copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::LEFT) &&
-			copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT_1) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR){//left side
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::LEFT) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT_1)
+			&& copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR) { //left side
 			avg_dist[3] += laserData.Data[i].scanDistance;
 			num_of_scans[3]++;
 		}
-    }
-	for(size_t i = 0; i < 4; i++){
+	}
+	for (size_t i = 0; i < 4; i++) {
 		avg_dist[i] /= num_of_scans[i];
-		if(avg_dist[i] < lidarDistance::CLOSE)
+		if (avg_dist[i] < lidarDistance::CLOSE)
 			distance[i] = lidarDistance::CLOSE;
-		else if(avg_dist[i] < lidarDistance::MEDIUM)
+		else if (avg_dist[i] < lidarDistance::MEDIUM)
 			distance[i] = lidarDistance::MEDIUM;
 		else
 			distance[i] = lidarDistance::FAR;
 	}
 }
 
-void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colisions){
-
+void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisions)
+{
 	static const double dist = 300;
 
-	for(size_t i = 0; i < laserData.numberOfScans; i++){
-		if(	(laserData.Data[i].scanAngle >= (float)(0) ||
-			laserData.Data[i].scanAngle <= (float)(90)) && laserData.Data[i].scanDistance >= 150){
-			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
-                // cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " "<< laserData.Data[i].scanQuality << endl;
+	for (size_t i = 0; i < laserData.numberOfScans; i++) {
+		if ((laserData.Data[i].scanAngle >= (float)(0) || laserData.Data[i].scanAngle <= (float)(90)) && laserData.Data[i].scanDistance >= 150) {
+			if (laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist) {
+				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " "<< laserData.Data[i].scanQuality << endl;
 				colisions[0] = true;
 			}
 		}
-		if(	(laserData.Data[i].scanAngle >= (float)(360) ||
-			laserData.Data[i].scanAngle <= (float)(270)) && laserData.Data[i].scanDistance >= 150){
-
-			if(laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist){
-                // cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
+		if ((laserData.Data[i].scanAngle >= (float)(360) || laserData.Data[i].scanAngle <= (float)(270)) && laserData.Data[i].scanDistance >= 150) {
+			if (laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist) {
+				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
 				colisions[1] = true;
 			}
 		}
@@ -620,4 +620,3 @@ void MainWindow::on_actionChangeHand_toggled()
 
 	m_controllButtons->switchHand();
 }
-

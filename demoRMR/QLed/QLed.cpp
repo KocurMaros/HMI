@@ -98,4 +98,3 @@ void QLed::drawLed(int p_length)
 		painter.drawText(rect2, Qt::AlignLeft | Qt::AlignVCenter, " " + m_label2 + " ");
 	}
 }
-
