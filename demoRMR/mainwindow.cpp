@@ -281,7 +281,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
-	// if (instance->count() > 0) {
+	if (instance->count() > 0) {
 		if (forwardspeed == 0 && rotationspeed != 0)
 			robot->setRotationSpeed(rotationspeed);
 		else if (forwardspeed != 0 && rotationspeed == 0)
@@ -290,7 +290,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 			robot->setArcSpeed(forwardspeed, forwardspeed / rotationspeed);
 		else
 			robot->setTranslationSpeed(0);
-	// }
+	}
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
 	if (datacounter % 5) {
