@@ -14,23 +14,36 @@ ControllButtons::ControllButtons(bool *reverse, MainWindow *parent)
 
 	m_buttonGridlayout = new QGridLayout(this);
 
+	QSize buttonSize(50, 75);
+	QSizePolicy buttonSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
 	m_forwardButtons = new QPushButton("Forward", this);
+	m_forwardButtons->setMinimumSize(buttonSize);
+	m_forwardButtons->setSizePolicy(buttonSizePolicy);
 	m_buttonGridlayout->addWidget(m_forwardButtons, 0, 1, 1, 1);
 	connect(m_forwardButtons, &QPushButton::clicked, this, &ControllButtons::on_forwardButtons_clicked);
 
 	m_backButtons = new QPushButton("Back", this);
+	m_backButtons->setMinimumSize(buttonSize);
+	m_backButtons->setSizePolicy(buttonSizePolicy);
 	m_buttonGridlayout->addWidget(m_backButtons, 2, 1, 1, 1);
 	connect(m_backButtons, &QPushButton::clicked, this, &ControllButtons::on_backButtons_clicked);
 
 	m_leftButtons = new QPushButton("Left", this);
+	m_leftButtons->setMinimumSize(buttonSize);
+	m_leftButtons->setSizePolicy(buttonSizePolicy);
 	m_buttonGridlayout->addWidget(m_leftButtons, 1, 0, 1, 1);
 	connect(m_leftButtons, &QPushButton::clicked, this, &ControllButtons::on_leftButtons_clicked);
 
 	m_rigthButtons = new QPushButton("Right", this);
+	m_rigthButtons->setMinimumSize(buttonSize);
+	m_rigthButtons->setSizePolicy(buttonSizePolicy);
 	m_buttonGridlayout->addWidget(m_rigthButtons, 1, 2, 1, 1);
 	connect(m_rigthButtons, &QPushButton::clicked, this, &ControllButtons::on_rigthButtons_clicked);
 
 	m_stopButtons = new QPushButton("Stop", this);
+	m_stopButtons->setMinimumSize(buttonSize);
+	m_stopButtons->setSizePolicy(buttonSizePolicy);
 	m_buttonGridlayout->addWidget(m_stopButtons, 1, 1, 1, 1);
 	connect(m_stopButtons, &QPushButton::clicked, this, &ControllButtons::on_stopButtons_clicked);
 
