@@ -1,0 +1,67 @@
+% Arguments for the template
+% Choose the type of thesis (required):
+%  - bp   - Bachelor thesis
+%  - dp   - Diploma thesis
+%  - dizp - Dissertation thesis
+%  - sp   - Seminar paper
+% Argument `tnr` selects the Times New Roman font, which is required by URK FEI STU
+\documentclass[dp, tnr]{FEIstyle}
+% \documentclass[dp, tnr, en]{FEIstyle} % If you want to write the thesis in English, add the argument `en`
+
+% Fill in your name, thesis title and details 
+\FEIauthor{Bc. Ján Srnec}
+\FEItitle{Ukážkový \LaTeX\ dokument s dlhým názvom}
+\FEItitleEn{Example \LaTeX\ document with long title}
+\FEIkeywords{kľúčové slovo1, kľúčové slovo2, kľúčové slovo3}
+\FEIkeywordsEn{keyword1, keyword2, keyword3}
+\FEIregNr{FEI-xxxx-xxxx}
+\FEIsupervisor{Mgr. Ing. Peter Párker, PhD.}
+\FEIconsultant{Ing. John Doe}
+\FEIdate{15}{5}{2021} % Date of submission (Day, month, year)
+\FEIstudyProgramme{Robotika a kybernetika}
+\FEIstudyProgrammeEn{Robotics and cybernetics}
+\FEItrainingWorkplace{\a'Ustav robotiky a kybernetiky}
+\FEItrainingWorkplaceEn{Institute of robotics and cybernetics}
+\FEIstudyField{kybernetika}
+\FEIstudyFieldEn{cybernetics}
+
+\FEIglossaries{includes/glossary}
+\bibliography{includes/bibliography.bib}
+
+\iffalse \input{includes/glossary} \fi
+
+\begin{document}
+\frontmatter
+
+\FEIpdfInfo
+\FEIcover
+\FEItitlePage
+% \FEIassignment{includes/assignment.jpeg}
+% \FEIassignment{includes/assignment_part2.jpeg}
+\FEIabstract{includes/abstract}
+\FEIabstractEn{includes/abstractEN}
+\FEIthanks{includes/thanks}
+\FEIcontent
+\FEIlistOfFiguresAndTables
+\FEIlistOfGlossaries
+\FEIlistOfAlgorithms
+\FEIlistOfListings
+
+\mainmatter
+
+\FEIintroduction{includes/introduction}
+\FEIcore{includes/core}
+\FEIconclusion{includes/conclusion}
+% \FEIresume{includes/resume} % Use only if document is in English language
+
+% bibliography should use UTF-8 accents (write as is ľščťžýáí...) NOT converted by BibDesk
+% http://tex.stackexchange.com/questions/57743/how-to-write-%C3%A4-and-other-umlauts-and-accented-letters-in-bibliography
+\FEIbibliography %includes/bibliography.bib
+
+\backmatter
+
+\FEIlistOfAppendix
+\FEIappendix{Štruktúra elektronického nosiča\label{att:A}}{includes/attachmentA}
+\FEIappendix{Algoritmus\label{att:B}}{includes/attachmentB}
+\FEIappendix{Výpis sublime\label{att:C}}{includes/attachmentC}
+\end{document}
