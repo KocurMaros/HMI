@@ -9,7 +9,7 @@ public:
 	explicit ControllButtons(bool *reverse, bool *forward, MainWindow *parent = nullptr);
 	void switchHand(bool checked);
 	bool reverse() const { return m_reverseRobot; }
-	bool forward() const { return m_reverseRobot; }
+	bool forward() const { return m_forwardRobot; }
 
 public slots:
 	void on_forwardButtons_clicked();

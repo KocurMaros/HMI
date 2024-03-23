@@ -130,14 +130,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				}
 				if (distanceFromWall[i] == lidarDistance::MEDIUM) {
 					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(255, 255, 0, MAP(copyOfLaserData.Data[i].scanDistance, lidarDistance::CLOSE, lidarDistance::MEDIUM, 255, 0)));
+					brush.setColor(QColor(255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, (double)lidarDistance::CLOSE, (double)lidarDistance::MEDIUM, 255.0, 0.0)));
 					painter.setBrush(brush);
 					if (i != 2)
 						painter.drawRect(border_rect);
 				}
 				if (distanceFromWall[i] == lidarDistance::CLOSE) {
 					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(255, 0, 0, MAP(copyOfLaserData.Data[i].scanDistance, 0, lidarDistance::CLOSE, 255, 0)));
+					brush.setColor(QColor(255, 0, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, 0.0, (double)lidarDistance::CLOSE, 255.0, 30.0)));
 					painter.setBrush(brush);
 					// painter.setPen(QPen(QColor(0,255,0,0), 3));
 					if (i != 2)
@@ -167,12 +167,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				else {
 					painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
 				}
-				// CKobuki kobuki;
-				// if(min_dist < lidarDistance::CLOSE){
-				// 	kobuki.setSound(1000,1);
-				// }else if(min_dist < lidarDistance::MEDIUM){
-				// 	kobuki.setSound(100,1);
-				// }
+				if(m_ipaddress != "127.0.0.1"){
+					CKobuki kobuki;
+					if(min_dist < lidarDistance::CLOSE){
+						kobuki.setSound(1000,1);
+					}else if(min_dist < lidarDistance::MEDIUM){
+						kobuki.setSound(100,1);
+					}
+				}
 
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
@@ -200,14 +202,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			painter.setPen(pero);
 			int den = 5;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				// if(copyOfLaserData.Data[k].scanAngle >= (float)(330) - (float)(lidarDirection::THRESHOLD/den) &&
-				//	copyOfLaserData.Data[k].scanAngle <= (float)(330) + (float)(lidarDirection::THRESHOLD/den)){
-				// 	painter.setPen(QPen(Qt::red, 3));
-				// }
-				// else
+				
 				painter.setPen(QPen(Qt::green, 3));
-				// break;
-
+			
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 					+ rect.topLeft().x(); //prepocet do obrazovky
@@ -386,28 +383,34 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Up:
 		robot->setTranslationSpeed(500);
 		reverse_robot = false;
+		forward_robot = true;
 		break;
 
 	case Qt::Key_S:
 	case Qt::Key_Down:
 		robot->setTranslationSpeed(-250);
 		reverse_robot = true;
+		forward_robot = false;
 		break;
 
 	case Qt::Key_A:
 	case Qt::Key_Left:
 		robot->setRotationSpeed(3.14159 / 2);
 		reverse_robot = false;
+		forward_robot = false;
 		break;
 
 	case Qt::Key_D:
 	case Qt::Key_Right:
 		robot->setRotationSpeed(-3.14159 / 2);
 		reverse_robot = false;
+		forward_robot = false;
 		break;
 
 	case Qt::Key_R:
 		robot->setTranslationSpeed(0);
+		forward_robot = false;
+		reverse_robot = false;
 		break;
 
 	case Qt::Key_Escape: {
@@ -570,7 +573,6 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 {
 	double avg_dist[4] = { 0 };
 	uint8_t num_of_scans[4] = { 0 };
-
 	for (size_t i = 0; i < laserData.numberOfScans; i++) {
 		if (copyOfLaserData.Data[i].scanDistance < 0.1)
 			continue;
@@ -607,6 +609,7 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colision
 	const double b = 250.0;
 	
 	double d_crit; 
+	cout << forward_robot << endl;
 	if(forward_robot){
 		for(size_t i = 0; i < laserData.numberOfScans; i++){
 			d_crit = std::abs(b/sin(laserData.Data[i].scanAngle*M_PI/180.0));
