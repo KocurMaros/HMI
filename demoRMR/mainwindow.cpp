@@ -73,10 +73,9 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 }
-
-uint8_t MAP(int x, int in_min, int in_max, int out_min, int out_max)
+double MAP(double x, double in_min, double in_max, double out_min, double out_max)
 {
-	return (uint8_t)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)
@@ -230,14 +229,40 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}
 	}
 
-	if (updateSkeletonPicture == 1) {
-		painter.setPen(Qt::red);
-		for (int i = 0; i < 75; i++) {
-			int xp = rect.width() - rect.width() * skeleJoints.joints[i].x + rect.topLeft().x();
-			int yp = (rect.height() * skeleJoints.joints[i].y) + rect.topLeft().y();
-			if (rect.contains(xp, yp))
-				painter.drawEllipse(QPoint(xp, yp), 2, 2);
-		}
+	if(updateSkeletonPicture==1 )
+	{
+        double left_zero = -M_PI/2 - M_PI/4;
+        double right_zero = - M_PI/4;
+        double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y, skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);   
+        double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y, skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+        double speed = 0;
+        double rotation= 0;
+        if((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0) || 
+            (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
+            angle_left = left_zero;
+        if((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0) || 
+            (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
+            angle_right = right_zero;
+        if(angle_left < left_zero - M_PI/4 || angle_left > 0)
+            angle_left = left_zero - M_PI/4;
+        else if (angle_left > left_zero + M_PI/4)
+            angle_left = left_zero + M_PI/4;
+
+        if(angle_right < right_zero - M_PI/4)
+            angle_right = right_zero - M_PI/4;
+        else if (angle_right > right_zero + M_PI/4)
+            angle_right = right_zero + M_PI/4;
+
+        if(angle_left < left_zero)
+            speed = MAP(angle_left, left_zero - M_PI/4, left_zero, -300, 0);
+        else if(angle_left > left_zero)
+            speed = MAP(angle_left, left_zero, left_zero + M_PI/4, 0, 300);
+        if(angle_right < right_zero)
+            rotation = MAP(angle_right, right_zero - M_PI/4, right_zero, -3.14159/4, 0);
+        else if(angle_right > right_zero)
+            rotation = MAP(angle_right, right_zero, right_zero + M_PI/4, 0, 3.14159/4);
+        forwardspeed = speed;
+        rotationspeed = rotation;
 	}
 }
 
@@ -259,7 +284,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
-	if (instance->count() > 0) {
+	// if (instance->count() > 0) {
 		if (forwardspeed == 0 && rotationspeed != 0)
 			robot->setRotationSpeed(rotationspeed);
 		else if (forwardspeed != 0 && rotationspeed == 0)
@@ -268,7 +293,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 			robot->setArcSpeed(forwardspeed, forwardspeed / rotationspeed);
 		else
 			robot->setTranslationSpeed(0);
-	}
+	// }
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
 	if (datacounter % 5) {
@@ -440,7 +465,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	instance = QJoysticks::getInstance();
 	forwardspeed = 0;
 	rotationspeed = 0;
-
 	///setovanie veci na komunikaciu s robotom/lidarom/kamerou.. su tam adresa porty a callback.. laser ma ze sa da dat callback aj ako lambda.
 	/// lambdy su super, setria miesto a ak su rozumnej dlzky,tak aj prehladnost... ak ste o nich nic nepoculi poradte sa s vasim doktorom alebo lekarnikom...
 	robot->setLaserParameters(
@@ -580,7 +604,7 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 
 void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colisions){
 
-	const double b = 200.0;
+	const double b = 250.0;
 	
 	double d_crit; 
 	if(forward_robot){
@@ -588,8 +612,8 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colision
 			d_crit = std::abs(b/sin(laserData.Data[i].scanAngle*M_PI/180.0));
 			if(d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE && 
 				(laserData.Data[i].scanAngle >= 270.0|| laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0){	
-				cout << d_crit << " ";
-				cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle <<endl;// " " << laserData.Data[i].scanQuality << endl;
+				// cout << d_crit << " ";
+				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle <<endl;// " " << laserData.Data[i].scanQuality << endl;
 				colisions[0] = true;
 			}
 		}
