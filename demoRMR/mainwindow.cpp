@@ -141,7 +141,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}
 	}
 	else {
-		if(reverse_robot){
+		if(reverse_robot || m_controllButtons->reverse()){
 			updateLaserPicture = 0;
 			double min_dist = 10000;
 			painter.setPen(pero);
@@ -353,21 +353,25 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		case Qt::Key_W:
 		case Qt::Key_Up:
 			robot->setTranslationSpeed(500);
+			reverse_robot = false;
 			break;
 
 		case Qt::Key_S:
 		case Qt::Key_Down:
 			robot->setTranslationSpeed(-250);
+			reverse_robot = true;
 			break;
 
 		case Qt::Key_A:
 		case Qt::Key_Left:
 			robot->setRotationSpeed(3.14159 / 2);
+			reverse_robot = false;
 			break;
 
 		case Qt::Key_D:
 		case Qt::Key_Right:
 			robot->setRotationSpeed(-3.14159 / 2);
+			reverse_robot = false;
 			break;
 
 		case Qt::Key_R:

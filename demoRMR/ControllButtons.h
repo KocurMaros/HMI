@@ -9,6 +9,7 @@ public:
 
 	explicit ControllButtons(MainWindow *parent = nullptr);
 	void switchHand();
+	bool reverse() const { return m_reverseRobot; }
 
 public slots:
 	void on_forwardButtons_clicked();
@@ -29,4 +30,5 @@ private:
 	QSpacerItem *m_spacer;
 
 	bool m_isLeftHand;
+	bool m_reverseRobot;
 };

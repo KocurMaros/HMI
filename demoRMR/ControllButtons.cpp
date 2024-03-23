@@ -8,6 +8,7 @@ ControllButtons::ControllButtons(MainWindow *parent)
 	: QWidget(parent)
 	, m_parent(parent)
 	, m_isLeftHand(false)
+	, m_reverseRobot(false)
 {
 	m_parent->ui->actionAdd_motion_buttons->setText("Remove motion buttons");
 
@@ -60,21 +61,25 @@ void ControllButtons::switchHand()
 void ControllButtons::on_forwardButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(500);
+	m_reverseRobot = false;
 }
 
 void ControllButtons::on_backButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(-250);
+	m_reverseRobot = true;
 }
 
 void ControllButtons::on_leftButtons_clicked()
 {
 	m_parent->robot->setRotationSpeed(3.14159 / 2);
+	m_reverseRobot = false;
 }
 
 void ControllButtons::on_rigthButtons_clicked()
 {
 	m_parent->robot->setRotationSpeed(-3.14159 / 2);
+	m_reverseRobot = false;
 }
 
 void ControllButtons::on_stopButtons_clicked()
