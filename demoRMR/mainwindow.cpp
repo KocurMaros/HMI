@@ -578,21 +578,19 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 	}
 }
 
-void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisions)
-{
-	static const double dist = 300;
+void MainWindow::calc_colisions_points(LaserMeasurement laserData,bool *colisions){
 
-	for (size_t i = 0; i < laserData.numberOfScans; i++) {
-		if ((laserData.Data[i].scanAngle >= (float)(0) || laserData.Data[i].scanAngle <= (float)(90)) && laserData.Data[i].scanDistance >= 150) {
-			if (laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist) {
-				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " "<< laserData.Data[i].scanQuality << endl;
+	const double b = 200.0;
+	
+	double d_crit; 
+	if(forward_robot){
+		for(size_t i = 0; i < laserData.numberOfScans; i++){
+			d_crit = std::abs(b/sin(laserData.Data[i].scanAngle*M_PI/180.0));
+			if(d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE && 
+				(laserData.Data[i].scanAngle >= 270.0|| laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0){	
+				cout << d_crit << " ";
+				cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle <<endl;// " " << laserData.Data[i].scanQuality << endl;
 				colisions[0] = true;
-			}
-		}
-		if ((laserData.Data[i].scanAngle >= (float)(360) || laserData.Data[i].scanAngle <= (float)(270)) && laserData.Data[i].scanDistance >= 150) {
-			if (laserData.Data[i].scanDistance < dist || laserData.Data[i].scanDistance < dist) {
-				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
-				colisions[1] = true;
 			}
 		}
 	}
@@ -603,7 +601,7 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 	if (!m_motionButtonsVisible) {
 		m_motionButtonsVisible = true;
 
-		m_controllButtons = new ControllButtons(&reverse_robot, this);
+		m_controllButtons = new ControllButtons(&reverse_robot, &forward_robot, this);
 		if (m_leftHandedMode) {
 			ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
 			m_controllButtons->switchHand(m_leftHandedMode);
