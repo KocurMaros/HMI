@@ -104,6 +104,7 @@ private:
     uint16_t distanceFromWall[4] = {lidarDistance::FAR};
 	bool colisionDetected[2] = {false};
 	bool reverse_robot = false;
+	bool forward_robot = false;
 
 	QImage attention_image;
 	QImage warning_image;
