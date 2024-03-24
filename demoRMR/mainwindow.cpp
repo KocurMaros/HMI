@@ -645,4 +645,19 @@ void MainWindow::inPaintEventProcessSkeleton(){
 		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
 	forwardspeed = speed;
 	rotationspeed = rotation;
+	setRobotDirection();
+}
+void MainWindow::setRobotDirection(){
+	if(forwardspeed > 0){
+		forward_robot = true;
+		reverse_robot = false;
+	}
+	else if(forwardspeed < 0){
+		forward_robot = false;
+		reverse_robot = true;
+	}
+	else{
+		forward_robot = false;
+		reverse_robot = false;
+	}
 }

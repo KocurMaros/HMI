@@ -56,6 +56,7 @@ private:
 	void disableAllButtons(bool disable);
 	bool isIPValid(const QString &ip);
 	void inPaintEventProcessSkeleton();
+	void setRobotDirection();
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
