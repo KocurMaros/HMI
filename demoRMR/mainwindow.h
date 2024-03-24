@@ -96,6 +96,7 @@ private:
 	TKobukiData robotdata;
 	int datacounter;
 	int updateSkeletonPicture;
+	bool useSkeleton;
 	skeleton skeleJoints;
 	QTimer *timer;
 
@@ -110,12 +111,12 @@ private:
 	QLed *m_connectionLed;
 
 	uint16_t distanceFromWall[4] = { lidarDistance::FAR };
+	double avg_dist[4] = { 0 };
+
 	bool colisionDetected = false ;
 	bool reverse_robot = false;
 	bool forward_robot = false;
 
-	QImage attention_image;
-	QImage warning_image;
 	QImage colision_image;
 
 	bool m_motionButtonsVisible;

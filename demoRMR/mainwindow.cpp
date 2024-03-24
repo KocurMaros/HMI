@@ -125,14 +125,11 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			for (size_t i = 0; i < 4; i++) {
 				if (distanceFromWall[i] != lidarDistance::FAR){
 					border_rect = create_border_rect(rect,  i);
-					if (distanceFromWall[i] == lidarDistance::MEDIUM) {
-						brush.setStyle(Qt::SolidPattern);
-						brush.setColor(QColor(255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, 
-												distanceFromWall[i] == lidarDistance::CLOSE ? (double)lidarDistance::CLOSE : 0, (double)distanceFromWall[i], 255.0, 0.0)));
-						painter.setBrush(brush);
-						if (i != 2)
-							painter.drawRect(border_rect);
-					}
+					brush.setStyle(Qt::SolidPattern);
+					brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0: 255, 0, (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0, (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
+					painter.setBrush(brush);
+					if (i != 2)
+						painter.drawRect(border_rect);
 				}
 			}
 		}
@@ -190,7 +187,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
 							rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 	}
-	if(updateSkeletonPicture == 1)
+	if(updateSkeletonPicture == 1 && useSkeleton)
 	{
 		updateSkeletonPicture = 0;
 		inPaintEventProcessSkeleton();
@@ -504,7 +501,7 @@ void MainWindow::on_emgStopButton_clicked()
 void MainWindow::on_bodyControlButton_clicked()
 {
 	qDebug() << "Body control button clicked";
-	updateSkeletonPicture = (updateSkeletonPicture ? 0 : 1);
+	useSkeleton = (useSkeleton ? 0 : 1);
 }
 
 void MainWindow::on_changeStyleSheet_triggered()
@@ -515,7 +512,7 @@ void MainWindow::on_changeStyleSheet_triggered()
 
 void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance)
 {
-	double avg_dist[4] = { 0 };
+	
 	uint8_t num_of_scans[4] = { 0 };
 	for (size_t i = 0; i < laserData.numberOfScans; i++) {
 		if (copyOfLaserData.Data[i].scanDistance < 0.1)
@@ -553,7 +550,6 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 	const double b = 250.0;
 
 	double d_crit;
-	cout << forward_robot << endl;
 	if (forward_robot) {
 		for (size_t i = 0; i < laserData.numberOfScans; i++) {
 			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
