@@ -8,6 +8,8 @@ class ControllButtons : public QWidget
 public:
 	explicit ControllButtons(bool *reverse, bool *forward, MainWindow *parent = nullptr);
 	void switchHand(bool checked);
+	void addProgressBars(BodyProgressBars *progressBars);
+	void removeProgressBars(BodyProgressBars *progressBars);
 	bool reverse() const { return m_reverseRobot; }
 	bool forward() const { return m_forwardRobot; }
 

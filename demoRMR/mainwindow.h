@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "HelpWindow.h"
+#include "BodyProgressBars.h"
 #include "QLed.h"
 #include <QMainWindow>
 #include <QMessageBox>
@@ -126,6 +127,7 @@ private:
 	bool m_motionButtonsVisible;
 	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
+	BodyProgressBars *m_bodyProgressBars;
 };
 
 #endif // MAINWINDOW_H

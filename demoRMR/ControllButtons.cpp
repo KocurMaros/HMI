@@ -73,6 +73,16 @@ void ControllButtons::switchHand(bool checked)
 	m_buttonGridlayout->removeItem(m_spacer);
 }
 
+void ControllButtons::addProgressBars(BodyProgressBars *progressBars)
+{
+	m_buttonGridlayout->addWidget(progressBars, 1, 3, 1, 2);
+}
+
+void ControllButtons::removeProgressBars(BodyProgressBars *progressBars)
+{
+	m_buttonGridlayout->removeWidget(progressBars);
+}
+
 void ControllButtons::on_forwardButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(500);
@@ -105,3 +115,4 @@ void ControllButtons::on_stopButtons_clicked()
 {
 	m_parent->robot->setTranslationSpeed(0);
 }
+

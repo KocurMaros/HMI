@@ -20,6 +20,28 @@
     </item>
     <item row="0" column="5">
      <layout class="QGridLayout" name="topGridLayout">
+      <item row="0" column="2">
+       <widget class="QFrame" name="frame">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>600</width>
+          <height>450</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="4">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -89,7 +111,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Body Control</string>
+             <string>Body Control: off</string>
             </property>
            </widget>
           </item>
@@ -222,28 +244,6 @@
          </layout>
         </item>
        </layout>
-      </item>
-      <item row="0" column="2">
-       <widget class="QFrame" name="frame">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>600</width>
-          <height>450</height>
-         </size>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>

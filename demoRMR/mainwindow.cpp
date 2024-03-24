@@ -18,6 +18,8 @@
 #include <qdebug.h>
 #include "CKobuki.h"
 
+#define BODY_PROGRESS_BAR_POS 3, 2
+
 // 11-15
 static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
 ///TOTO JE DEMO PROGRAM...AK SI HO NASIEL NA PC V LABAKU NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
@@ -513,6 +515,30 @@ void MainWindow::on_bodyControlButton_clicked()
 {
 	qDebug() << "Body control button clicked";
 	useSkeleton = (useSkeleton ? 0 : 1);
+
+	if (useSkeleton) {
+		m_bodyProgressBars = new BodyProgressBars(this);
+		ui->bodyControlButton->setText("Body Control: on");
+
+		if (m_leftHandedMode) {
+			m_controllButtons->addProgressBars(m_bodyProgressBars);
+		}
+		else {
+			ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+		}
+	}
+	else {
+		ui->bodyControlButton->setText("Body Control: off");
+
+		if (m_leftHandedMode) {
+			m_controllButtons->removeProgressBars(m_bodyProgressBars);
+		}
+		else {
+			ui->topGridLayout->removeWidget(m_bodyProgressBars);
+		}
+
+		m_bodyProgressBars->deleteLater();
+	}
 }
 
 void MainWindow::on_changeStyleSheet_triggered()
@@ -599,11 +625,18 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 
 		m_controllButtons = new ControllButtons(&reverse_robot, &forward_robot, this);
 		if (m_leftHandedMode) {
+			if (updateSkeletonPicture) {
+				ui->topGridLayout->removeWidget(m_bodyProgressBars);
+				m_controllButtons->addProgressBars(m_bodyProgressBars);
+			}
+			else {
+				ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+			}
 			ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
 			m_controllButtons->switchHand(m_leftHandedMode);
 		}
 		else {
-			ui->topGridLayout->addWidget(m_controllButtons, 4, 4, 1, 1);
+			ui->topGridLayout->addWidget(m_controllButtons, 3, 4, 1, 1);
 		}
 		update();
 		return;
@@ -611,6 +644,10 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 
 	m_motionButtonsVisible = false;
 	ui->actionAdd_motion_buttons->setText("Add motion buttons");
+	if (updateSkeletonPicture) {
+		m_controllButtons->removeProgressBars(m_bodyProgressBars);
+		ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+	}
 	ui->topGridLayout->removeWidget(m_controllButtons);
 	m_controllButtons->deleteLater();
 }
@@ -628,9 +665,17 @@ void MainWindow::on_actionChangeHand_toggled()
 	ui->topGridLayout->removeWidget(m_controllButtons);
 	if (m_leftHandedMode) {
 		ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
+		if (updateSkeletonPicture) {
+			m_controllButtons->addProgressBars(m_bodyProgressBars);
+			ui->topGridLayout->removeWidget(m_bodyProgressBars);
+		}
 	}
 	else {
-		ui->topGridLayout->addWidget(m_controllButtons, 4, 4, 1, 1);
+		if (updateSkeletonPicture) {
+			m_controllButtons->removeProgressBars(m_bodyProgressBars);
+			ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+		}
+		ui->topGridLayout->addWidget(m_controllButtons, 3, 4, 1, 1);
 	}
 
 	m_controllButtons->switchHand(m_leftHandedMode);

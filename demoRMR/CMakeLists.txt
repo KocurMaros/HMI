@@ -28,6 +28,7 @@ set(HEADERS
 	stylesheeteditor.h
 	ControllButtons.h
 	HelpWindow.h
+	BodyProgressBars.h
 )
 
 set(SOURCES
@@ -36,6 +37,7 @@ set(SOURCES
 	stylesheeteditor.cpp
 	ControllButtons.cpp
 	HelpWindow.cpp
+	BodyProgressBars.cpp
 )
 
 set(UI
