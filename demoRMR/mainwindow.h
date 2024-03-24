@@ -66,6 +66,8 @@ private slots:
 
 	void on_emgStopButton_clicked();
 
+	void on_bodyControlButton_clicked();
+
 	void on_changeStyleSheet_triggered();
 	void on_actionAdd_motion_buttons_triggered();
 	void on_actionChangeHand_toggled();

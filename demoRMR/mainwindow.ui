@@ -38,7 +38,7 @@
             <property name="minimumSize">
              <size>
               <width>162</width>
-              <height>25</height>
+              <height>50</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -66,7 +66,7 @@
             <property name="minimumSize">
              <size>
               <width>162</width>
-              <height>0</height>
+              <height>50</height>
              </size>
             </property>
             <property name="text">
@@ -75,7 +75,7 @@
            </widget>
           </item>
           <item alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_7">
+           <widget class="QPushButton" name="bodyControlButton">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -85,11 +85,11 @@
             <property name="minimumSize">
              <size>
               <width>162</width>
-              <height>0</height>
+              <height>50</height>
              </size>
             </property>
             <property name="text">
-             <string>Reset Laser</string>
+             <string>Body Control</string>
             </property>
            </widget>
           </item>
@@ -104,30 +104,11 @@
             <property name="minimumSize">
              <size>
               <width>162</width>
-              <height>0</height>
+              <height>50</height>
              </size>
             </property>
             <property name="text">
              <string>Use camera</string>
-            </property>
-           </widget>
-          </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_8">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>162</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Reset robot</string>
             </property>
            </widget>
           </item>

@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
-	updateSkeletonPicture = 1;
+	updateSkeletonPicture = 0;
 
 	datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
@@ -283,7 +283,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
-	if (instance->count() > 0) {
+	if (instance->count() > 0 || (updateSkeletonPicture && robot != nullptr)) {
 		if (forwardspeed == 0 && rotationspeed != 0)
 			robot->setRotationSpeed(rotationspeed);
 		else if (forwardspeed != 0 && rotationspeed == 0)
@@ -368,7 +368,6 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 {
 	memcpy(&skeleJoints, &skeledata, sizeof(skeleton));
 
-	updateSkeletonPicture = 1;
 	return 0;
 }
 
@@ -565,6 +564,12 @@ void MainWindow::on_emgStopButton_clicked()
 	reverse_robot = false;
 }
 
+void MainWindow::on_bodyControlButton_clicked()
+{
+	qDebug() << "Body control button clicked";
+	updateSkeletonPicture = (updateSkeletonPicture ? 0 : 1);
+}
+
 void MainWindow::on_changeStyleSheet_triggered()
 {
 	m_styleSheetEditor->show();
@@ -678,3 +683,4 @@ void MainWindow::on_actionShowHelp_triggered()
 
 	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() { m_helpWindow->close(); });
 }
+
