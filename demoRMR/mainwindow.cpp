@@ -78,6 +78,17 @@ double MAP(double x, double in_min, double in_max, double out_min, double out_ma
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+QRectF create_border_rect(QRect rect, size_t i)
+{
+	QRectF border_rect;
+	if (i == 0)
+		border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 20);
+	else if (i == 1)
+		border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y(), rect.width() / 50, rect.height());
+	else if (i == 3) 
+		border_rect = QRect(rect.x(), rect.y(), rect.width() / 50, rect.height());
+	return border_rect;
+}
 void MainWindow::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
@@ -98,113 +109,66 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 		parse_lidar_data(copyOfLaserData, distanceFromWall);
-		calc_colisions_points(copyOfLaserData, colisionDetected);
+		calc_colisions_points(copyOfLaserData, &colisionDetected);
 
 		painter.drawImage(rect, image.rgbSwapped());
 
-		QPoint dest_pos;
 		uint16_t width = rect.width();
 		uint16_t height = rect.height();
-		uint16_t x, y;
-		if (colisionDetected[0] || colisionDetected[1]) {
+		if (colisionDetected) {
 			painter.drawImage(QPoint(width / 2 - colision_image.width() / 2, height / 2 - colision_image.height() / 2), colision_image);
-			colisionDetected[0] = false;
-			colisionDetected[1] = false;
+			colisionDetected = false;
 		}
 		else {
 			QRectF border_rect;
 			QBrush brush;
 			for (size_t i = 0; i < 4; i++) {
-				if (distanceFromWall[i] != lidarDistance::FAR) {
-					if (i == 0) {
-						border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 20);
+				if (distanceFromWall[i] != lidarDistance::FAR){
+					border_rect = create_border_rect(rect,  i);
+					if (distanceFromWall[i] == lidarDistance::MEDIUM) {
+						brush.setStyle(Qt::SolidPattern);
+						brush.setColor(QColor(255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, 
+												distanceFromWall[i] == lidarDistance::CLOSE ? (double)lidarDistance::CLOSE : 0, (double)distanceFromWall[i], 255.0, 0.0)));
+						painter.setBrush(brush);
+						if (i != 2)
+							painter.drawRect(border_rect);
 					}
-					else if (i == 1) {
-						border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y(), rect.width() / 50, rect.height());
-					}
-					else if (i == 3) {
-						border_rect = QRect(rect.x(), rect.y(), rect.width() / 50, rect.height());
-						// border_rect = QRect(rect.x(c), rect.y(), rect.width(), rect.height()/20);
-					}
-					dest_pos = QPoint(x, y);
-				}
-				if (distanceFromWall[i] == lidarDistance::MEDIUM) {
-					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(
-						255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, (double)lidarDistance::CLOSE, (double)lidarDistance::MEDIUM, 255.0, 0.0)));
-					painter.setBrush(brush);
-					if (i != 2)
-						painter.drawRect(border_rect);
-				}
-				if (distanceFromWall[i] == lidarDistance::CLOSE) {
-					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(255, 0, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, 0.0, (double)lidarDistance::CLOSE, 255.0, 30.0)));
-					painter.setBrush(brush);
-					// painter.setPen(QPen(QColor(0,255,0,0), 3));
-					if (i != 2)
-						painter.drawRect(border_rect);
 				}
 			}
 		}
-	}
-	else {
-		if (reverse_robot) {
-			updateLaserPicture = 0;
-			double min_dist = 10000;
-			painter.setPen(pero);
-			int den = 5;
-			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REVERSE_LEFT)
-					&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REVERSE_RIGHT)) {
-					if (min_dist > copyOfLaserData.Data[k].scanDistance)
-						min_dist = copyOfLaserData.Data[k].scanDistance;
-					if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
-						painter.setPen(QPen(Qt::red, 3));
-					else if (copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM)
-						painter.setPen(QPen(Qt::yellow, 3));
-					else
-						painter.setPen(QPen(Qt::green, 3));
-				}
-				else {
-					painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
-				}
-				if (m_ipaddress != "127.0.0.1") {
-					CKobuki kobuki;
-					if (min_dist < lidarDistance::CLOSE) {
-						kobuki.setSound(1000, 1);
-					}
-					else if (min_dist < lidarDistance::MEDIUM) {
-						kobuki.setSound(100, 1);
-					}
-				}
-
-				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
-				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
-					+ rect.topLeft().x(); //prepocet do obrazovky
-				int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
-					+ rect.topLeft().y();  //prepocet do obrazovky
-				if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
-					painter.drawEllipse(QPoint(xp, yp), 2, 2);
-			}
-			pero.setColor(Qt::magenta);
-			painter.setPen(pero);
-			int xrobot = rect.width() / 2;
-			int yrobot = rect.height() / 2;
-			int xpolomer = 20;
-			int ypolomer = 20;
-
-			painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
-			painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-							 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
-		}
-		else if (updateLaserPicture == 1) ///ak mam nove data z lidaru
+	}else {
+		if (updateLaserPicture == 1) ///ak mam nove data z lidaru
 		{
 			updateLaserPicture = 0;
-
 			painter.setPen(pero);
 			int den = 5;
+			double min_dist = 10000;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				painter.setPen(QPen(Qt::green, 3));
+				if(reverse_robot){
+					if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REVERSE_LEFT)
+						&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REVERSE_RIGHT)) {
+						if (min_dist > copyOfLaserData.Data[k].scanDistance)
+							min_dist = copyOfLaserData.Data[k].scanDistance;
+						if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
+							painter.setPen(QPen(Qt::red, 3));
+						else if (copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM)
+							painter.setPen(QPen(Qt::yellow, 3));
+						else
+							painter.setPen(QPen(Qt::green, 3));
+					}
+					else 
+						painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
+					if (m_ipaddress != "127.0.0.1") {
+						CKobuki kobuki;
+						if (min_dist < lidarDistance::CLOSE) {
+							kobuki.setSound(1000, 1);
+						}
+						else if (min_dist < lidarDistance::MEDIUM) {
+							kobuki.setSound(100, 1);
+						}
+					}
+				}else
+					painter.setPen(QPen(Qt::green, 3));
 
 				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
@@ -214,54 +178,22 @@ void MainWindow::paintEvent(QPaintEvent *event)
 				if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
 					painter.drawEllipse(QPoint(xp, yp), 2, 2);
 			}
-			pero.setColor(Qt::magenta);
-			painter.setPen(pero);
-			int xrobot = rect.width() / 2;
-			int yrobot = rect.height() / 2;
-			int xpolomer = 20;
-			int ypolomer = 20;
-
-			painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
-			painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-							 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 		}
+		pero.setColor(Qt::magenta);
+		painter.setPen(pero);
+		int xrobot = rect.width() / 2;
+		int yrobot = rect.height() / 2;
+		int xpolomer = 20;
+		int ypolomer = 20;
+
+		painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+							rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 	}
-
-	if (updateSkeletonPicture == 1) {
-		double left_zero = -M_PI / 2 - M_PI / 4;
-		double right_zero = -M_PI / 4;
-		double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
-								   skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
-		double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
-								  skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
-		double speed = 0;
-		double rotation = 0;
-		if ((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0)
-			|| (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
-			angle_left = left_zero;
-		if ((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0)
-			|| (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
-			angle_right = right_zero;
-		if (angle_left < left_zero - M_PI / 4 || angle_left > 0)
-			angle_left = left_zero - M_PI / 4;
-		else if (angle_left > left_zero + M_PI / 4)
-			angle_left = left_zero + M_PI / 4;
-
-		if (angle_right < right_zero - M_PI / 4)
-			angle_right = right_zero - M_PI / 4;
-		else if (angle_right > right_zero + M_PI / 4)
-			angle_right = right_zero + M_PI / 4;
-
-		if (angle_left < left_zero)
-			speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -300, 0);
-		else if (angle_left > left_zero)
-			speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 300);
-		if (angle_right < right_zero)
-			rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
-		else if (angle_right > right_zero)
-			rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
-		forwardspeed = speed;
-		rotationspeed = rotation;
+	if(updateSkeletonPicture == 1)
+	{
+		updateSkeletonPicture = 0;
+		inPaintEventProcessSkeleton();
 	}
 }
 
@@ -367,7 +299,7 @@ bool MainWindow::isIPValid(const QString &ip)
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
 	memcpy(&skeleJoints, &skeledata, sizeof(skeleton));
-
+	updateSkeletonPicture = 1;
 	return 0;
 }
 
@@ -382,36 +314,41 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 	switch (key) {
 	case Qt::Key_W:
 	case Qt::Key_Up:
-		robot->setTranslationSpeed(500);
-		reverse_robot = false;
-		forward_robot = true;
+		forwardspeed = 300;
+		rotationspeed = 0;
+		setRobotDirection();
+		robot->setTranslationSpeed(forwardspeed);
 		break;
 
 	case Qt::Key_S:
 	case Qt::Key_Down:
-		robot->setTranslationSpeed(-250);
-		reverse_robot = true;
-		forward_robot = false;
+		forwardspeed = -300;
+		rotationspeed = 0;
+		setRobotDirection();
+		robot->setTranslationSpeed(forwardspeed);
 		break;
 
 	case Qt::Key_A:
 	case Qt::Key_Left:
-		robot->setRotationSpeed(3.14159 / 2);
-		reverse_robot = false;
-		forward_robot = false;
+		forwardspeed = 0;
+		rotationspeed = 3.14159 / 2;
+		setRobotDirection();
+		robot->setRotationSpeed(rotationspeed);
 		break;
 
 	case Qt::Key_D:
 	case Qt::Key_Right:
-		robot->setRotationSpeed(-3.14159 / 2);
-		reverse_robot = false;
-		forward_robot = false;
+		forwardspeed = 0;
+		rotationspeed = -3.14159 / 2;
+		setRobotDirection();
+		robot->setRotationSpeed(rotationspeed);
 		break;
 
 	case Qt::Key_R:
-		robot->setTranslationSpeed(0);
-		forward_robot = false;
-		reverse_robot = false;
+		forwardspeed = 0;
+		rotationspeed = 0;
+		setRobotDirection();
+		robot->setTranslationSpeed(forwardspeed);
 		break;
 
 	case Qt::Key_Escape: {
@@ -622,9 +559,7 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
 			if (d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE
 				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-				// cout << d_crit << " ";
-				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle <<endl;// " " << laserData.Data[i].scanQuality << endl;
-				colisions[0] = true;
+				*colisions = true;
 			}
 		}
 	}
@@ -684,3 +619,56 @@ void MainWindow::on_actionShowHelp_triggered()
 	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() { m_helpWindow->close(); });
 }
 
+
+void MainWindow::inPaintEventProcessSkeleton(){
+	double left_zero = -M_PI / 2 - M_PI / 4;
+	double right_zero = -M_PI / 4;
+	double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
+								skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
+	double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
+								skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+	double speed = 0;
+	double rotation = 0;
+
+	if ((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0)
+		|| (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
+		angle_left = left_zero;
+	if ((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0)
+		|| (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
+		angle_right = right_zero;
+	if (angle_left < left_zero - M_PI / 4 || angle_left > 0)
+		angle_left = left_zero - M_PI / 4;
+	else if (angle_left > left_zero + M_PI / 4)
+		angle_left = left_zero + M_PI / 4;
+
+	if (angle_right < right_zero - M_PI / 4)
+		angle_right = right_zero - M_PI / 4;
+	else if (angle_right > right_zero + M_PI / 4)
+		angle_right = right_zero + M_PI / 4;
+
+	if (angle_left < left_zero)
+		speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -300, 0);
+	else if (angle_left > left_zero)
+		speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 300);
+	if (angle_right < right_zero)
+		rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
+	else if (angle_right > right_zero)
+		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
+	forwardspeed = speed;
+	rotationspeed = rotation;
+	setRobotDirection();
+}
+void MainWindow::setRobotDirection(){
+	if(forwardspeed > 0){
+		forward_robot = true;
+		reverse_robot = false;
+	}
+	else if(forwardspeed < 0){
+		forward_robot = false;
+		reverse_robot = true;
+	}
+	else{
+		forward_robot = false;
+		reverse_robot = false;
+	}
+}
