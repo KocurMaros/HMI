@@ -22,7 +22,7 @@ In the top menu bar we can see two sections. First are the Settings and the seco
 this Help message. The main window consist of the main screen where all the data are
 displayed and a control panel.
 
-### Control panel:
+### Control panel
 
   1. **Led:** Indicator for the current state (Connected, Disconnected, Emergency Stop).
   This led also offeres the current IP address of the robot.
@@ -35,13 +35,13 @@ displayed and a control panel.
 
 In this state you can only switch between the lidar and camera view. Movement is prohibited.
 
-### Settings:
+### Settings
 
   1. **Colorscheme:** You can choose between 3 colorschemes. Default, coffee, mocha.
   2. **Control buttons:** Show the control buttons in the app.
   3. **Left-handed mode:** Switch the app into left handed mode.
 
-### Body controlling:
+### Body controlling
 
 For the controll is this application using left and right hand. Where left hand controls
 the velocity of th robot and the right hand controls the rotation of th e robot robot. For

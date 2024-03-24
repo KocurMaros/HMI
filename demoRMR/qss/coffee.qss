@@ -11,17 +11,11 @@ QLineEdit[echoMode="2"] {
    so that they look elegant regardless of the width of the text. */
 QPushButton {
 	background-color: palegoldenrod;
-	border-width: 2px;
 	border-color: darkkhaki;
-	border-style: solid;
-	border-radius: 5;
-	padding: 3px;
-	min-width: 9ex;
-	min-height: 2.5ex;
 }
 
 QPushButton:!disabled {
-	color: white
+	color: black
 }
 
 QPushButton:disabled {

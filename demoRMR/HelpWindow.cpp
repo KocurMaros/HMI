@@ -8,6 +8,7 @@ HelpWindow::HelpWindow(QWidget *parent)
 	: QDialog(parent)
 {
 	this->setWindowTitle("Help");
+	setFixedSize(730, 381);
 	QFile file(":/md/help.md");
 
 	if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
