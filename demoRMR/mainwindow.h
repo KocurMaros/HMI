@@ -55,7 +55,9 @@ public:
 private:
 	void disableAllButtons(bool disable);
 	bool isIPValid(const QString &ip);
-
+	void inPaintEventProcessSkeleton();
+	void inPaintEventProcessLidar(QPainter *painter, QRect *rect, QPen *pero);
+	void inPaintEventProcessLidarReverse(QPainter *painter, QRect *rect, QPen *pero);
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
