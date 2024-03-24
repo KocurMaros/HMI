@@ -98,40 +98,35 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 		parse_lidar_data(copyOfLaserData, distanceFromWall);
-		calc_colisions_points(copyOfLaserData, colisionDetected);
+		calc_colisions_points(copyOfLaserData, &colisionDetected);
 
 		painter.drawImage(rect, image.rgbSwapped());
 
 		QPoint dest_pos;
 		uint16_t width = rect.width();
 		uint16_t height = rect.height();
+
 		uint16_t x, y;
-		if (colisionDetected[0] || colisionDetected[1]) {
+		if (colisionDetected) {
 			painter.drawImage(QPoint(width / 2 - colision_image.width() / 2, height / 2 - colision_image.height() / 2), colision_image);
-			colisionDetected[0] = false;
-			colisionDetected[1] = false;
+			colisionDetected = false;
 		}
 		else {
 			QRectF border_rect;
 			QBrush brush;
 			for (size_t i = 0; i < 4; i++) {
 				if (distanceFromWall[i] != lidarDistance::FAR) {
-					if (i == 0) {
+					if (i == 0)
 						border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 20);
-					}
-					else if (i == 1) {
+					else if (i == 1)
 						border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y(), rect.width() / 50, rect.height());
-					}
-					else if (i == 3) {
+					else if (i == 3) 
 						border_rect = QRect(rect.x(), rect.y(), rect.width() / 50, rect.height());
-						// border_rect = QRect(rect.x(c), rect.y(), rect.width(), rect.height()/20);
-					}
 					dest_pos = QPoint(x, y);
 				}
 				if (distanceFromWall[i] == lidarDistance::MEDIUM) {
 					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(
-						255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, (double)lidarDistance::CLOSE, (double)lidarDistance::MEDIUM, 255.0, 0.0)));
+					brush.setColor(QColor(255, 255, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, (double)lidarDistance::CLOSE, (double)lidarDistance::MEDIUM, 255.0, 0.0)));
 					painter.setBrush(brush);
 					if (i != 2)
 						painter.drawRect(border_rect);
@@ -140,7 +135,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 					brush.setStyle(Qt::SolidPattern);
 					brush.setColor(QColor(255, 0, 0, (uint8_t)MAP(copyOfLaserData.Data[i].scanDistance, 0.0, (double)lidarDistance::CLOSE, 255.0, 30.0)));
 					painter.setBrush(brush);
-					// painter.setPen(QPen(QColor(0,255,0,0), 3));
 					if (i != 2)
 						painter.drawRect(border_rect);
 				}
@@ -225,43 +219,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
 							 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 		}
-	}
-
-	if (updateSkeletonPicture == 1) {
-		double left_zero = -M_PI / 2 - M_PI / 4;
-		double right_zero = -M_PI / 4;
-		double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
-								   skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
-		double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
-								  skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
-		double speed = 0;
-		double rotation = 0;
-		if ((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0)
-			|| (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
-			angle_left = left_zero;
-		if ((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0)
-			|| (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
-			angle_right = right_zero;
-		if (angle_left < left_zero - M_PI / 4 || angle_left > 0)
-			angle_left = left_zero - M_PI / 4;
-		else if (angle_left > left_zero + M_PI / 4)
-			angle_left = left_zero + M_PI / 4;
-
-		if (angle_right < right_zero - M_PI / 4)
-			angle_right = right_zero - M_PI / 4;
-		else if (angle_right > right_zero + M_PI / 4)
-			angle_right = right_zero + M_PI / 4;
-
-		if (angle_left < left_zero)
-			speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -300, 0);
-		else if (angle_left > left_zero)
-			speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 300);
-		if (angle_right < right_zero)
-			rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
-		else if (angle_right > right_zero)
-			rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
-		forwardspeed = speed;
-		rotationspeed = rotation;
 	}
 }
 
@@ -367,8 +324,42 @@ bool MainWindow::isIPValid(const QString &ip)
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
 	memcpy(&skeleJoints, &skeledata, sizeof(skeleton));
+	// updateSkeletonPicture = 1;
+	double left_zero = -M_PI / 2 - M_PI / 4;
+	double right_zero = -M_PI / 4;
+	double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
+								skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
+	double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
+								skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+	double speed = 0;
+	double rotation = 0;
 
-	updateSkeletonPicture = 1;
+	if ((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0)
+		|| (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
+		angle_left = left_zero;
+	if ((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0)
+		|| (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
+		angle_right = right_zero;
+	if (angle_left < left_zero - M_PI / 4 || angle_left > 0)
+		angle_left = left_zero - M_PI / 4;
+	else if (angle_left > left_zero + M_PI / 4)
+		angle_left = left_zero + M_PI / 4;
+
+	if (angle_right < right_zero - M_PI / 4)
+		angle_right = right_zero - M_PI / 4;
+	else if (angle_right > right_zero + M_PI / 4)
+		angle_right = right_zero + M_PI / 4;
+
+	if (angle_left < left_zero)
+		speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -300, 0);
+	else if (angle_left > left_zero)
+		speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 300);
+	if (angle_right < right_zero)
+		rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
+	else if (angle_right > right_zero)
+		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
+	forwardspeed = speed;
+	rotationspeed = rotation;
 	return 0;
 }
 
@@ -485,7 +476,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		robot->setCameraParameters("http://" + m_ipaddress + ":8000/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
 	}
 
-	robot->setSkeletonParameters(m_ipaddress, 23432, 23432, std::bind(&MainWindow::processThisSkeleton, this, std::placeholders::_1));
+	// robot->setSkeletonParameters(m_ipaddress, 23432, 23432, std::bind(&MainWindow::processThisSkeleton, this, std::placeholders::_1));
 
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
 	robot->robotStart();
@@ -617,9 +608,7 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
 			if (d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE
 				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-				// cout << d_crit << " ";
-				// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle <<endl;// " " << laserData.Data[i].scanQuality << endl;
-				colisions[0] = true;
+				colisions = true;
 			}
 		}
 	}
