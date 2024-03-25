@@ -81,12 +81,23 @@ double MAP(double x, double in_min, double in_max, double out_min, double out_ma
 QRectF create_border_rect(QRect rect, size_t i)
 {
 	QRectF border_rect;
+	int offset = rect.height() / 40;
+	int outside_size = rect.height() / 10;
+
 	if (i == lidarSectors ::FRONT) 
-		border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 20);
-	else if (i == lidarSectors::RIGHT || i == lidarSectors::REAR_RIGHT || i == lidarSectors::FRONT_RIGHT)
-		border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y(), rect.width() / 50, rect.height());
-	else if (i == lidarSectors::LEFT || i == lidarSectors::REAR_LEFT || i == lidarSectors::FRONT_LEFT) 
-		border_rect = QRect(rect.x(), rect.y(), rect.width() / 50, rect.height());
+		border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 40);
+	else if(i == lidarSectors::FRONT_RIGHT)
+		border_rect = QRect(rect.x() + rect.width()- rect.width() / 50, rect.y()+offset , rect.width() / 50, outside_size);
+	else if (i == lidarSectors::RIGHT)
+		border_rect = QRect(rect.x() + rect.width()- rect.width() / 50, rect.y()+offset+outside_size, rect.width() / 50, rect.height()-offset-2*outside_size);
+	else if(i == lidarSectors::REAR_RIGHT)
+		border_rect = QRect(rect.x() + rect.width()- rect.width() / 50, rect.y()+offset + rect.height()-offset-outside_size, rect.width() / 50, outside_size);
+	else if (i == lidarSectors::LEFT) 
+		border_rect = QRect(rect.x(), rect.y()+offset+outside_size, rect.width() / 50, rect.height()-offset-2*outside_size);
+	else if(i == lidarSectors::REAR_LEFT)
+		border_rect = QRect(rect.x(), rect.y()+offset+rect.height()-offset-outside_size, rect.width() / 50, outside_size);
+	else if(i == lidarSectors::FRONT_LEFT)
+		border_rect = QRect(rect.x(), rect.y()+offset, rect.width() / 50, outside_size);
 	return border_rect;
 }
 void MainWindow::paintEvent(QPaintEvent *event)
@@ -128,8 +139,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 					brush.setStyle(Qt::SolidPattern);
 					brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0: 255, 0, (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0, (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
 					painter.setBrush(brush);
-					if (i != 2)
-						painter.drawRect(border_rect);
+					painter.setPen(Qt::NoPen); // Set the pen to NoPen to remove git adthe border
+					painter.drawRect(border_rect);
 				}
 			}
 		}
@@ -575,9 +586,6 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
 			if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
 				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-                cout << "Colision detected" << endl;
-                cout << "Distance: " << laserData.Data[i].scanDistance << endl;
-                cout << "critic " << d_crit << endl;
                 *colisions = true;
 			}
 		}
