@@ -135,7 +135,7 @@ V tejto úlohe bolo potrebné vizualizovať na kamere dáta z lidaru, primárne 
 \subsection{Riešenie}
 Robota sme si rozdelili na 8 častí a z nich sme následné spracovali dáta pre vizualizáciu. Robota delíme na prednú/zadnú časť pravú/ľavú časť po 40 stupňov a pomedzi ne sú ďalšie 50 stupňov sektory, ktoré nám poskytujú ďalšie informácie o predmetoch v okolí robota. Taktiež v HMI je implementovaný detektor kolízii. Parkovacia kamera vykresľuje primárne body za robotom, ale ponecháva operátorovy informáciu aj o prekážkach pred robotom.
 \subsection{Kamerová časť}
-Detegovali sme prekážky ktoré sa nachádzajú už 80cm od robota, a ak sa predmet nachádzal bližšie než 50cm od robota, zvýšili sme úroveň alarmu. Na kamere sa nevykresľujú dáta nachádzajúce sa za robotom.
+Detegovali sme prekážky ktoré sa nachádzajú už 80cm od robota, a ak sa predmet nachádzal bližšie než 50cm od robota, zvýšili sme úroveň alarmu. Na kamere sa nevykresľujú dáta nachádzajúce sa priamo za robotom, ale zvýrazňujeme 7 sektorov v okolí robota.
 Alarm výzera následovne:
 \begin{figure}[!htbp]
 	\begin{center}
@@ -159,10 +159,10 @@ Ovládač reaguje na operátorove zápästie a lakeť pravej aj ľavej ruky. Poh
 
 \begin{figure}[!htbp]
 	\begin{center}
-		\includegraphics[width=0.95\textwidth]{img/skeleton.png}
+		\includegraphics[width=0.35\textwidth]{img/skeleton.png}
 	\end{center}
 	\caption{Kĺby ľudského tela}
 	\label{fig:skeleton}
 \end{figure}
-
+\newpage
 Na \ref{fig:skeleton} sú znázornené kĺby ktoré sa na ľudskom tele detegujú. My sa zaoberáme kĺbom 7 voči 9 a 13 voči 15, kde obe ruky sa sklápajú do vnútra. Nulové rýchlosti sú pri 45 stupňovom uhle.
