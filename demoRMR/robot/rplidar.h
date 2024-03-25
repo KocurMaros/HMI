@@ -52,20 +52,27 @@ typedef struct
 	int numberOfScans;
 	LaserData Data[1000];
 } LaserMeasurement;
-typedef enum {
-	FRONT_LEFT = 338,
-	FRONT_LEFT_1 = 310,
-	FRONT_RIGHT = 13,
-	FRONT_RIGHT_1 = 50,
-	REAR_LEFT = 182,
-	REAR_RIGHT = 170,
-	THRESHOLD = 5,
-	LEFT = 270,
-	RIGHT = 90,
-	REVERSE_LEFT = 220,
-	REVERSE_RIGHT = 130
-} lidarDirection;
 
+typedef enum {
+	FRONT_A = 20,
+	RIGHT_A = 70,
+	RIGHT_B = 110,
+	REAR_A = 160,
+	REAR_B = 200,
+	LEFT_B = 250,
+	LEFT_A = 290,
+	FRONT_B = 340
+} lidarAngles;
+typedef enum {
+	FRONT = 0,
+	FRONT_RIGHT = 1,
+	RIGHT = 2,
+	REAR_RIGHT = 3,
+	REAR = 4,
+	REAR_LEFT = 5,
+	LEFT = 6,
+	FRONT_LEFT = 7,
+} lidarSectors;
 typedef enum { FAR = 1050, MEDIUM = 800, CLOSE = 500 } lidarDistance;
 
 class rplidar

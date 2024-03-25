@@ -110,8 +110,8 @@ private:
 
 	QLed *m_connectionLed;
 
-	uint16_t distanceFromWall[4] = { lidarDistance::FAR };
-	double avg_dist[4] = { 0 };
+	uint16_t distanceFromWall[8] = { lidarDistance::FAR };
+	double avg_dist[8] = { 0 };
 
 	bool colisionDetected = false ;
 	bool reverse_robot = false;

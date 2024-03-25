@@ -81,11 +81,11 @@ double MAP(double x, double in_min, double in_max, double out_min, double out_ma
 QRectF create_border_rect(QRect rect, size_t i)
 {
 	QRectF border_rect;
-	if (i == 0)
+	if (i == lidarSectors ::FRONT) 
 		border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 20);
-	else if (i == 1)
+	else if (i == lidarSectors::RIGHT || i == lidarSectors::REAR_RIGHT || i == lidarSectors::FRONT_RIGHT)
 		border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y(), rect.width() / 50, rect.height());
-	else if (i == 3) 
+	else if (i == lidarSectors::LEFT || i == lidarSectors::REAR_LEFT || i == lidarSectors::FRONT_LEFT) 
 		border_rect = QRect(rect.x(), rect.y(), rect.width() / 50, rect.height());
 	return border_rect;
 }
@@ -122,8 +122,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		else {
 			QRectF border_rect;
 			QBrush brush;
-			for (size_t i = 0; i < 4; i++) {
-				if (distanceFromWall[i] != lidarDistance::FAR){
+			for (size_t i = 0; i < 8; i++) {
+				if (distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR){
 					border_rect = create_border_rect(rect,  i);
 					brush.setStyle(Qt::SolidPattern);
 					brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0: 255, 0, (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0, (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
@@ -142,8 +142,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 			double min_dist = 10000;
 			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
 				if(reverse_robot){
-					if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarDirection::REVERSE_LEFT)
-						&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarDirection::REVERSE_RIGHT)) {
+					if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B)
+						&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
 						if (min_dist > copyOfLaserData.Data[k].scanDistance)
 							min_dist = copyOfLaserData.Data[k].scanDistance;
 						if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
@@ -513,28 +513,48 @@ void MainWindow::on_changeStyleSheet_triggered()
 void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance)
 {
 	
-	uint8_t num_of_scans[4] = { 0 };
-	for (size_t i = 0; i < laserData.numberOfScans; i++) {
-		if (copyOfLaserData.Data[i].scanDistance < 0.1)
+	uint8_t num_of_scans[8] = { 0 };
+	for (size_t i = 0; i < 8; i++){
+		avg_dist[i] = 0;
+	}
+	for (size_t i = 0; i < laserData.numberOfScans; i++){
+		if(copyOfLaserData.Data[i].scanDistance == lidarDistance::FAR || copyOfLaserData.Data[i].scanDistance < 0.1){
 			continue;
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_LEFT)
-			|| copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_RIGHT) && copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR) { // front side
-			avg_dist[0] += laserData.Data[i].scanDistance;
-			num_of_scans[0]++;
 		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::FRONT_RIGHT_1) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::RIGHT)
-			&& copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR) { //right side
-			// cout << laserData.Data[i].scanDistance << " " << laserData.Data[i].scanAngle << " " << laserData.Data[i].scanQuality << endl;
-			avg_dist[1] += laserData.Data[i].scanDistance;
-			num_of_scans[1]++;
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_B) || copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_A)){
+			avg_dist[lidarSectors::FRONT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::FRONT]++;
 		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarDirection::LEFT) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarDirection::FRONT_LEFT_1)
-			&& copyOfLaserData.Data[i].scanDistance < lidarDistance::FAR) { //left side
-			avg_dist[3] += laserData.Data[i].scanDistance;
-			num_of_scans[3]++;
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_A)){
+			avg_dist[lidarSectors::FRONT_RIGHT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::FRONT_RIGHT]++;
+		}
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_B)){
+			avg_dist[lidarSectors::RIGHT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::RIGHT]++;
+		}
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_A)){
+			avg_dist[lidarSectors::REAR_RIGHT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::REAR_RIGHT]++;
+		}
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_B)){
+			avg_dist[lidarSectors::REAR] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::REAR]++;
+		}
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_B)){
+			avg_dist[lidarSectors::REAR_LEFT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::REAR_LEFT]++;
+		}
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_A)){
+			avg_dist[lidarSectors::LEFT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::LEFT]++;
+		}
+		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_B)){
+			avg_dist[lidarSectors::FRONT_LEFT] += copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::FRONT_LEFT]++;
 		}
 	}
-	for (size_t i = 0; i < 4; i++) {
+	for (size_t i = 0; i < 8; i++) {
 		avg_dist[i] /= num_of_scans[i];
 		if (avg_dist[i] < lidarDistance::CLOSE)
 			distance[i] = lidarDistance::CLOSE;
