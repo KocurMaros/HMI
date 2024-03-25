@@ -39,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_motionButtonsVisible(false)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
+	, useSkeleton(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -225,15 +226,19 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
-	if (instance->count() > 0 || (updateSkeletonPicture && robot != nullptr)) {
-		if (forwardspeed == 0 && rotationspeed != 0)
+	if (instance->count() > 0 || (useSkeleton && robot != nullptr)) {
+		if (forwardspeed == 0 && rotationspeed != 0) {
 			robot->setRotationSpeed(rotationspeed);
-		else if (forwardspeed != 0 && rotationspeed == 0)
+		}
+		else if (forwardspeed != 0 && rotationspeed == 0) {
 			robot->setTranslationSpeed(forwardspeed);
-		else if ((forwardspeed != 0 && rotationspeed != 0))
+		}
+		else if ((forwardspeed != 0 && rotationspeed != 0)) {
 			robot->setArcSpeed(forwardspeed, forwardspeed / rotationspeed);
-		else
+		}
+		else {
 			robot->setTranslationSpeed(0);
+		}
 	}
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
@@ -513,11 +518,15 @@ void MainWindow::on_emgStopButton_clicked()
 
 void MainWindow::on_bodyControlButton_clicked()
 {
-	qDebug() << "Body control button clicked";
-	useSkeleton = (useSkeleton ? 0 : 1);
+	qDebug() << "Body control button clicked. Old: " << useSkeleton;
+	useSkeleton = (useSkeleton ? false : true);
+	qDebug() << "New: " << useSkeleton;
 
 	if (useSkeleton) {
 		m_bodyProgressBars = new BodyProgressBars(this);
+
+		connect(this, &MainWindow::changeSpeed, m_bodyProgressBars, &BodyProgressBars::setValues);
+
 		ui->bodyControlButton->setText("Body Control: on");
 
 		if (m_leftHandedMode) {
@@ -625,7 +634,7 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 
 		m_controllButtons = new ControllButtons(&reverse_robot, &forward_robot, this);
 		if (m_leftHandedMode) {
-			if (updateSkeletonPicture) {
+			if (useSkeleton) {
 				ui->topGridLayout->removeWidget(m_bodyProgressBars);
 				m_controllButtons->addProgressBars(m_bodyProgressBars);
 			}
@@ -644,7 +653,7 @@ void MainWindow::on_actionAdd_motion_buttons_triggered()
 
 	m_motionButtonsVisible = false;
 	ui->actionAdd_motion_buttons->setText("Add motion buttons");
-	if (updateSkeletonPicture) {
+	if (useSkeleton) {
 		m_controllButtons->removeProgressBars(m_bodyProgressBars);
 		ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
 	}
@@ -665,13 +674,13 @@ void MainWindow::on_actionChangeHand_toggled()
 	ui->topGridLayout->removeWidget(m_controllButtons);
 	if (m_leftHandedMode) {
 		ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
-		if (updateSkeletonPicture) {
+		if (useSkeleton) {
 			m_controllButtons->addProgressBars(m_bodyProgressBars);
 			ui->topGridLayout->removeWidget(m_bodyProgressBars);
 		}
 	}
 	else {
-		if (updateSkeletonPicture) {
+		if (useSkeleton) {
 			m_controllButtons->removeProgressBars(m_bodyProgressBars);
 			ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
 		}
