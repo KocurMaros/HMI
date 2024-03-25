@@ -675,10 +675,12 @@ void MainWindow::inPaintEventProcessSkeleton(){
 		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
     bool change[2] = {false};
     // cout << "angle_left: " << angle_left << " angle_right: " << angle_right << endl;
-    if(std::abs(prev_forwardspeed - speed) > 20){
+    if ((prev_forwardspeed > 20 || prev_forwardspeed < 20) && speed == 0){
+        
+    }else if(std::abs(prev_forwardspeed - speed) > 20){
         prev_forwardspeed = speed;
 	    forwardspeed = speed;
-        // cout << "Speed: " << forwardspeed << endl;
+        cout << "Speed: " << forwardspeed << endl;
         change[0] = true;
     }
     if(std::abs(prev_rotationspeed - rotation) > 0.1){
