@@ -84,6 +84,7 @@ public slots:
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
+    void changeSpeed(double forwardspeed, double rotationspeed);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
@@ -104,6 +105,8 @@ private:
 
 	double forwardspeed;  //mm/s
 	double rotationspeed; //omega/s
+    double prev_forwardspeed;
+    double prev_rotationspeed;
 
 	StyleSheetEditor *m_styleSheetEditor;
 	HelpWindow *m_helpWindow;
@@ -116,6 +119,7 @@ private:
 	bool colisionDetected = false ;
 	bool reverse_robot = false;
 	bool forward_robot = false;
+
 
 	QImage colision_image;
 

@@ -674,8 +674,13 @@ void MainWindow::inPaintEventProcessSkeleton(){
 		rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
 	else if (angle_right > right_zero)
 		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
-	forwardspeed = speed;
-	rotationspeed = rotation;
+    if(std::abs(prev_forwardspeed - speed) > 10 || std::abs(prev_rotationspeed - rotation) > 0.1){
+        prev_forwardspeed = speed;
+        prev_rotationspeed = rotation;
+	    rotationspeed = rotation;
+	    forwardspeed = speed;
+        emit changeSpeed(forwardspeed, rotationspeed);
+    }
 	setRobotDirection();
 }
 void MainWindow::setRobotDirection(){
