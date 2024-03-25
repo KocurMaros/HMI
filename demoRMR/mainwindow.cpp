@@ -311,7 +311,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 	switch (key) {
 	case Qt::Key_W:
 	case Qt::Key_Up:
-		forwardspeed = 300;
+		forwardspeed = 200;
 		rotationspeed = 0;
 		setRobotDirection();
 		robot->setTranslationSpeed(forwardspeed);
@@ -319,7 +319,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 	case Qt::Key_S:
 	case Qt::Key_Down:
-		forwardspeed = -300;
+		forwardspeed = -150;
 		rotationspeed = 0;
 		setRobotDirection();
 		robot->setTranslationSpeed(forwardspeed);
@@ -518,7 +518,7 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 		avg_dist[i] = 0;
 	}
 	for (size_t i = 0; i < laserData.numberOfScans; i++){
-		if(copyOfLaserData.Data[i].scanDistance == lidarDistance::FAR || copyOfLaserData.Data[i].scanDistance < 0.1){
+		if(copyOfLaserData.Data[i].scanDistance >= lidarDistance::FAR || copyOfLaserData.Data[i].scanDistance < 0.1){
 			continue;
 		}
 		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_B) || copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_A)){
@@ -556,6 +556,7 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 	}
 	for (size_t i = 0; i < 8; i++) {
 		avg_dist[i] /= num_of_scans[i];
+        cout << "sector " << i << " avg dist: " << avg_dist[i] << endl;
 		if (avg_dist[i] < lidarDistance::CLOSE)
 			distance[i] = lidarDistance::CLOSE;
 		else if (avg_dist[i] < lidarDistance::MEDIUM)
@@ -567,15 +568,18 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 
 void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisions)
 {
-	const double b = 250.0;
+	const double b = 200.0;
 
 	double d_crit;
 	if (forward_robot) {
 		for (size_t i = 0; i < laserData.numberOfScans; i++) {
 			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
-			if (d_crit >= laserData.Data[i].scanDistance && laserData.Data[i].scanDistance < lidarDistance::CLOSE
+			if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
 				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-				*colisions = true;
+                cout << "Colision detected" << endl;
+                cout << "Distance: " << laserData.Data[i].scanDistance << endl;
+                cout << "critic " << d_crit << endl;
+                *colisions = true;
 			}
 		}
 	}

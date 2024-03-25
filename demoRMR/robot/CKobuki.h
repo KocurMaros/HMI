@@ -122,7 +122,7 @@ typedef long (*src_callback_kobuki_data)(void *user_data, TKobukiData &Kobuki_da
 class CKobuki
 {
 public:
-	CKobuki() { std::cout << "kobuki instantiated" << std::endl; };
+	// CKobuki() { std::cout << "kobuki instantiated" << std::endl; };
 	virtual ~CKobuki() {
 
 	};
