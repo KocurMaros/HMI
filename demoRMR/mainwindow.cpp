@@ -556,8 +556,7 @@ void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance
 	}
 	for (size_t i = 0; i < 8; i++) {
 		avg_dist[i] /= num_of_scans[i];
-        cout << "sector " << i << " avg dist: " << avg_dist[i] << endl;
-		if (avg_dist[i] < lidarDistance::CLOSE)
+        if (avg_dist[i] < lidarDistance::CLOSE)
 			distance[i] = lidarDistance::CLOSE;
 		else if (avg_dist[i] < lidarDistance::MEDIUM)
 			distance[i] = lidarDistance::MEDIUM;
@@ -667,18 +666,30 @@ void MainWindow::inPaintEventProcessSkeleton(){
 		angle_right = right_zero + M_PI / 4;
 
 	if (angle_left < left_zero)
-		speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -300, 0);
+		speed = MAP(angle_left, left_zero - M_PI / 4, left_zero, -250, 0);
 	else if (angle_left > left_zero)
-		speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 300);
+		speed = MAP(angle_left, left_zero, left_zero + M_PI / 4, 0, 250);
 	if (angle_right < right_zero)
 		rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
 	else if (angle_right > right_zero)
 		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
-    if(std::abs(prev_forwardspeed - speed) > 10 || std::abs(prev_rotationspeed - rotation) > 0.1){
+    bool change[2] = {false};
+    // cout << "angle_left: " << angle_left << " angle_right: " << angle_right << endl;
+    if(std::abs(prev_forwardspeed - speed) > 20){
         prev_forwardspeed = speed;
+	    forwardspeed = speed;
+        // cout << "Speed: " << forwardspeed << endl;
+        change[0] = true;
+    }
+    if(std::abs(prev_rotationspeed - rotation) > 0.1){
         prev_rotationspeed = rotation;
 	    rotationspeed = rotation;
-	    forwardspeed = speed;
+        // cout << "Rotation: " << rotationspeed << endl;
+        change[1] = true;    
+    }
+    if(change[0] || change[1]){
+        change[0] = false;
+        change[1] = false;
         emit changeSpeed(forwardspeed, rotationspeed);
     }
 	setRobotDirection();
