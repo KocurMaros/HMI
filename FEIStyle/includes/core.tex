@@ -129,5 +129,40 @@ aby si ich užívateľ vedel nájsť a vedel ich použivať v čo najkratšom č
 	\caption{Pomoc pre užívateľa na zorientovanie sa v používaní aplikácie.}
 	\label{fig:help}
 \end{figure}
+\section{Lidar-Kamera fúzia}
+\subsection{Problematika}
+V tejto úlohe bolo potrebné vizualizovať na kamere dáta z lidaru, primárne tie ktoré niesu viditeľne kamerou, aby sme upozornili operátora na možne kolízie a prekážky ktoré sa nachádzajú v pracovnom prostredí robota. Taktiež sme implementovali parkovaciu kameru, ktorá sa zapne pri cúvaní s robotom, následne pri zmene smeru dopredu sa opäť zapne pôvodné okno, ktoré mal používateľ zapnuté.
+\subsection{Riešenie}
+Robota sme si rozdelili na 8 častí a z nich sme následné spracovali dáta pre vizualizáciu. Robota delíme na prednú/zadnú časť pravú/ľavú časť po 40 stupňov a pomedzi ne sú ďalšie 50 stupňov sektory, ktoré nám poskytujú ďalšie informácie o predmetoch v okolí robota. Taktiež v HMI je implementovaný detektor kolízii. Parkovacia kamera vykresľuje primárne body za robotom, ale ponecháva operátorovy informáciu aj o prekážkach pred robotom.
+\subsection{Kamerová časť}
+Detegovali sme prekážky ktoré sa nachádzajú už 80cm od robota, a ak sa predmet nachádzal bližšie než 50cm od robota, zvýšili sme úroveň alarmu. Na kamere sa nevykresľujú dáta nachádzajúce sa za robotom.
+Alarm výzera následovne:
+\begin{figure}[!htbp]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{img/alarm-all.png}
+	\end{center}
+	\caption{Alarmy použite na upozornenie operátora o objektoch v blízkosti robota}
+	\label{fig:alarm}
+\end{figure}
+\subsection{Parkovacia kamera}
+Pri zmene smere robota na chod vzad, sa automaticky zapne parkovacia kamera, na ktorej sa zafarbujú predmety ležiace za robotom. Body postupne menia farbu z bezpečnej zelenej cez žltú na červenú farbu.
+\begin{figure}[!htbp]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{img/parking_camera.png}
+	\end{center}
+	\caption{Parkovací asistent}
+	\label{fig:parking}
+\end{figure}
 
+\section{Ovládanie gestami}
+Ovládač reaguje na operátorove zápästie a lakeť pravej aj ľavej ruky. Pohyb je v prirodzenom pracovnom priestore kĺbov ruky. S ľavou rukou sa nastavuje rýchlosť v pred aj vzad od 300 po -300 mm/s, zväčšením uhla medzi lakťom a zápästím sa rýchlosť pridáva a naopak. Pravou rukou sa nastavuje rotačná rýchlosť rovnakým spôsobom ako pri rýchlosti, stým že rozmedzie je od -45 stupňov až 45 stupňov za sekundu. Týmto typom ovládania je možne robotovi posielať tri typy rýchlosti. 
 
+\begin{figure}[!htbp]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{img/skeleton.png}
+	\end{center}
+	\caption{Kĺby ľudského tela}
+	\label{fig:skeleton}
+\end{figure}
+
+Na \ref{fig:skeleton} sú znázornené kĺby ktoré sa na ľudskom tele detegujú. My sa zaoberáme kĺbom 7 voči 9 a 13 voči 15, kde obe ruky sa sklápajú do vnútra. Nulové rýchlosti sú pri 45 stupňovom uhle.
