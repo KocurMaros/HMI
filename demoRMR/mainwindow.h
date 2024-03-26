@@ -88,7 +88,7 @@ public slots:
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
-    void changeSpeed(double forwardspeed, double rotationspeed);
+	void changeSpeed(double forwardspeed, double rotationspeed);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
@@ -109,8 +109,8 @@ private:
 
 	double forwardspeed;  //mm/s
 	double rotationspeed; //omega/s
-    double prev_forwardspeed;
-    double prev_rotationspeed;
+	double prev_forwardspeed;
+	double prev_rotationspeed;
 
 	StyleSheetEditor *m_styleSheetEditor;
 	HelpWindow *m_helpWindow;
@@ -120,7 +120,7 @@ private:
 	uint16_t distanceFromWall[8] = { lidarDistance::FAR };
 	double avg_dist[8] = { 0 };
 
-	bool colisionDetected = false ;
+	bool colisionDetected = false;
 	bool reverse_robot = false;
 	bool forward_robot = false;
 

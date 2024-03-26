@@ -7,6 +7,7 @@ class BodyProgressBars
 	: public QWidget
 {
 	Q_OBJECT;
+
 public:
 	explicit BodyProgressBars(QWidget *parent = nullptr);
 	void setVelocity(int velocity);

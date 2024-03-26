@@ -73,7 +73,12 @@ typedef enum {
 	LEFT = 6,
 	FRONT_LEFT = 7,
 } lidarSectors;
-typedef enum { FAR = 1050, MEDIUM = 800, CLOSE = 500, CRITICAL = 350, } lidarDistance;
+typedef enum {
+	FAR = 1050,
+	MEDIUM = 800,
+	CLOSE = 500,
+	CRITICAL = 350,
+} lidarDistance;
 
 class rplidar
 {

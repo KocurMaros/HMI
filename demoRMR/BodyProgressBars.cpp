@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-#define TO_DEGREES(rad) int(rad * 180/M_PI)
+#define TO_DEGREES(rad) int(rad * 180 / M_PI)
 
 BodyProgressBars::BodyProgressBars(QWidget *parent)
 	: QWidget(parent)
@@ -17,7 +17,7 @@ BodyProgressBars::BodyProgressBars(QWidget *parent)
 
 	m_velocityProgressBar = new QProgressBar(this);
 	m_velocityProgressBar->setOrientation(Qt::Horizontal);
-	m_velocityProgressBar->setRange(TO_DEGREES(-M_PI/4.), TO_DEGREES(M_PI/4.));
+	m_velocityProgressBar->setRange(TO_DEGREES(-M_PI / 4.), TO_DEGREES(M_PI / 4.));
 	m_velocityProgressBar->setValue(0);
 
 	QVBoxLayout *layout = new QVBoxLayout(this);
@@ -45,4 +45,3 @@ void BodyProgressBars::setValues(int velocity, double rotation)
 	setVelocity(velocity);
 	setRotation(rotation);
 }
-

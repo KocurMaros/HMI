@@ -87,20 +87,22 @@ QRectF create_border_rect(QRect rect, size_t i)
 	int offset = rect.height() / 40;
 	int outside_size = rect.height() / 10;
 
-	if (i == lidarSectors ::FRONT) 
+	if (i == lidarSectors ::FRONT)
 		border_rect = QRect(rect.x(), rect.y(), rect.width(), rect.height() / 40);
-	else if(i == lidarSectors::FRONT_RIGHT)
-		border_rect = QRect(rect.x() + rect.width()- rect.width() / 50, rect.y()+offset , rect.width() / 50, outside_size);
+	else if (i == lidarSectors::FRONT_RIGHT)
+		border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y() + offset, rect.width() / 50, outside_size);
 	else if (i == lidarSectors::RIGHT)
-		border_rect = QRect(rect.x() + rect.width()- rect.width() / 50, rect.y()+offset+outside_size, rect.width() / 50, rect.height()-offset-2*outside_size);
-	else if(i == lidarSectors::REAR_RIGHT)
-		border_rect = QRect(rect.x() + rect.width()- rect.width() / 50, rect.y()+offset + rect.height()-offset-outside_size, rect.width() / 50, outside_size);
-	else if (i == lidarSectors::LEFT) 
-		border_rect = QRect(rect.x(), rect.y()+offset+outside_size, rect.width() / 50, rect.height()-offset-2*outside_size);
-	else if(i == lidarSectors::REAR_LEFT)
-		border_rect = QRect(rect.x(), rect.y()+offset+rect.height()-offset-outside_size, rect.width() / 50, outside_size);
-	else if(i == lidarSectors::FRONT_LEFT)
-		border_rect = QRect(rect.x(), rect.y()+offset, rect.width() / 50, outside_size);
+		border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y() + offset + outside_size, rect.width() / 50,
+							rect.height() - offset - 2 * outside_size);
+	else if (i == lidarSectors::REAR_RIGHT)
+		border_rect = QRect(rect.x() + rect.width() - rect.width() / 50, rect.y() + offset + rect.height() - offset - outside_size, rect.width() / 50,
+							outside_size);
+	else if (i == lidarSectors::LEFT)
+		border_rect = QRect(rect.x(), rect.y() + offset + outside_size, rect.width() / 50, rect.height() - offset - 2 * outside_size);
+	else if (i == lidarSectors::REAR_LEFT)
+		border_rect = QRect(rect.x(), rect.y() + offset + rect.height() - offset - outside_size, rect.width() / 50, outside_size);
+	else if (i == lidarSectors::FRONT_LEFT)
+		border_rect = QRect(rect.x(), rect.y() + offset, rect.width() / 50, outside_size);
 	return border_rect;
 }
 
@@ -145,7 +147,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 			painter.drawEllipse(QPoint(miniRect.x() + xrobot, miniRect.y() + yrobot), xpolomer, ypolomer);
 			painter.drawLine(miniRect.x() + xrobot, miniRect.y() + yrobot, miniRect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-								miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+							 miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 		}
 	}
 	else {
@@ -164,11 +166,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 		painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
 		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-							rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+						 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 	}
 
-	if(updateSkeletonPicture == 1 && useSkeleton)
-	{
+	if (updateSkeletonPicture == 1 && useSkeleton) {
 		updateSkeletonPicture = 0;
 		inPaintEventProcessSkeleton();
 	}
@@ -524,51 +525,50 @@ void MainWindow::on_changeStyleSheet_triggered()
 
 void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance)
 {
-	
 	uint8_t num_of_scans[8] = { 0 };
-	for (size_t i = 0; i < 8; i++){
+	for (size_t i = 0; i < 8; i++) {
 		avg_dist[i] = 0;
 	}
-	for (size_t i = 0; i < laserData.numberOfScans; i++){
-		if(copyOfLaserData.Data[i].scanDistance >= lidarDistance::FAR || copyOfLaserData.Data[i].scanDistance < 0.1){
+	for (size_t i = 0; i < laserData.numberOfScans; i++) {
+		if (copyOfLaserData.Data[i].scanDistance >= lidarDistance::FAR || copyOfLaserData.Data[i].scanDistance < 0.1) {
 			continue;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_B) || copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_A)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_B) || copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_A)) {
 			avg_dist[lidarSectors::FRONT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::FRONT]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_A)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_A)) {
 			avg_dist[lidarSectors::FRONT_RIGHT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::FRONT_RIGHT]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_B)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_B)) {
 			avg_dist[lidarSectors::RIGHT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::RIGHT]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_A)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_A)) {
 			avg_dist[lidarSectors::REAR_RIGHT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::REAR_RIGHT]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_B)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_B)) {
 			avg_dist[lidarSectors::REAR] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::REAR]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_B)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_B)) {
 			avg_dist[lidarSectors::REAR_LEFT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::REAR_LEFT]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_A)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_A)) {
 			avg_dist[lidarSectors::LEFT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::LEFT]++;
 		}
-		if(copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_B)){
+		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_B)) {
 			avg_dist[lidarSectors::FRONT_LEFT] += copyOfLaserData.Data[i].scanDistance;
 			num_of_scans[lidarSectors::FRONT_LEFT]++;
 		}
 	}
 	for (size_t i = 0; i < 8; i++) {
 		avg_dist[i] /= num_of_scans[i];
-        if (avg_dist[i] < lidarDistance::CLOSE)
+		if (avg_dist[i] < lidarDistance::CLOSE)
 			distance[i] = lidarDistance::CLOSE;
 		else if (avg_dist[i] < lidarDistance::MEDIUM)
 			distance[i] = lidarDistance::MEDIUM;
@@ -587,7 +587,7 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
 			if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
 				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-                *colisions = true;
+				*colisions = true;
 			}
 		}
 	}
@@ -667,13 +667,14 @@ void MainWindow::on_actionShowHelp_triggered()
 }
 
 
-void MainWindow::inPaintEventProcessSkeleton(){
+void MainWindow::inPaintEventProcessSkeleton()
+{
 	double left_zero = -M_PI / 2 - M_PI / 4;
 	double right_zero = -M_PI / 4;
 	double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
-								skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
+							   skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
 	double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
-								skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+							  skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
 	double speed = 0;
 	double rotation = 0;
 
@@ -701,41 +702,40 @@ void MainWindow::inPaintEventProcessSkeleton(){
 		rotation = MAP(angle_right, right_zero - M_PI / 4, right_zero, -3.14159 / 4, 0);
 	else if (angle_right > right_zero)
 		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
-    bool change[2] = {false};
-    // cout << "angle_left: " << angle_left << " angle_right: " << angle_right << endl;
-    if ((prev_forwardspeed > 20 || prev_forwardspeed < 20) && speed == 0){
-        
-    }else if(std::abs(prev_forwardspeed - speed) > 20){
-        prev_forwardspeed = speed;
-	    forwardspeed = speed;
-        cout << "Speed: " << forwardspeed << endl;
-        change[0] = true;
-    }
-    if(std::abs(prev_rotationspeed - rotation) > 0.1){
-        prev_rotationspeed = rotation;
-	    rotationspeed = rotation;
-        // cout << "Rotation: " << rotationspeed << endl;
-        change[1] = true;    
-    }
-    if(change[0] || change[1]){
-        change[0] = false;
-        change[1] = false;
-        emit changeSpeed(forwardspeed, rotationspeed);
-    }
+	bool change[2] = { false };
+	// cout << "angle_left: " << angle_left << " angle_right: " << angle_right << endl;
+	if ((prev_forwardspeed > 20 || prev_forwardspeed < 20) && speed == 0) { }
+	else if (std::abs(prev_forwardspeed - speed) > 20) {
+		prev_forwardspeed = speed;
+		forwardspeed = speed;
+		cout << "Speed: " << forwardspeed << endl;
+		change[0] = true;
+	}
+	if (std::abs(prev_rotationspeed - rotation) > 0.1) {
+		prev_rotationspeed = rotation;
+		rotationspeed = rotation;
+		// cout << "Rotation: " << rotationspeed << endl;
+		change[1] = true;
+	}
+	if (change[0] || change[1]) {
+		change[0] = false;
+		change[1] = false;
+		emit changeSpeed(forwardspeed, rotationspeed);
+	}
 	setRobotDirection();
 }
 
 void MainWindow::setRobotDirection()
 {
-	if(forwardspeed > 0){
+	if (forwardspeed > 0) {
 		forward_robot = true;
 		reverse_robot = false;
 	}
-	else if(forwardspeed < 0){
+	else if (forwardspeed < 0) {
 		forward_robot = false;
 		reverse_robot = true;
 	}
-	else{
+	else {
 		forward_robot = false;
 		reverse_robot = false;
 	}
@@ -749,9 +749,8 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 		painter.setPen(pen);
 		double min_dist = 10000;
 		for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-			if(reverse_robot){
-				if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B)
-					&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
+			if (reverse_robot) {
+				if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B) && copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
 					if (min_dist > copyOfLaserData.Data[k].scanDistance) {
 						min_dist = copyOfLaserData.Data[k].scanDistance;
 					}
@@ -814,10 +813,13 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 		QRectF border_rect;
 		QBrush brush;
 		for (size_t i = 0; i < 8; i++) {
-			if (distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR){
-				border_rect = create_border_rect(rect,  i);
+			if (distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR) {
+				border_rect = create_border_rect(rect, i);
 				brush.setStyle(Qt::SolidPattern);
-				brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0: 255, 0, (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0, (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
+				brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
+									  (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
+												   (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE,
+												   255.0, 30.0)));
 				painter.setBrush(brush);
 				if (i != 2)
 					painter.drawRect(border_rect);
