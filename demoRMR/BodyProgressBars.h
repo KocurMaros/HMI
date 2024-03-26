@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QProgressBar>
+#include <QLabel>
 
 class BodyProgressBars
 	: public QWidget
@@ -17,6 +18,8 @@ signals:
 
 public slots:
 private:
+	QLabel *m_angleLabel;
+	QLabel *m_velocityLabel;
 	QProgressBar *m_angleProgressBar;
 	QProgressBar *m_velocityProgressBar;
 };

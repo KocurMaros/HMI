@@ -1,6 +1,7 @@
 #include "BodyProgressBars.h"
-#include <QBoxLayout>
+
 #include <QDebug>
+#include <QGridLayout>
 
 #include <algorithm>
 #include <cmath>
@@ -10,19 +11,26 @@
 BodyProgressBars::BodyProgressBars(QWidget *parent)
 	: QWidget(parent)
 {
+	m_angleLabel = new QLabel("Angle", this);
+	m_velocityLabel = new QLabel("Velocity", this);
+
 	m_angleProgressBar = new QProgressBar(this);
 	m_angleProgressBar->setOrientation(Qt::Horizontal);
 	m_angleProgressBar->setRange(-250, 250);
 	m_angleProgressBar->setValue(0);
+	m_angleProgressBar->setTextVisible(false);
 
 	m_velocityProgressBar = new QProgressBar(this);
 	m_velocityProgressBar->setOrientation(Qt::Horizontal);
 	m_velocityProgressBar->setRange(TO_DEGREES(-M_PI / 4.), TO_DEGREES(M_PI / 4.));
 	m_velocityProgressBar->setValue(0);
+	m_velocityProgressBar->setTextVisible(false);
 
-	QVBoxLayout *layout = new QVBoxLayout(this);
-	layout->addWidget(m_angleProgressBar);
-	layout->addWidget(m_velocityProgressBar);
+	QGridLayout *layout = new QGridLayout(this);
+	layout->addWidget(m_angleLabel, 0, 0);
+	layout->addWidget(m_velocityLabel, 1, 0);
+	layout->addWidget(m_angleProgressBar, 0, 1);
+	layout->addWidget(m_velocityProgressBar, 1, 1);
 	setLayout(layout);
 }
 

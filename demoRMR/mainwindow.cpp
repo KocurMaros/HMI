@@ -124,7 +124,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	painter.drawRect(rect);
 
 	QRect miniRect;
-	if (!useSkeleton) {
+	if (!useSkeleton && !m_motionButtonsVisible) {
 		miniRect = ui->minLidarFrame->geometry();
 		miniRect.translate(0, 37);
 		painter.drawRect(miniRect);
@@ -133,7 +133,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	if (useCamera1 == true && actIndex > -1 && !reverse_robot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
 	{
 		drawImageData(painter, rect);
-		if (!useSkeleton || ui->minLidarFrame->geometry().height() < 50) {
+		if (!useSkeleton && !m_motionButtonsVisible || ui->minLidarFrame->geometry().height() < 50) {
 			pero.setWidth(1);
 			drawLidarData(painter, pero, miniRect, 70);
 
@@ -151,7 +151,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}
 	}
 	else {
-		if (!useSkeleton || ui->minLidarFrame->geometry().height() < 50) {
+		if (!useSkeleton && !m_motionButtonsVisible || ui->minLidarFrame->geometry().height() < 50) {
 			drawImageData(painter, miniRect, true);
 		}
 		drawLidarData(painter, pero, rect);
