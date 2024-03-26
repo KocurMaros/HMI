@@ -103,93 +103,58 @@ QRectF create_border_rect(QRect rect, size_t i)
 		border_rect = QRect(rect.x(), rect.y()+offset, rect.width() / 50, outside_size);
 	return border_rect;
 }
+
 void MainWindow::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
 	///prekreslujem obrazovku len vtedy, ked viem ze mam nove data. paintevent sa
 	/// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
 	painter.setBrush(Qt::black); //cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
+
 	QPen pero;
 	pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
 	pero.setWidth(3);			  //hrubka pera -3pixely
 	pero.setColor(Qt::green);	  //farba je zelena
+
 	QRect rect;
 	rect = ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
 	rect.translate(0, 37);
 	painter.drawRect(rect);
 
+	QRect miniRect;
+	if (!useSkeleton) {
+		miniRect = ui->minLidarFrame->geometry();
+		miniRect.translate(0, 37);
+		painter.drawRect(miniRect);
+	}
+
 	if (useCamera1 == true && actIndex > -1 && !reverse_robot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
 	{
-		QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
-							  QImage::Format_RGB888); //kopirovanie cvmat do qimage
-		parse_lidar_data(copyOfLaserData, distanceFromWall);
-		calc_colisions_points(copyOfLaserData, &colisionDetected);
+		drawImageData(painter, rect);
+		if (!useSkeleton || ui->minLidarFrame->geometry().height() < 50) {
+			pero.setWidth(1);
+			drawLidarData(painter, pero, miniRect, 70);
 
-		painter.drawImage(rect, image.rgbSwapped());
-
-		uint16_t width = rect.width();
-		uint16_t height = rect.height();
-		if (colisionDetected) {
-			painter.drawImage(QPoint(width / 2 - colision_image.width() / 2, height / 2 - colision_image.height() / 2), colision_image);
-			colisionDetected = false;
-		}
-		else {
-			QRectF border_rect;
-			QBrush brush;
-			for (size_t i = 0; i < 8; i++) {
-				if (distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR){
-					border_rect = create_border_rect(rect,  i);
-					brush.setStyle(Qt::SolidPattern);
-					brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0: 255, 0, (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0, (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
-					painter.setBrush(brush);
-					painter.setPen(Qt::NoPen); // Set the pen to NoPen to remove git adthe border
-					painter.drawRect(border_rect);
-				}
-			}
-		}
-	}else {
-		if (updateLaserPicture == 1) ///ak mam nove data z lidaru
-		{
-			updateLaserPicture = 0;
+			painter.setBrush(Qt::black);
+			pero.setColor(Qt::magenta);
 			painter.setPen(pero);
-			int den = 5;
-			double min_dist = 10000;
-			for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-				if(reverse_robot){
-					if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B)
-						&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
-						if (min_dist > copyOfLaserData.Data[k].scanDistance)
-							min_dist = copyOfLaserData.Data[k].scanDistance;
-						if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE)
-							painter.setPen(QPen(Qt::red, 3));
-						else if (copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM)
-							painter.setPen(QPen(Qt::yellow, 3));
-						else
-							painter.setPen(QPen(Qt::green, 3));
-					}
-					else 
-						painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
-					if (m_ipaddress != "127.0.0.1") {
-						CKobuki kobuki;
-						if (min_dist < lidarDistance::CLOSE) {
-							kobuki.setSound(1000, 1);
-						}
-						else if (min_dist < lidarDistance::MEDIUM) {
-							kobuki.setSound(100, 1);
-						}
-					}
-				}else
-					painter.setPen(QPen(Qt::green, 3));
+			int xrobot = miniRect.width() / 2;
+			int yrobot = miniRect.height() / 2;
+			int xpolomer = 10;
+			int ypolomer = 10;
 
-				int dist = copyOfLaserData.Data[k].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
-				int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
-					+ rect.topLeft().x(); //prepocet do obrazovky
-				int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
-					+ rect.topLeft().y();  //prepocet do obrazovky
-				if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
-					painter.drawEllipse(QPoint(xp, yp), 2, 2);
-			}
+			painter.drawEllipse(QPoint(miniRect.x() + xrobot, miniRect.y() + yrobot), xpolomer, ypolomer);
+			painter.drawLine(miniRect.x() + xrobot, miniRect.y() + yrobot, miniRect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+								miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 		}
+	}
+	else {
+		if (!useSkeleton || ui->minLidarFrame->geometry().height() < 50) {
+			drawImageData(painter, miniRect, true);
+		}
+		drawLidarData(painter, pero, rect);
+
+		painter.setBrush(Qt::black);
 		pero.setColor(Qt::magenta);
 		painter.setPen(pero);
 		int xrobot = rect.width() / 2;
@@ -201,6 +166,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
 							rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 	}
+
 	if(updateSkeletonPicture == 1 && useSkeleton)
 	{
 		updateSkeletonPicture = 0;
@@ -758,7 +724,9 @@ void MainWindow::inPaintEventProcessSkeleton(){
     }
 	setRobotDirection();
 }
-void MainWindow::setRobotDirection(){
+
+void MainWindow::setRobotDirection()
+{
 	if(forwardspeed > 0){
 		forward_robot = true;
 		reverse_robot = false;
@@ -770,5 +738,90 @@ void MainWindow::setRobotDirection(){
 	else{
 		forward_robot = false;
 		reverse_robot = false;
+	}
+}
+
+void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale)
+{
+	if (updateLaserPicture == 1) ///ak mam nove data z lidaru
+	{
+		updateLaserPicture = 0;
+		painter.setPen(pen);
+		double min_dist = 10000;
+		for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
+			if(reverse_robot){
+				if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B)
+					&& copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
+					if (min_dist > copyOfLaserData.Data[k].scanDistance) {
+						min_dist = copyOfLaserData.Data[k].scanDistance;
+					}
+					if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE) {
+						painter.setPen(QPen(Qt::red, 3));
+					}
+					else if (copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM) {
+						painter.setPen(QPen(Qt::yellow, 3));
+					}
+					else {
+						painter.setPen(QPen(Qt::green, 3));
+					}
+				}
+				else {
+					painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
+				}
+				if (m_ipaddress != "127.0.0.1") {
+					CKobuki kobuki;
+					if (min_dist < lidarDistance::CLOSE) {
+						kobuki.setSound(1000, 1);
+					}
+					else if (min_dist < lidarDistance::MEDIUM) {
+						kobuki.setSound(100, 1);
+					}
+				}
+			}
+			else {
+				painter.setPen(QPen(Qt::green, 3));
+			}
+
+			int dist = copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
+			int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
+				+ rect.topLeft().x(); //prepocet do obrazovky
+			int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
+				+ rect.topLeft().y();  //prepocet do obrazovky
+			if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
+				painter.drawEllipse(QPoint(xp, yp), 2, 2);
+		}
+	}
+}
+
+void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
+{
+	QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
+						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
+	parse_lidar_data(copyOfLaserData, distanceFromWall);
+	calc_colisions_points(copyOfLaserData, &colisionDetected);
+
+	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
+	painter.drawImage(rect, image.rgbSwapped());
+
+	if (colisionDetected && !mini) {
+		uint16_t width = rect.width();
+		uint16_t height = rect.height();
+
+		painter.drawImage(QPoint(width / 2 - colision_image.width() / 2, height / 2 - colision_image.height() / 2), colision_image);
+		colisionDetected = false;
+	}
+	else {
+		QRectF border_rect;
+		QBrush brush;
+		for (size_t i = 0; i < 8; i++) {
+			if (distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR){
+				border_rect = create_border_rect(rect,  i);
+				brush.setStyle(Qt::SolidPattern);
+				brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0: 255, 0, (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0, (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
+				painter.setBrush(brush);
+				if (i != 2)
+					painter.drawRect(border_rect);
+			}
+		}
 	}
 }

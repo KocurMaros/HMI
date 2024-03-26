@@ -58,6 +58,9 @@ private:
 	bool isIPValid(const QString &ip);
 	void inPaintEventProcessSkeleton();
 	void setRobotDirection();
+	void drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale = 20);
+	void drawImageData(QPainter &painter, QRect &rect, bool mini = false);
+
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
@@ -120,7 +123,6 @@ private:
 	bool colisionDetected = false ;
 	bool reverse_robot = false;
 	bool forward_robot = false;
-
 
 	QImage colision_image;
 
