@@ -1068,82 +1068,98 @@ File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 
 
 ] (./includes/core.tex
-<img/oldUI.png, id=152, 807.015pt x 610.28pt>
+<img/oldUI.png, id=154, 807.015pt x 610.28pt>
 File: img/oldUI.png Graphic file (type png)
 <use img/oldUI.png>
 Package pdftex.def Info: img/oldUI.png  used on input line 10.
 (pdftex.def)             Requested size: 227.62206pt x 172.13437pt.
  [2 <./img/oldUI.png>]
-<img/default-app.png, id=161, 939.51pt x 684.5575pt>
+<img/default-app.png, id=163, 939.51pt x 684.5575pt>
 File: img/default-app.png Graphic file (type png)
 <use img/default-app.png>
 Package pdftex.def Info: img/default-app.png  used on input line 45.
 (pdftex.def)             Requested size: 223.07211pt x 162.53186pt.
-<img/coffee-app.png, id=162, 939.51pt x 684.5575pt>
+<img/coffee-app.png, id=164, 939.51pt x 684.5575pt>
 File: img/coffee-app.png Graphic file (type png)
 <use img/coffee-app.png>
 Package pdftex.def Info: img/coffee-app.png  used on input line 49.
 (pdftex.def)             Requested size: 223.07211pt x 162.53186pt.
-<img/mocha-app.png, id=163, 939.51pt x 684.5575pt>
+<img/mocha-app.png, id=165, 939.51pt x 684.5575pt>
 File: img/mocha-app.png Graphic file (type png)
 <use img/mocha-app.png>
 Package pdftex.def Info: img/mocha-app.png  used on input line 55.
 (pdftex.def)             Requested size: 223.07211pt x 162.53186pt.
-<img/led-connected.png, id=165, 131.49126pt x 48.18pt>
+<img/led-connected.png, id=167, 131.49126pt x 48.18pt>
 File: img/led-connected.png Graphic file (type png)
 <use img/led-connected.png>
 Package pdftex.def Info: img/led-connected.png  used on input line 66.
 (pdftex.def)             Requested size: 136.57462pt x 50.04497pt.
-<img/led-disconnected.png, id=166, 131.49126pt x 48.18pt>
+<img/led-disconnected.png, id=168, 131.49126pt x 48.18pt>
 File: img/led-disconnected.png Graphic file (type png)
 <use img/led-disconnected.png>
 Package pdftex.def Info: img/led-disconnected.png  used on input line 70.
 (pdftex.def)             Requested size: 136.57462pt x 50.04497pt.
-<img/led-emg-stop.png, id=167, 131.49126pt x 48.18pt>
+<img/led-emg-stop.png, id=169, 131.49126pt x 48.18pt>
 File: img/led-emg-stop.png Graphic file (type png)
 <use img/led-emg-stop.png>
 Package pdftex.def Info: img/led-emg-stop.png  used on input line 74.
 (pdftex.def)             Requested size: 136.57462pt x 50.04497pt.
  [3 <./img/default-app.png> <./img/coffee-app.png> <./img/mocha-app.png>]
-<img/app-emg-stop.png, id=178, 939.51pt x 684.5575pt>
+<img/app-emg-stop.png, id=180, 939.51pt x 684.5575pt>
 File: img/app-emg-stop.png Graphic file (type png)
 <use img/app-emg-stop.png>
 Package pdftex.def Info: img/app-emg-stop.png  used on input line 94.
 (pdftex.def)             Requested size: 432.48051pt x 315.11961pt.
  [4 <./img/led-connected.png> <./img/led-disconnected.png> <./img/led-emg-stop.png> <./img/app-emg-stop.png>]
-<img/left-hand.png, id=189, 933.4875pt x 796.9775pt>
+<img/left-hand.png, id=191, 933.4875pt x 796.9775pt>
 File: img/left-hand.png Graphic file (type png)
 <use img/left-hand.png>
 Package pdftex.def Info: img/left-hand.png  used on input line 107.
 (pdftex.def)             Requested size: 223.07211pt x 190.43939pt.
-<img/right-hand.png, id=190, 933.4875pt x 796.9775pt>
+<img/right-hand.png, id=192, 933.4875pt x 796.9775pt>
 File: img/right-hand.png Graphic file (type png)
 <use img/right-hand.png>
 Package pdftex.def Info: img/right-hand.png  used on input line 111.
 (pdftex.def)             Requested size: 223.07211pt x 190.43939pt.
-<img/help.png, id=193, 733.74126pt x 401.5pt>
+<img/help.png, id=195, 733.74126pt x 401.5pt>
 File: img/help.png Graphic file (type png)
 <use img/help.png>
 Package pdftex.def Info: img/help.png  used on input line 127.
 (pdftex.def)             Requested size: 432.48051pt x 236.65627pt.
  [5 <./img/left-hand.png> <./img/right-hand.png>] [6 <./img/help.png>]
-<img/alarm-all.png, id=206, 1643.13875pt x 551.05875pt>
+<img/alarm-all.png, id=208, 1643.13875pt x 551.05875pt>
 File: img/alarm-all.png Graphic file (type png)
 <use img/alarm-all.png>
 Package pdftex.def Info: img/alarm-all.png  used on input line 156.
 (pdftex.def)             Requested size: 432.48051pt x 145.03766pt.
-<img/parking_camera.png, id=207, 940.51375pt x 603.25375pt>
+<img/parking_camera.png, id=209, 940.51375pt x 603.25375pt>
 File: img/parking_camera.png Graphic file (type png)
 <use img/parking_camera.png>
 Package pdftex.def Info: img/parking_camera.png  used on input line 169.
 (pdftex.def)             Requested size: 432.48051pt x 277.39883pt.
  [7 <./img/alarm-all.png>]
-<img/skeleton.png, id=213, 363.3575pt x 533.995pt>
+<img/skeleton.png, id=215, 363.3575pt x 533.995pt>
 File: img/skeleton.png Graphic file (type png)
 <use img/skeleton.png>
 Package pdftex.def Info: img/skeleton.png  used on input line 184.
 (pdftex.def)             Requested size: 159.33821pt x 234.16815pt.
- [8 <./img/parking_camera.png>]) [9 <./img/skeleton.png>] (./includes/conclusion.tex) [10
+ [8 <./img/parking_camera.png>]
+<img/left-hand-body-control.png, id=223, 939.51pt x 801.99625pt>
+File: img/left-hand-body-control.png Graphic file (type png)
+<use img/left-hand-body-control.png>
+Package pdftex.def Info: img/left-hand-body-control.png  used on input line 202.
+(pdftex.def)             Requested size: 223.07211pt x 190.41489pt.
+<img/right-hand-body-control.png, id=224, 939.51pt x 801.99625pt>
+File: img/right-hand-body-control.png Graphic file (type png)
+<use img/right-hand-body-control.png>
+Package pdftex.def Info: img/right-hand-body-control.png  used on input line 206.
+(pdftex.def)             Requested size: 223.07211pt x 190.41489pt.
+<img/body-control.png, id=225, 941.5175pt x 679.53876pt>
+File: img/body-control.png Graphic file (type png)
+<use img/body-control.png>
+Package pdftex.def Info: img/body-control.png  used on input line 212.
+(pdftex.def)             Requested size: 223.07211pt x 160.99811pt.
+) [9 <./img/skeleton.png>] [10 <./img/left-hand-body-control.png> <./img/right-hand-body-control.png> <./img/body-control.png>] (./includes/conclusion.tex) [11
 
 
 ]
@@ -1154,44 +1170,44 @@ LaTeX Warning: Empty bibliography on input line 44.
 \tf@pri=\write13
 \openout13 = `example_paper.pri'.
 
- [11
+ [12
 
 
 
 
 
 
-] (./includes/attachmentA.tex) [12
+] (./includes/attachmentA.tex) [13
 
 
 ] (./includes/attachmentB.tex
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 2.
-) [13
+) [14
 
 
-] (./includes/attachmentC.tex (./includes/listings/fei.sublime)) [14
+] (./includes/attachmentC.tex (./includes/listings/fei.sublime)) [15
 
 
 ] (./example_paper.aux)
 Package rerunfilecheck Info: File `example_paper.out' has not changed.
-(rerunfilecheck)             Checksum: 409AAD435A1B6FEC0E18A7017511E926;1986.
+(rerunfilecheck)             Checksum: 530AF265CEDAC44B08FF25F87619A6D6;1989.
 Package logreq Info: Writing requests to 'example_paper.run.xml'.
 \openout1 = `example_paper.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 31204 strings out of 479342
- 556444 string characters out of 5869178
- 1291341 words of memory out of 5000000
- 48646 multiletter control sequences out of 15000+600000
+ 31228 strings out of 479342
+ 557134 string characters out of 5869178
+ 1291429 words of memory out of 5000000
+ 48665 multiletter control sequences out of 15000+600000
  531390 words of font info for 58 fonts, out of 8000000 for 9000
  473 hyphenation exceptions out of 8191
  123i,8n,120p,1123b,1828s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}</usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi12.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmri12.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb>
-Output written on example_paper.pdf (21 pages, 553052 bytes).
+Output written on example_paper.pdf (22 pages, 664055 bytes).
 PDF statistics:
- 338 PDF objects out of 1000 (max. 8388607)
- 267 compressed objects within 3 object streams
- 74 named destinations out of 1000 (max. 500000)
- 199 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 351 PDF objects out of 1000 (max. 8388607)
+ 273 compressed objects within 3 object streams
+ 76 named destinations out of 1000 (max. 500000)
+ 214 words of extra memory for PDF output out of 10000 (max. 10000000)
 

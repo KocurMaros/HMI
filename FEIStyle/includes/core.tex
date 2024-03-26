@@ -130,7 +130,7 @@ aby si ich užívateľ vedel nájsť a vedel ich použivať v čo najkratšom č
 	\label{fig:help}
 \end{figure}
 
-\section{Lidar-Kamera fúzia}
+\section{Lidar Kamera fúzia}
 
 \subsection{Problematika}
 V tejto úlohe bolo potrebné vizualizovať na kamere dáta z lidaru, primárne tie ktoré niesu viditeľne kamerou, aby sme upozornili
@@ -177,7 +177,7 @@ Body postupne menia farbu z bezpečnej zelenej cez žltú na červenú farbu.
 Ovládač reaguje na operátorove zápästie a lakeť pravej aj ľavej ruky. Pohyb je v prirodzenom pracovnom priestore kĺbov ruky.
 S ľavou rukou sa nastavuje rýchlosť v pred aj vzad od 300 po -300 mm/s, zväčšením uhla medzi lakťom a zápästím sa rýchlosť pridáva a naopak.
 Pravou rukou sa nastavuje rotačná rýchlosť rovnakým spôsobom ako pri rýchlosti, stým že rozmedzie je od -45 stupňov až 45 stupňov za sekundu.
-Týmto typom ovládania je možne robotovi posielať tri typy rýchlosti. 
+Týmto typom ovládania je možne robotovi posielať tri typy rýchlosti.
 
 \begin{figure}[!htbp]
 	\begin{center}
@@ -191,4 +191,32 @@ Týmto typom ovládania je možne robotovi posielať tri typy rýchlosti.
 
 Na \ref{fig:skeleton} sú znázornené kĺby ktoré sa na ľudskom tele detegujú. My sa zaoberáme kĺbom 7 voči 9 a 13 voči 15, kde obe ruky
 sa sklápajú do vnútra. Nulové rýchlosti sú pri 45 stupňovom uhle.
+
+Aby mal uzivatel aj spatnu vazbu o tom, ako aplikacia vnima natocenia jeho ruk, tak si moze pridat zobrazenie relativnej
+hodnoty. Toto zobrazenie vidime na \ref{fig:progres-bars}.
+
+\begin{figure}[!htbp]
+	\centering
+
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/left-hand-body-control.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/right-hand-body-control.png}
+	\end{subfigure}
+
+	\vspace{\baselineskip}
+
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/body-control.png}
+	\end{subfigure}
+
+	\caption{ Relativne zobrazenie polohy ruk na ovladanie robota. }
+	\label{fig:progres-bars}
+\end{figure}
+
+Zaroven, ako si mozeme vsimnut, tak maly frame, krory sme mali na pravo od hlavnej zobrazujucej plochy nam zanikol.
+Stalo sa to z dovodu, ze sme nemali dostatok miesta na jeho vykreslenie. Preto, aby sme neposkytovali necitatelne
+inforamcie, tak sme sa rozhodli tento frame odstranit.
 
