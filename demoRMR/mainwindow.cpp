@@ -821,8 +821,8 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 												   (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE,
 												   255.0, 30.0)));
 				painter.setBrush(brush);
-				if (i != 2)
-					painter.drawRect(border_rect);
+				painter.setPen(Qt::NoPen);
+				painter.drawRect(border_rect);
 			}
 		}
 	}

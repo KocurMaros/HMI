@@ -11,8 +11,8 @@
 BodyProgressBars::BodyProgressBars(QWidget *parent)
 	: QWidget(parent)
 {
-	m_angleLabel = new QLabel("Angle", this);
-	m_velocityLabel = new QLabel("Velocity", this);
+	m_angleLabel = new QLabel("Angle (deg)", this);
+	m_velocityLabel = new QLabel("Velocity (mm/s)", this);
 
 	m_angleProgressBar = new QProgressBar(this);
 	m_angleProgressBar->setOrientation(Qt::Horizontal);

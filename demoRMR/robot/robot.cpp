@@ -32,6 +32,10 @@ Robot::~Robot()
 	laserthreadHandle.join();
 	camerathreadhandle.join();
 	skeletonthreadHandle.join();
+
+	close(rob_s);
+	close(las_s);
+	close(ske_s);
 #ifdef _WIN32
 	WSACleanup();
 #endif
