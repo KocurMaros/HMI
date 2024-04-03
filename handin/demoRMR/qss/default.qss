@@ -1,0 +1,10 @@
+/* empty stylesheet */
+
+QPushButton#pushButton_9 {
+    background-color: green
+}
+
+QPushButton#emgStopButton {
+    border-style: none
+}
+
