@@ -60,6 +60,7 @@ private:
 	void setRobotDirection();
 	void drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale = 20);
 	void drawImageData(QPainter &painter, QRect &rect, bool mini = false);
+	void calculateOdometry(const TKobukiData &robotdata);
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
@@ -130,6 +131,14 @@ private:
 	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
 	BodyProgressBars *m_bodyProgressBars;
+
+	int lastLeftEncoder;
+	int lastRightEncoder;
+	double m_fiCorrection;
+	bool m_robotStartupLocation;
+	std::atomic<double> m_fi;
+	std::atomic<double> m_x;
+	std::atomic<double> m_y;
 };
 
 #endif // MAINWINDOW_H

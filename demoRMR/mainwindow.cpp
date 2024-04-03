@@ -19,6 +19,8 @@
 #include "CKobuki.h"
 
 #define BODY_PROGRESS_BAR_POS 3, 2
+#define SHORT_MAX 32767
+#define TO_RADIANS 3.14159 / 180.0
 
 // 11-15
 static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
@@ -189,6 +191,8 @@ void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
 /// vola sa vzdy ked dojdu nove data z robota. nemusite nic riesit, proste sa to stane
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
+	calculateOdometry(robotdata);
+
 	///tu mozete robit s datami z robota
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
@@ -218,7 +222,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 		/// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete. prikaz emit to presne takto spravi
 		/// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
 		///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
-		emit uiValuesChanged(robotdata.EncoderLeft, 11, 12);
+		emit uiValuesChanged(m_x, m_y, m_fi);
 		///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
 		/// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
 		/// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
@@ -824,6 +828,42 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 				painter.setPen(Qt::NoPen);
 				painter.drawRect(border_rect);
 			}
+		}
+	}
+}
+
+void MainWindow::calculateOdometry(const TKobukiData &robotdata)
+{
+	int diffLeftEnc = robotdata.EncoderLeft - lastLeftEncoder;
+	int diffRightEnc = robotdata.EncoderRight - lastRightEncoder;
+
+	if (lastRightEncoder > 60'000 && robotdata.EncoderRight < 1'000)
+		diffRightEnc += SHORT_MAX;
+	if (lastLeftEncoder > 60'000 && robotdata.EncoderLeft < 1'000)
+		diffLeftEnc += SHORT_MAX;
+
+	if (lastRightEncoder < 1'000 && robotdata.EncoderRight > 60'000)
+		diffRightEnc -= SHORT_MAX;
+	if (lastLeftEncoder < 1'000 && robotdata.EncoderLeft > 60'000)
+		diffLeftEnc -= SHORT_MAX;
+
+	auto leftEncDist = robot->tickToMeter * diffLeftEnc;
+	auto rightEncDist = robot->tickToMeter * diffRightEnc;
+
+	lastLeftEncoder = robotdata.EncoderLeft;
+	lastRightEncoder = robotdata.EncoderRight;
+
+	double l = (rightEncDist + leftEncDist) / 2.0;
+	{
+		m_fi = robotdata.GyroAngle / 100. * TO_RADIANS - m_fiCorrection;
+		m_x = m_x + l * std::cos(m_fi);
+		m_y = m_y + l * std::sin(m_fi);
+
+		if (!m_robotStartupLocation && datacounter % 5) {
+			m_x = 0;
+			m_y = 0;
+			m_fiCorrection = m_fi;
+			m_robotStartupLocation = true;
 		}
 	}
 }
