@@ -34,49 +34,49 @@ static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
-	, ui(new Ui::MainWindow)
+	, m_ui(new Ui::MainWindow)
 	, m_connectionLed(new QLed(this))
-	, robot(nullptr)
+	, m_robot(nullptr)
 	, m_ipaddress(IP_ADDRESSES[0].toStdString())
 	, m_motionButtonsVisible(false)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
-	, useSkeleton(false)
+	, m_useSkeleton(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
 	//  cap.open("http://192.168.1.11:8000/stream.mjpg");
-	ui->setupUi(this);
-	ui->ipComboBox->addItem(IP_ADDRESSES[0]);
+	m_ui->setupUi(this);
+	m_ui->ipComboBox->addItem(IP_ADDRESSES[0]);
 	for (size_t i = 11; i < 15; i++) {
-		ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
+		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
-	datacounter = 0;
+	m_datacounter = 0;
 	//  timer = new QTimer(this);
 	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
-	updateSkeletonPicture = 0;
+	m_updateSkeletonPicture = 0;
 
-	datacounter = 0;
+	m_datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
-	ui->topRightLayout->insertWidget(0, m_connectionLed);
-	ui->pushButton_9->setStyleSheet("background-color: green");
+	m_ui->topRightLayout->insertWidget(0, m_connectionLed);
+	m_ui->pushButton_9->setStyleSheet("background-color: green");
 
 	QImageReader reader = QImageReader(":/img/warning.png");
 
-	colision_image = reader.read();
-	if (colision_image.isNull())
+	m_colisionImage = reader.read();
+	if (m_colisionImage.isNull())
 		qDebug() << "Error: Cannot load image. " << reader.errorString();
 	else
 		qDebug() << "Image loaded";
-	colision_image = colision_image.scaled(150, 150, Qt::KeepAspectRatio);
+	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
 }
 
 MainWindow::~MainWindow()
 {
-	delete ui;
+	delete m_ui;
 }
 double MAP(double x, double in_min, double in_max, double out_min, double out_max)
 {
@@ -121,21 +121,21 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	pero.setColor(Qt::green);	  //farba je zelena
 
 	QRect rect;
-	rect = ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
+	rect = m_ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
 	rect.translate(0, 37);
 	painter.drawRect(rect);
 
 	QRect miniRect;
-	if (!useSkeleton && !m_motionButtonsVisible) {
-		miniRect = ui->minLidarFrame->geometry();
+	if (!m_useSkeleton && !m_motionButtonsVisible) {
+		miniRect = m_ui->minLidarFrame->geometry();
 		miniRect.translate(0, 37);
 		painter.drawRect(miniRect);
 	}
 
-	if (useCamera1 == true && actIndex > -1 && !reverse_robot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
+	if (useCamera1 == true && actIndex > -1 && !m_reverseRobot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
 	{
 		drawImageData(painter, rect);
-		if (!useSkeleton && !m_motionButtonsVisible || ui->minLidarFrame->geometry().height() < 50) {
+		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
 			pero.setWidth(1);
 			drawLidarData(painter, pero, miniRect, 70);
 
@@ -153,7 +153,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		}
 	}
 	else {
-		if (!useSkeleton && !m_motionButtonsVisible || ui->minLidarFrame->geometry().height() < 50) {
+		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
 			drawImageData(painter, miniRect, true);
 		}
 		drawLidarData(painter, pero, rect);
@@ -171,20 +171,89 @@ void MainWindow::paintEvent(QPaintEvent *event)
 						 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
 	}
 
-	if (updateSkeletonPicture == 1 && useSkeleton) {
-		updateSkeletonPicture = 0;
+	if (m_updateSkeletonPicture == 1 && m_useSkeleton) {
+		m_updateSkeletonPicture = 0;
 		inPaintEventProcessSkeleton();
 	}
 }
 
+void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance)
+{
+	uint8_t num_of_scans[8] = { 0 };
+	for (size_t i = 0; i < 8; i++) {
+		m_avgDist[i] = 0;
+	}
+	for (size_t i = 0; i < laserData.numberOfScans; i++) {
+		if (m_copyOfLaserData.Data[i].scanDistance >= lidarDistance::FAR || m_copyOfLaserData.Data[i].scanDistance < 0.1) {
+			continue;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_B) || m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_A)) {
+			m_avgDist[lidarSectors::FRONT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::FRONT]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_A) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_A)) {
+			m_avgDist[lidarSectors::FRONT_RIGHT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::FRONT_RIGHT]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_A) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_B)) {
+			m_avgDist[lidarSectors::RIGHT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::RIGHT]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_B) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_A)) {
+			m_avgDist[lidarSectors::REAR_RIGHT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::REAR_RIGHT]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_A) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_B)) {
+			m_avgDist[lidarSectors::REAR] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::REAR]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_B) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_B)) {
+			m_avgDist[lidarSectors::REAR_LEFT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::REAR_LEFT]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_B) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_A)) {
+			m_avgDist[lidarSectors::LEFT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::LEFT]++;
+		}
+		if (m_copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_A) && m_copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_B)) {
+			m_avgDist[lidarSectors::FRONT_LEFT] += m_copyOfLaserData.Data[i].scanDistance;
+			num_of_scans[lidarSectors::FRONT_LEFT]++;
+		}
+	}
+	for (size_t i = 0; i < 8; i++) {
+		m_avgDist[i] /= num_of_scans[i];
+		if (m_avgDist[i] < lidarDistance::CLOSE)
+			distance[i] = lidarDistance::CLOSE;
+		else if (m_avgDist[i] < lidarDistance::MEDIUM)
+			distance[i] = lidarDistance::MEDIUM;
+		else
+			distance[i] = lidarDistance::FAR;
+	}
+}
+
+void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisions)
+{
+	const double b = 200.0;
+
+	double d_crit;
+	if (m_forwardRobot) {
+		for (size_t i = 0; i < laserData.numberOfScans; i++) {
+			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
+			if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
+				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
+				*colisions = true;
+			}
+		}
+	}
+}
 
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
 void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
 {
-	ui->lineEdit_2->setText(QString::number(robotX));
-	ui->lineEdit_3->setText(QString::number(robotY));
-	ui->lineEdit_4->setText(QString::number(robotFi));
+	m_ui->lineEdit_2->setText(QString::number(robotX));
+	m_ui->lineEdit_3->setText(QString::number(robotY));
+	m_ui->lineEdit_4->setText(QString::number(robotFi));
 }
 
 ///toto je calback na data z robota, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
@@ -197,23 +266,23 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
 	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
-	if (instance->count() > 0 || (useSkeleton && robot != nullptr)) {
-		if (forwardspeed == 0 && rotationspeed != 0) {
-			robot->setRotationSpeed(rotationspeed);
+	if (m_instance->count() > 0 || (m_useSkeleton && m_robot != nullptr)) {
+		if (forwardspeed == 0 && m_rotationspeed != 0) {
+			m_robot->setRotationSpeed(m_rotationspeed);
 		}
-		else if (forwardspeed != 0 && rotationspeed == 0) {
-			robot->setTranslationSpeed(forwardspeed);
+		else if (forwardspeed != 0 && m_rotationspeed == 0) {
+			m_robot->setTranslationSpeed(forwardspeed);
 		}
-		else if ((forwardspeed != 0 && rotationspeed != 0)) {
-			robot->setArcSpeed(forwardspeed, forwardspeed / rotationspeed);
+		else if ((forwardspeed != 0 && m_rotationspeed != 0)) {
+			m_robot->setArcSpeed(forwardspeed, forwardspeed / m_rotationspeed);
 		}
 		else {
-			robot->setTranslationSpeed(0);
+			m_robot->setTranslationSpeed(0);
 		}
 	}
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
-	if (datacounter % 5) {
+	if (m_datacounter % 5) {
 		///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
 		// ui->lineEdit_2->setText(QString::number(robotdata.EncoderRight));
 		//ui->lineEdit_3->setText(QString::number(robotdata.EncoderLeft));
@@ -227,7 +296,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 		/// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
 		/// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
 	}
-	datacounter++;
+	m_datacounter++;
 
 	return 0;
 }
@@ -236,10 +305,10 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 /// vola sa ked dojdu nove data z lidaru
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
-	memcpy(&copyOfLaserData, &laserData, sizeof(LaserMeasurement));
+	memcpy(&m_copyOfLaserData, &laserData, sizeof(LaserMeasurement));
 	//tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
 	// ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
-	updateLaserPicture = 1;
+	m_updateLaserPicture = 1;
 	update(); //tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 
 	return 0;
@@ -251,7 +320,7 @@ int MainWindow::processThisCamera(cv::Mat cameraData)
 {
 	cameraData.copyTo(frame[(actIndex + 1) % 3]); //kopirujem do nasej strukury
 	actIndex = (actIndex + 1) % 3;				  //aktualizujem kde je nova fotka
-	updateLaserPicture = 1;
+	m_updateLaserPicture = 1;
 	return 0;
 }
 
@@ -284,14 +353,14 @@ bool MainWindow::isIPValid(const QString &ip)
 
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
-	memcpy(&skeleJoints, &skeledata, sizeof(skeleton));
-	updateSkeletonPicture = 1;
+	memcpy(&m_skeleJoints, &skeledata, sizeof(skeleton));
+	m_updateSkeletonPicture = 1;
 	return 0;
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-	if (robot == nullptr) {
+	if (m_robot == nullptr) {
 		qDebug() << "Robot is not connected";
 		return;
 	}
@@ -301,45 +370,45 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_W:
 	case Qt::Key_Up:
 		forwardspeed = 200;
-		rotationspeed = 0;
+		m_rotationspeed = 0;
 		setRobotDirection();
-		robot->setTranslationSpeed(forwardspeed);
+		m_robot->setTranslationSpeed(forwardspeed);
 		break;
 
 	case Qt::Key_S:
 	case Qt::Key_Down:
 		forwardspeed = -150;
-		rotationspeed = 0;
+		m_rotationspeed = 0;
 		setRobotDirection();
-		robot->setTranslationSpeed(forwardspeed);
+		m_robot->setTranslationSpeed(forwardspeed);
 		break;
 
 	case Qt::Key_A:
 	case Qt::Key_Left:
 		forwardspeed = 0;
-		rotationspeed = 3.14159 / 2;
+		m_rotationspeed = 3.14159 / 2;
 		setRobotDirection();
-		robot->setRotationSpeed(rotationspeed);
+		m_robot->setRotationSpeed(m_rotationspeed);
 		break;
 
 	case Qt::Key_D:
 	case Qt::Key_Right:
 		forwardspeed = 0;
-		rotationspeed = -3.14159 / 2;
+		m_rotationspeed = -3.14159 / 2;
 		setRobotDirection();
-		robot->setRotationSpeed(rotationspeed);
+		m_robot->setRotationSpeed(m_rotationspeed);
 		break;
 
 	case Qt::Key_R:
 		forwardspeed = 0;
-		rotationspeed = 0;
+		m_rotationspeed = 0;
 		setRobotDirection();
-		robot->setTranslationSpeed(forwardspeed);
+		m_robot->setTranslationSpeed(forwardspeed);
 		break;
 
 	case Qt::Key_Escape: {
-		if (robot->isInEmgStop()) {
-			robot->setEmgStop(false);
+		if (m_robot->isInEmgStop()) {
+			m_robot->setEmgStop(false);
 			m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
 
 			disableAllButtons(false);
@@ -348,8 +417,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 			return;
 		}
 
-		robot->setTranslationSpeed(0);
-		robot->setEmgStop(true);
+		m_robot->setTranslationSpeed(0);
+		m_robot->setEmgStop(true);
 		m_connectionLed->setToEmgStopState();
 
 		disableAllButtons(true);
@@ -365,56 +434,56 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::on_pushButton_9_clicked() //start button
 {
-	if (robot != nullptr && robot->isInEmgStop()) {
+	if (m_robot != nullptr && m_robot->isInEmgStop()) {
 		return;
 	}
 
 	if (m_connectionLed->isInConnectedState()) {
 		qDebug() << "Disconnecting the UI";
-		robot.reset();
+		m_robot.reset();
 
 		m_connectionLed->setToDisconnectedState();
-		ui->pushButton_9->setText("Connect");
-		ui->pushButton_9->setStyleSheet("");
+		m_ui->pushButton_9->setText("Connect");
+		m_ui->pushButton_9->setStyleSheet("");
 
-		copyOfLaserData.numberOfScans = 0;
+		m_copyOfLaserData.numberOfScans = 0;
 
 		return;
 	}
 
-	QString tmpIP = ui->ipComboBox->currentText();
+	QString tmpIP = m_ui->ipComboBox->currentText();
 	qDebug() << "Connecting to " << tmpIP;
 	m_ipaddress = tmpIP.toStdString();
 	qDebug() << "Address " << tmpIP << " " << isIPValid(tmpIP);
 
-	robot = std::make_unique<Robot>(m_ipaddress);
+	m_robot = std::make_unique<Robot>(m_ipaddress);
 	//ziskanie joystickov
-	instance = QJoysticks::getInstance();
+	m_instance = QJoysticks::getInstance();
 	forwardspeed = 0;
-	rotationspeed = 0;
+	m_rotationspeed = 0;
 	///setovanie veci na komunikaciu s robotom/lidarom/kamerou.. su tam adresa porty a callback.. laser ma ze sa da dat callback aj ako lambda.
 	/// lambdy su super, setria miesto a ak su rozumnej dlzky,tak aj prehladnost... ak ste o nich nic nepoculi poradte sa s vasim doktorom alebo lekarnikom...
-	robot->setLaserParameters(
+	m_robot->setLaserParameters(
 		m_ipaddress, 52999, 5299,
 		/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/ std::bind(&MainWindow::processThisLidar, this, std::placeholders::_1));
-	robot->setRobotParameters(m_ipaddress, 53000, 5300, std::bind(&MainWindow::processThisRobot, this, std::placeholders::_1));
+	m_robot->setRobotParameters(m_ipaddress, 53000, 5300, std::bind(&MainWindow::processThisRobot, this, std::placeholders::_1));
 	//---simulator ma port 8889, realny robot 8000
 
 	if (m_ipaddress == "127.0.0.1") {
-		robot->setCameraParameters("http://" + m_ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+		m_robot->setCameraParameters("http://" + m_ipaddress + ":8889/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
 	}
 	else {
-		robot->setCameraParameters("http://" + m_ipaddress + ":8000/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
+		m_robot->setCameraParameters("http://" + m_ipaddress + ":8000/stream.mjpg", std::bind(&MainWindow::processThisCamera, this, std::placeholders::_1));
 	}
 
-	robot->setSkeletonParameters(m_ipaddress, 23432, 23432, std::bind(&MainWindow::processThisSkeleton, this, std::placeholders::_1));
+	m_robot->setSkeletonParameters(m_ipaddress, 23432, 23432, std::bind(&MainWindow::processThisSkeleton, this, std::placeholders::_1));
 
 	///ked je vsetko nasetovane tak to tento prikaz spusti (ak nieco nieje setnute,tak to normalne nenastavi.cize ak napr nechcete kameru,vklude vsetky info o nej vymazte)
-	robot->robotStart();
+	m_robot->robotStart();
 
 	int i = 0;
 	for (; i < 3; i++) {
-		if (robot->isConnected()) {
+		if (m_robot->isConnected()) {
 			break;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -422,54 +491,54 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	}
 	if (i == 3) {
 		std::cerr << "Connection failed" << std::endl;
-		robot.reset();
+		m_robot.reset();
 		return;
 	}
 
 	m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
-	ui->pushButton_9->setText("Disconnect");
-	ui->pushButton_9->setStyleSheet("background-color: red");
+	m_ui->pushButton_9->setText("Disconnect");
+	m_ui->pushButton_9->setStyleSheet("background-color: red");
 
 	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
 	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
 
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
 	/// co vas vlastne zaujima? citanie komentov asi nie, inak by ste citali toto a ze tu je blbosti
-	connect(instance, &QJoysticks::axisChanged, [this](const int js, const int axis, const qreal value) {
+	connect(m_instance, &QJoysticks::axisChanged, [this](const int js, const int axis, const qreal value) {
 		if (/*js==0 &&*/ axis == 1) {
 			forwardspeed = -value * 300;
 		}
 		if (/*js==0 &&*/ axis == 0) {
-			rotationspeed = -value * (3.14159 / 2.0);
+			m_rotationspeed = -value * (3.14159 / 2.0);
 		}
 	});
 }
 
 void MainWindow::on_pushButton_clicked()
 {
-	if (robot == nullptr) {
+	if (m_robot == nullptr) {
 		return;
 	}
 	if (useCamera1 == true) {
 		useCamera1 = false;
 
-		ui->pushButton->setText("use camera");
+		m_ui->pushButton->setText("use camera");
 	}
 	else {
 		useCamera1 = true;
 
-		ui->pushButton->setText("use laser");
+		m_ui->pushButton->setText("use laser");
 	}
 }
 
 void MainWindow::on_emgStopButton_clicked()
 {
-	if (robot == nullptr) {
+	if (m_robot == nullptr) {
 		return;
 	}
 
-	if (robot->isInEmgStop()) {
-		robot->setEmgStop(false);
+	if (m_robot->isInEmgStop()) {
+		m_robot->setEmgStop(false);
 		m_connectionLed->setToConnectedState(QString::fromStdString(m_ipaddress));
 
 		disableAllButtons(false);
@@ -478,43 +547,43 @@ void MainWindow::on_emgStopButton_clicked()
 		return;
 	}
 
-	robot->setTranslationSpeed(0);
-	robot->setEmgStop(true);
+	m_robot->setTranslationSpeed(0);
+	m_robot->setEmgStop(true);
 	m_connectionLed->setToEmgStopState();
 
 	disableAllButtons(true);
 	setStyleSheet("background-color: rgba(255,164,0,25)");
-	reverse_robot = false;
+	m_reverseRobot = false;
 }
 
 void MainWindow::on_bodyControlButton_clicked()
 {
-	qDebug() << "Body control button clicked. Old: " << useSkeleton;
-	useSkeleton = (useSkeleton ? false : true);
-	qDebug() << "New: " << useSkeleton;
+	qDebug() << "Body control button clicked. Old: " << m_useSkeleton;
+	m_useSkeleton = (m_useSkeleton ? false : true);
+	qDebug() << "New: " << m_useSkeleton;
 
-	if (useSkeleton) {
+	if (m_useSkeleton) {
 		m_bodyProgressBars = new BodyProgressBars(this);
 
 		connect(this, &MainWindow::changeSpeed, m_bodyProgressBars, &BodyProgressBars::setValues);
 
-		ui->bodyControlButton->setText("Body Control: on");
+		m_ui->bodyControlButton->setText("Body Control: on");
 
 		if (m_leftHandedMode) {
 			m_controllButtons->addProgressBars(m_bodyProgressBars);
 		}
 		else {
-			ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+			m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
 		}
 	}
 	else {
-		ui->bodyControlButton->setText("Body Control: off");
+		m_ui->bodyControlButton->setText("Body Control: off");
 
 		if (m_leftHandedMode) {
 			m_controllButtons->removeProgressBars(m_bodyProgressBars);
 		}
 		else {
-			ui->topGridLayout->removeWidget(m_bodyProgressBars);
+			m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
 		}
 
 		m_bodyProgressBars->deleteLater();
@@ -527,134 +596,64 @@ void MainWindow::on_changeStyleSheet_triggered()
 	m_styleSheetEditor->activateWindow();
 }
 
-void MainWindow::parse_lidar_data(LaserMeasurement laserData, uint16_t *distance)
-{
-	uint8_t num_of_scans[8] = { 0 };
-	for (size_t i = 0; i < 8; i++) {
-		avg_dist[i] = 0;
-	}
-	for (size_t i = 0; i < laserData.numberOfScans; i++) {
-		if (copyOfLaserData.Data[i].scanDistance >= lidarDistance::FAR || copyOfLaserData.Data[i].scanDistance < 0.1) {
-			continue;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_B) || copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_A)) {
-			avg_dist[lidarSectors::FRONT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::FRONT]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::FRONT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_A)) {
-			avg_dist[lidarSectors::FRONT_RIGHT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::FRONT_RIGHT]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::RIGHT_B)) {
-			avg_dist[lidarSectors::RIGHT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::RIGHT]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::RIGHT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_A)) {
-			avg_dist[lidarSectors::REAR_RIGHT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::REAR_RIGHT]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::REAR_B)) {
-			avg_dist[lidarSectors::REAR] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::REAR]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::REAR_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_B)) {
-			avg_dist[lidarSectors::REAR_LEFT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::REAR_LEFT]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_B) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::LEFT_A)) {
-			avg_dist[lidarSectors::LEFT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::LEFT]++;
-		}
-		if (copyOfLaserData.Data[i].scanAngle >= (float)(lidarAngles::LEFT_A) && copyOfLaserData.Data[i].scanAngle <= (float)(lidarAngles::FRONT_B)) {
-			avg_dist[lidarSectors::FRONT_LEFT] += copyOfLaserData.Data[i].scanDistance;
-			num_of_scans[lidarSectors::FRONT_LEFT]++;
-		}
-	}
-	for (size_t i = 0; i < 8; i++) {
-		avg_dist[i] /= num_of_scans[i];
-		if (avg_dist[i] < lidarDistance::CLOSE)
-			distance[i] = lidarDistance::CLOSE;
-		else if (avg_dist[i] < lidarDistance::MEDIUM)
-			distance[i] = lidarDistance::MEDIUM;
-		else
-			distance[i] = lidarDistance::FAR;
-	}
-}
-
-void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisions)
-{
-	const double b = 200.0;
-
-	double d_crit;
-	if (forward_robot) {
-		for (size_t i = 0; i < laserData.numberOfScans; i++) {
-			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
-			if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
-				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-				*colisions = true;
-			}
-		}
-	}
-}
-
 void MainWindow::on_actionAdd_motion_buttons_triggered()
 {
 	if (!m_motionButtonsVisible) {
 		m_motionButtonsVisible = true;
 
-		m_controllButtons = new ControllButtons(&reverse_robot, &forward_robot, this);
+		m_controllButtons = new ControllButtons(&m_reverseRobot, &m_forwardRobot, this);
 		if (m_leftHandedMode) {
-			if (useSkeleton) {
-				ui->topGridLayout->removeWidget(m_bodyProgressBars);
+			if (m_useSkeleton) {
+				m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
 				m_controllButtons->addProgressBars(m_bodyProgressBars);
 			}
 			else {
-				ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+				m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
 			}
-			ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
+			m_ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
 			m_controllButtons->switchHand(m_leftHandedMode);
 		}
 		else {
-			ui->topGridLayout->addWidget(m_controllButtons, 3, 4, 1, 1);
+			m_ui->topGridLayout->addWidget(m_controllButtons, 3, 4, 1, 1);
 		}
 		update();
 		return;
 	}
 
 	m_motionButtonsVisible = false;
-	ui->actionAdd_motion_buttons->setText("Add motion buttons");
-	if (useSkeleton) {
+	m_ui->actionAdd_motion_buttons->setText("Add motion buttons");
+	if (m_useSkeleton) {
 		m_controllButtons->removeProgressBars(m_bodyProgressBars);
-		ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+		m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
 	}
-	ui->topGridLayout->removeWidget(m_controllButtons);
+	m_ui->topGridLayout->removeWidget(m_controllButtons);
 	m_controllButtons->deleteLater();
 }
 
 
 void MainWindow::on_actionChangeHand_toggled()
 {
-	m_leftHandedMode = ui->actionChangeHand->isChecked();
-	ui->actionChangeHand->setChecked(m_leftHandedMode);
+	m_leftHandedMode = m_ui->actionChangeHand->isChecked();
+	m_ui->actionChangeHand->setChecked(m_leftHandedMode);
 
-	if (m_controllButtons == nullptr || ui->topGridLayout->indexOf(m_controllButtons) == -1) {
+	if (m_controllButtons == nullptr || m_ui->topGridLayout->indexOf(m_controllButtons) == -1) {
 		return;
 	}
 
-	ui->topGridLayout->removeWidget(m_controllButtons);
+	m_ui->topGridLayout->removeWidget(m_controllButtons);
 	if (m_leftHandedMode) {
-		ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
-		if (useSkeleton) {
+		m_ui->topGridLayout->addWidget(m_controllButtons, 1, 2, 1, 1);
+		if (m_useSkeleton) {
 			m_controllButtons->addProgressBars(m_bodyProgressBars);
-			ui->topGridLayout->removeWidget(m_bodyProgressBars);
+			m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
 		}
 	}
 	else {
-		if (useSkeleton) {
+		if (m_useSkeleton) {
 			m_controllButtons->removeProgressBars(m_bodyProgressBars);
-			ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+			m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
 		}
-		ui->topGridLayout->addWidget(m_controllButtons, 3, 4, 1, 1);
+		m_ui->topGridLayout->addWidget(m_controllButtons, 3, 4, 1, 1);
 	}
 
 	m_controllButtons->switchHand(m_leftHandedMode);
@@ -675,18 +674,18 @@ void MainWindow::inPaintEventProcessSkeleton()
 {
 	double left_zero = -M_PI / 2 - M_PI / 4;
 	double right_zero = -M_PI / 4;
-	double angle_right = atan2(skeleJoints.joints[right_wrist].y - skeleJoints.joints[right_elbow].y,
-							   skeleJoints.joints[right_wrist].x - skeleJoints.joints[right_elbow].x);
-	double angle_left = atan2(skeleJoints.joints[left_wrist].y - skeleJoints.joints[left_elbow].y,
-							  skeleJoints.joints[left_wrist].x - skeleJoints.joints[left_elbow].x);
+	double angle_right = atan2(m_skeleJoints.joints[right_wrist].y - m_skeleJoints.joints[right_elbow].y,
+							   m_skeleJoints.joints[right_wrist].x - m_skeleJoints.joints[right_elbow].x);
+	double angle_left = atan2(m_skeleJoints.joints[left_wrist].y - m_skeleJoints.joints[left_elbow].y,
+							  m_skeleJoints.joints[left_wrist].x - m_skeleJoints.joints[left_elbow].x);
 	double speed = 0;
 	double rotation = 0;
 
-	if ((skeleJoints.joints[left_elbow].x == 0 && skeleJoints.joints[left_elbow].y == 0)
-		|| (skeleJoints.joints[left_wrist].x == 0 && skeleJoints.joints[left_wrist].y == 0))
+	if ((m_skeleJoints.joints[left_elbow].x == 0 && m_skeleJoints.joints[left_elbow].y == 0)
+		|| (m_skeleJoints.joints[left_wrist].x == 0 && m_skeleJoints.joints[left_wrist].y == 0))
 		angle_left = left_zero;
-	if ((skeleJoints.joints[right_elbow].x == 0 && skeleJoints.joints[right_elbow].y == 0)
-		|| (skeleJoints.joints[right_wrist].x == 0 && skeleJoints.joints[right_wrist].y == 0))
+	if ((m_skeleJoints.joints[right_elbow].x == 0 && m_skeleJoints.joints[right_elbow].y == 0)
+		|| (m_skeleJoints.joints[right_wrist].x == 0 && m_skeleJoints.joints[right_wrist].y == 0))
 		angle_right = right_zero;
 	if (angle_left < left_zero - M_PI / 4 || angle_left > 0)
 		angle_left = left_zero - M_PI / 4;
@@ -708,23 +707,23 @@ void MainWindow::inPaintEventProcessSkeleton()
 		rotation = MAP(angle_right, right_zero, right_zero + M_PI / 4, 0, 3.14159 / 4);
 	bool change[2] = { false };
 	// cout << "angle_left: " << angle_left << " angle_right: " << angle_right << endl;
-	if ((prev_forwardspeed > 20 || prev_forwardspeed < 20) && speed == 0) { }
-	else if (std::abs(prev_forwardspeed - speed) > 20) {
-		prev_forwardspeed = speed;
+	if ((m_prevForwardspeed > 20 || m_prevForwardspeed < 20) && speed == 0) { }
+	else if (std::abs(m_prevForwardspeed - speed) > 20) {
+		m_prevForwardspeed = speed;
 		forwardspeed = speed;
 		cout << "Speed: " << forwardspeed << endl;
 		change[0] = true;
 	}
-	if (std::abs(prev_rotationspeed - rotation) > 0.1) {
-		prev_rotationspeed = rotation;
-		rotationspeed = rotation;
+	if (std::abs(m_prevRotationspeed - rotation) > 0.1) {
+		m_prevRotationspeed = rotation;
+		m_rotationspeed = rotation;
 		// cout << "Rotation: " << rotationspeed << endl;
 		change[1] = true;
 	}
 	if (change[0] || change[1]) {
 		change[0] = false;
 		change[1] = false;
-		emit changeSpeed(forwardspeed, rotationspeed);
+		emit changeSpeed(forwardspeed, m_rotationspeed);
 	}
 	setRobotDirection();
 }
@@ -732,36 +731,36 @@ void MainWindow::inPaintEventProcessSkeleton()
 void MainWindow::setRobotDirection()
 {
 	if (forwardspeed > 0) {
-		forward_robot = true;
-		reverse_robot = false;
+		m_forwardRobot = true;
+		m_reverseRobot = false;
 	}
 	else if (forwardspeed < 0) {
-		forward_robot = false;
-		reverse_robot = true;
+		m_forwardRobot = false;
+		m_reverseRobot = true;
 	}
 	else {
-		forward_robot = false;
-		reverse_robot = false;
+		m_forwardRobot = false;
+		m_reverseRobot = false;
 	}
 }
 
 void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale)
 {
-	if (updateLaserPicture == 1) ///ak mam nove data z lidaru
+	if (m_updateLaserPicture == 1) ///ak mam nove data z lidaru
 	{
-		updateLaserPicture = 0;
+		m_updateLaserPicture = 0;
 		painter.setPen(pen);
 		double min_dist = 10000;
-		for (int k = 0; k < copyOfLaserData.numberOfScans /*360*/; k++) {
-			if (reverse_robot) {
-				if (copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B) && copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
-					if (min_dist > copyOfLaserData.Data[k].scanDistance) {
-						min_dist = copyOfLaserData.Data[k].scanDistance;
+		for (int k = 0; k < m_copyOfLaserData.numberOfScans /*360*/; k++) {
+			if (m_reverseRobot) {
+				if (m_copyOfLaserData.Data[k].scanAngle <= (float)(lidarAngles::LEFT_B) && m_copyOfLaserData.Data[k].scanAngle >= (float)(lidarAngles::RIGHT_B)) {
+					if (min_dist > m_copyOfLaserData.Data[k].scanDistance) {
+						min_dist = m_copyOfLaserData.Data[k].scanDistance;
 					}
-					if (copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE) {
+					if (m_copyOfLaserData.Data[k].scanDistance < lidarDistance::CLOSE) {
 						painter.setPen(QPen(Qt::red, 3));
 					}
-					else if (copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM) {
+					else if (m_copyOfLaserData.Data[k].scanDistance < lidarDistance::MEDIUM) {
 						painter.setPen(QPen(Qt::yellow, 3));
 					}
 					else {
@@ -785,10 +784,10 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 				painter.setPen(QPen(Qt::green, 3));
 			}
 
-			int dist = copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
-			int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
+			int dist = m_copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
+			int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 				+ rect.topLeft().x(); //prepocet do obrazovky
-			int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
+			int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 				+ rect.topLeft().y();  //prepocet do obrazovky
 			if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
 				painter.drawEllipse(QPoint(xp, yp), 2, 2);
@@ -800,29 +799,29 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
 	QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
-	parse_lidar_data(copyOfLaserData, distanceFromWall);
-	calc_colisions_points(copyOfLaserData, &colisionDetected);
+	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
+	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
 
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());
 
-	if (colisionDetected && !mini) {
+	if (m_colisionDetected && !mini) {
 		uint16_t width = rect.width();
 		uint16_t height = rect.height();
 
-		painter.drawImage(QPoint(width / 2 - colision_image.width() / 2, height / 2 - colision_image.height() / 2), colision_image);
-		colisionDetected = false;
+		painter.drawImage(QPoint(width / 2 - m_colisionImage.width() / 2, height / 2 - m_colisionImage.height() / 2), m_colisionImage);
+		m_colisionDetected = false;
 	}
 	else {
 		QRectF border_rect;
 		QBrush brush;
 		for (size_t i = 0; i < 8; i++) {
-			if (distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR) {
+			if (m_distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR) {
 				border_rect = create_border_rect(rect, i);
 				brush.setStyle(Qt::SolidPattern);
-				brush.setColor(QColor(255, distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
-									  (uint8_t)MAP(avg_dist[i], (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
-												   (distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE,
+				brush.setColor(QColor(255, m_distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
+									  (uint8_t)MAP(m_avgDist[i], (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
+												   (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE,
 												   255.0, 30.0)));
 				painter.setBrush(brush);
 				painter.setPen(Qt::NoPen);
@@ -834,24 +833,24 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 
 void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 {
-	int diffLeftEnc = robotdata.EncoderLeft - lastLeftEncoder;
-	int diffRightEnc = robotdata.EncoderRight - lastRightEncoder;
+	int diffLeftEnc = robotdata.EncoderLeft - m_lastLeftEncoder;
+	int diffRightEnc = robotdata.EncoderRight - m_lastRightEncoder;
 
-	if (lastRightEncoder > 60'000 && robotdata.EncoderRight < 1'000)
+	if (m_lastRightEncoder > 60'000 && robotdata.EncoderRight < 1'000)
 		diffRightEnc += SHORT_MAX;
-	if (lastLeftEncoder > 60'000 && robotdata.EncoderLeft < 1'000)
+	if (m_lastLeftEncoder > 60'000 && robotdata.EncoderLeft < 1'000)
 		diffLeftEnc += SHORT_MAX;
 
-	if (lastRightEncoder < 1'000 && robotdata.EncoderRight > 60'000)
+	if (m_lastRightEncoder < 1'000 && robotdata.EncoderRight > 60'000)
 		diffRightEnc -= SHORT_MAX;
-	if (lastLeftEncoder < 1'000 && robotdata.EncoderLeft > 60'000)
+	if (m_lastLeftEncoder < 1'000 && robotdata.EncoderLeft > 60'000)
 		diffLeftEnc -= SHORT_MAX;
 
-	auto leftEncDist = robot->tickToMeter * diffLeftEnc;
-	auto rightEncDist = robot->tickToMeter * diffRightEnc;
+	auto leftEncDist = m_robot->tickToMeter * diffLeftEnc;
+	auto rightEncDist = m_robot->tickToMeter * diffRightEnc;
 
-	lastLeftEncoder = robotdata.EncoderLeft;
-	lastRightEncoder = robotdata.EncoderRight;
+	m_lastLeftEncoder = robotdata.EncoderLeft;
+	m_lastRightEncoder = robotdata.EncoderRight;
 
 	double l = (rightEncDist + leftEncDist) / 2.0;
 	{
@@ -859,7 +858,7 @@ void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 		m_x = m_x + l * std::cos(m_fi);
 		m_y = m_y + l * std::sin(m_fi);
 
-		if (!m_robotStartupLocation && datacounter % 5) {
+		if (!m_robotStartupLocation && m_datacounter % 5) {
 			m_x = 0;
 			m_y = 0;
 			m_fiCorrection = m_fi;

@@ -61,6 +61,9 @@ private:
 	void drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale = 20);
 	void drawImageData(QPainter &painter, QRect &rect, bool mini = false);
 	void calculateOdometry(const TKobukiData &robotdata);
+	void paintEvent(QPaintEvent *event) override; // Q_DECL_OVERRIDE;
+	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
+	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
@@ -79,8 +82,6 @@ private slots:
 	void on_actionChangeHand_toggled();
 	void on_actionShowHelp_triggered();
 
-	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
-	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -93,47 +94,46 @@ signals:
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
-	Ui::MainWindow *ui;
-	void paintEvent(QPaintEvent *event); // Q_DECL_OVERRIDE;
-	int updateLaserPicture;
-	LaserMeasurement copyOfLaserData;
+	Ui::MainWindow *m_ui;
+	int m_updateLaserPicture;
+	LaserMeasurement m_copyOfLaserData;
 	std::string m_ipaddress;
-	std::unique_ptr<Robot> robot;
-	TKobukiData robotdata;
-	int datacounter;
-	int updateSkeletonPicture;
-	bool useSkeleton;
-	skeleton skeleJoints;
-	QTimer *timer;
+	std::unique_ptr<Robot> m_robot;
+	TKobukiData m_robotdata;
+	int m_datacounter;
+	int m_updateSkeletonPicture;
+	bool m_useSkeleton;
+	skeleton m_skeleJoints;
+	QTimer *m_timer;
 
-	QJoysticks *instance;
+	QJoysticks *m_instance;
 
 	double forwardspeed;  //mm/s
-	double rotationspeed; //omega/s
-	double prev_forwardspeed;
-	double prev_rotationspeed;
+	double m_rotationspeed; //omega/s
+	double m_prevForwardspeed;
+	double m_prevRotationspeed;
 
 	StyleSheetEditor *m_styleSheetEditor;
 	HelpWindow *m_helpWindow;
 
 	QLed *m_connectionLed;
 
-	uint16_t distanceFromWall[8] = { lidarDistance::FAR };
-	double avg_dist[8] = { 0 };
+	uint16_t m_distanceFromWall[8] = { lidarDistance::FAR };
+	double m_avgDist[8] = { 0 };
 
-	bool colisionDetected = false;
-	bool reverse_robot = false;
-	bool forward_robot = false;
+	bool m_colisionDetected = false;
+	bool m_reverseRobot = false;
+	bool m_forwardRobot = false;
 
-	QImage colision_image;
+	QImage m_colisionImage;
 
 	bool m_motionButtonsVisible;
 	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
 	BodyProgressBars *m_bodyProgressBars;
 
-	int lastLeftEncoder;
-	int lastRightEncoder;
+	int m_lastLeftEncoder;
+	int m_lastRightEncoder;
 	double m_fiCorrection;
 	bool m_robotStartupLocation;
 	std::atomic<double> m_fi;

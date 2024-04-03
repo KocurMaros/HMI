@@ -11,7 +11,7 @@ ControllButtons::ControllButtons(bool *reverse, bool *forward, MainWindow *paren
 	, m_reverseRobot(reverse)
 	, m_forwardRobot(forward)
 {
-	m_parent->ui->actionAdd_motion_buttons->setText("Remove motion buttons");
+	m_parent->m_ui->actionAdd_motion_buttons->setText("Remove motion buttons");
 
 	m_buttonGridlayout = new QGridLayout(this);
 
@@ -49,12 +49,12 @@ ControllButtons::ControllButtons(bool *reverse, bool *forward, MainWindow *paren
 	connect(m_stopButtons, &QPushButton::clicked, this, &ControllButtons::on_stopButtons_clicked);
 
 	if (!m_isLeftHand) {
-		m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
+		m_parent->m_ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
 		m_buttonGridlayout->removeItem(m_spacer);
 		return;
 	}
 
-	m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 0);
+	m_parent->m_ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 0);
 	m_buttonGridlayout->addItem(m_spacer, 2, 2);
 }
 
@@ -65,11 +65,11 @@ void ControllButtons::switchHand(bool checked)
 	if (m_isLeftHand) {
 		m_spacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
 		m_buttonGridlayout->addItem(m_spacer, 2, 3);
-		m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
+		m_parent->m_ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 1);
 		return;
 	}
 
-	m_parent->ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 0);
+	m_parent->m_ui->topGridLayout->addLayout(m_buttonGridlayout, 1, 0);
 	m_buttonGridlayout->removeItem(m_spacer);
 }
 
@@ -85,33 +85,33 @@ void ControllButtons::removeProgressBars(BodyProgressBars *progressBars)
 
 void ControllButtons::on_forwardButtons_clicked()
 {
-	m_parent->robot->setTranslationSpeed(500);
+	m_parent->m_robot->setTranslationSpeed(500);
 	*m_reverseRobot = false;
 	*m_forwardRobot = true;
 }
 
 void ControllButtons::on_backButtons_clicked()
 {
-	m_parent->robot->setTranslationSpeed(-250);
+	m_parent->m_robot->setTranslationSpeed(-250);
 	*m_reverseRobot = true;
 	*m_forwardRobot = false;
 }
 
 void ControllButtons::on_leftButtons_clicked()
 {
-	m_parent->robot->setRotationSpeed(3.14159 / 2);
+	m_parent->m_robot->setRotationSpeed(3.14159 / 2);
 	*m_reverseRobot = false;
 	*m_forwardRobot = false;
 }
 
 void ControllButtons::on_rigthButtons_clicked()
 {
-	m_parent->robot->setRotationSpeed(-3.14159 / 2);
+	m_parent->m_robot->setRotationSpeed(-3.14159 / 2);
 	*m_reverseRobot = false;
 	*m_forwardRobot = false;
 }
 
 void ControllButtons::on_stopButtons_clicked()
 {
-	m_parent->robot->setTranslationSpeed(0);
+	m_parent->m_robot->setTranslationSpeed(0);
 }
