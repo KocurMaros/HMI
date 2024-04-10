@@ -18,6 +18,7 @@ find_package(SDL2 REQUIRED)
 add_subdirectory(robot)
 add_subdirectory(QJoysticks-master)
 add_subdirectory(QLed)
+add_definitions(-DMAP_PATH="${CMAKE_CURRENT_SOURCE_DIR}/priestor.txt")
 
 message("SDL_LIBRARIES: ${SDL_LIBRARIES}")
 message("SDL_INCLUDE_DIRS: ${SDL_INCLUDE_DIRS}")
