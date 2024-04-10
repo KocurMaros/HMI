@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
+	, m_useTeleView(true)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -669,6 +670,15 @@ void MainWindow::on_actionShowHelp_triggered()
 	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() { m_helpWindow->close(); });
 }
 
+void MainWindow::on_teleControlButton_clicked()
+{
+	m_useTeleView = true;
+}
+
+void MainWindow::on_supervisorButton_clicked()
+{
+	m_useTeleView = false;
+}
 
 void MainWindow::inPaintEventProcessSkeleton()
 {

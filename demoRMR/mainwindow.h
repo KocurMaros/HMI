@@ -81,6 +81,8 @@ private slots:
 	void on_actionAdd_motion_buttons_triggered();
 	void on_actionChangeHand_toggled();
 	void on_actionShowHelp_triggered();
+	void on_teleControlButton_clicked();
+	void on_supervisorButton_clicked();
 
 	//protected:
 	//	void contextMenuEvent(QContextMenuEvent *event) override;
@@ -139,6 +141,10 @@ private:
 	std::atomic<double> m_fi;
 	std::atomic<double> m_x;
 	std::atomic<double> m_y;
+
+	bool m_useTeleView;
+	MapLoader m_mapLoader;
+	TMapArea m_mapArea;
 };
 
 #endif // MAINWINDOW_H
