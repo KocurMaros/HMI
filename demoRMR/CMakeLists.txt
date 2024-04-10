@@ -25,20 +25,22 @@ message("SDL_INCLUDE_DIRS: ${SDL_INCLUDE_DIRS}")
 message("OpenCV_LIBS: ${OpenCV_LIBS}")
 message("OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 set(HEADERS
-	mainwindow.h
-	stylesheeteditor.h
+	BodyProgressBars.h
 	ControllButtons.h
 	HelpWindow.h
-	BodyProgressBars.h
+	MapLoader.h
+	mainwindow.h
+	stylesheeteditor.h
 )
 
 set(SOURCES
+	BodyProgressBars.cpp
+	ControllButtons.cpp
+	HelpWindow.cpp
+	MapLoader.cpp
 	main.cpp
 	mainwindow.cpp
 	stylesheeteditor.cpp
-	ControllButtons.cpp
-	HelpWindow.cpp
-	BodyProgressBars.cpp
 )
 
 set(UI

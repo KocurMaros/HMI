@@ -3,6 +3,7 @@
 
 #include "HelpWindow.h"
 #include "BodyProgressBars.h"
+#include "MapLoader.h"
 #include "QLed.h"
 #include <QMainWindow>
 #include <QMessageBox>

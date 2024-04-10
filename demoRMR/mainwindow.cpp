@@ -73,6 +73,8 @@ MainWindow::MainWindow(QWidget *parent)
 	else
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
+
+	m_mapLoader.loadMap(MAP_PATH, m_mapArea);
 }
 
 MainWindow::~MainWindow()
