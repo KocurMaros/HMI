@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QKeyEvent>
+#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -65,6 +66,11 @@ private:
 	void paintEvent(QPaintEvent *event) override; // Q_DECL_OVERRIDE;
 	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
+	void paintTeleControl();
+	void paintSupervisorControl();
+	double getX();
+	double getY();
+	double getFi();
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
@@ -139,9 +145,11 @@ private:
 	int m_lastRightEncoder;
 	double m_fiCorrection;
 	bool m_robotStartupLocation;
-	std::atomic<double> m_fi;
-	std::atomic<double> m_x;
-	std::atomic<double> m_y;
+
+	std::mutex m_odometryLock;
+	double m_fi;
+	double m_x;
+	double m_y;
 
 	bool m_useTeleView;
 	MapLoader m_mapLoader;

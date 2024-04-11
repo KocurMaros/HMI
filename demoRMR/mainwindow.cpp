@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <cmath>
 #include <memory>
+#include <mutex>
 #include <qgridlayout.h>
 #include <qnamespace.h>
 
@@ -113,70 +114,11 @@ QRectF create_border_rect(QRect rect, size_t i)
 
 void MainWindow::paintEvent(QPaintEvent *event)
 {
-	QPainter painter(this);
-	///prekreslujem obrazovku len vtedy, ked viem ze mam nove data. paintevent sa
-	/// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
-	painter.setBrush(Qt::black); //cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
-
-	QPen pero;
-	pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
-	pero.setWidth(3);			  //hrubka pera -3pixely
-	pero.setColor(Qt::green);	  //farba je zelena
-
-	QRect rect;
-	rect = m_ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
-	rect.translate(0, 37);
-	painter.drawRect(rect);
-
-	QRect miniRect;
-	if (!m_useSkeleton && !m_motionButtonsVisible) {
-		miniRect = m_ui->minLidarFrame->geometry();
-		miniRect.translate(0, 37);
-		painter.drawRect(miniRect);
-	}
-
-	if (useCamera1 == true && actIndex > -1 && !m_reverseRobot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
-	{
-		drawImageData(painter, rect);
-		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
-			pero.setWidth(1);
-			drawLidarData(painter, pero, miniRect, 70);
-
-			painter.setBrush(Qt::black);
-			pero.setColor(Qt::magenta);
-			painter.setPen(pero);
-			int xrobot = miniRect.width() / 2;
-			int yrobot = miniRect.height() / 2;
-			int xpolomer = 10;
-			int ypolomer = 10;
-
-			painter.drawEllipse(QPoint(miniRect.x() + xrobot, miniRect.y() + yrobot), xpolomer, ypolomer);
-			painter.drawLine(miniRect.x() + xrobot, miniRect.y() + yrobot, miniRect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-							 miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
-		}
+	if (m_useTeleView) {
+		paintTeleControl();
 	}
 	else {
-		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
-			drawImageData(painter, miniRect, true);
-		}
-		drawLidarData(painter, pero, rect);
-
-		painter.setBrush(Qt::black);
-		pero.setColor(Qt::magenta);
-		painter.setPen(pero);
-		int xrobot = rect.width() / 2;
-		int yrobot = rect.height() / 2;
-		int xpolomer = 20;
-		int ypolomer = 20;
-
-		painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
-		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-						 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
-	}
-
-	if (m_updateSkeletonPicture == 1 && m_useSkeleton) {
-		m_updateSkeletonPicture = 0;
-		inPaintEventProcessSkeleton();
+		paintSupervisorControl();
 	}
 }
 
@@ -250,6 +192,152 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 	}
 }
 
+void MainWindow::paintTeleControl()
+{
+	QPainter painter(this);
+	///prekreslujem obrazovku len vtedy, ked viem ze mam nove data. paintevent sa
+	/// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
+	painter.setBrush(Qt::black); //cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
+
+	QPen pero;
+	pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
+	pero.setWidth(3);			  //hrubka pera -3pixely
+	pero.setColor(Qt::green);	  //farba je zelena
+
+	QRect rect;
+	rect = m_ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
+	rect.translate(0, 37);
+	painter.drawRect(rect);
+
+	QRect miniRect;
+	if (!m_useSkeleton && !m_motionButtonsVisible) {
+		miniRect = m_ui->minLidarFrame->geometry();
+		miniRect.translate(0, 37);
+		painter.drawRect(miniRect);
+	}
+
+	if (useCamera1 == true && actIndex > -1 && !m_reverseRobot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
+	{
+		drawImageData(painter, rect);
+		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
+			pero.setWidth(1);
+			drawLidarData(painter, pero, miniRect, 70);
+
+			painter.setBrush(Qt::black);
+			pero.setColor(Qt::magenta);
+			painter.setPen(pero);
+			int xrobot = miniRect.width() / 2;
+			int yrobot = miniRect.height() / 2;
+			int xpolomer = 10;
+			int ypolomer = 10;
+
+			painter.drawEllipse(QPoint(miniRect.x() + xrobot, miniRect.y() + yrobot), xpolomer, ypolomer);
+			painter.drawLine(miniRect.x() + xrobot, miniRect.y() + yrobot, miniRect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+							 miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+		}
+	}
+	else {
+		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
+			drawImageData(painter, miniRect, true);
+		}
+		drawLidarData(painter, pero, rect);
+
+		painter.setBrush(Qt::black);
+		pero.setColor(Qt::magenta);
+		painter.setPen(pero);
+		int xrobot = rect.width() / 2;
+		int yrobot = rect.height() / 2;
+		int xpolomer = 20;
+		int ypolomer = 20;
+
+		painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+						 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+	}
+
+	if (m_updateSkeletonPicture == 1 && m_useSkeleton) {
+		m_updateSkeletonPicture = 0;
+		inPaintEventProcessSkeleton();
+	}
+}
+
+void MainWindow::paintSupervisorControl()
+{
+	QPainter painter(this);
+	painter.setBrush(Qt::black);
+
+	QPen pero;
+	pero.setStyle(Qt::SolidLine);
+	pero.setWidth(3);
+	pero.setColor(Qt::green);
+
+	QRect rect(20, 120, 700, 500);
+	rect = m_ui->frame->geometry();
+	rect.translate(0, 15);
+	painter.drawRect(rect);
+
+	for (int i = 0; i < m_mapArea.wall.points.size(); i++) {
+		painter.setPen(pero);
+		int xmin = rect.width() * (m_mapArea.wall.points[i].point.x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
+		int xmax = rect.width() * (m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.x - m_mapLoader.minX)
+			/ (m_mapLoader.maxX - m_mapLoader.minX);
+		int ymin = rect.height() - rect.height() * (m_mapArea.wall.points[i].point.y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
+		int ymax = rect.height()
+			- rect.height() * (m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
+		painter.drawLine(rect.x() + xmin, rect.y() + ymin, rect.x() + xmax, rect.y() + ymax);
+	}
+
+	for (int i = 0; i < m_mapArea.obstacle.size(); i++) {
+		for (int j = 0; j < m_mapArea.obstacle[i].points.size(); j++) {
+			painter.setPen(pero);
+			int xmin = rect.width() * (m_mapArea.obstacle[i].points[j].point.x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
+			int xmax = rect.width() * (m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.x - m_mapLoader.minX)
+				/ (m_mapLoader.maxX - m_mapLoader.minX);
+			int ymin = rect.height() - rect.height() * (m_mapArea.obstacle[i].points[j].point.y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
+			int ymax = rect.height()
+				- rect.height() * (m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.y - m_mapLoader.minY)
+					/ (m_mapLoader.maxY - m_mapLoader.minY);
+			painter.drawLine(rect.x() + xmin, rect.y() + ymin, rect.x() + xmax, rect.y() + ymax);
+		}
+	}
+
+	pero.setColor(Qt::red);
+	painter.setPen(pero);
+
+	double x = getX() * 100 + 50;
+	double y = getY() * 100 + 50;
+
+	qDebug() << "x: " << x << " y: " << y;
+
+	int xrobot = rect.width() * (x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
+	int yrobot = rect.height() - rect.height() * (y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
+
+	int xpolomer = rect.width() * (20) / (m_mapLoader.maxX - m_mapLoader.minX);
+	int ypolomer = rect.height() * (20) / (m_mapLoader.maxY - m_mapLoader.minY);
+
+	painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
+					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
+}
+
+double MainWindow::getX()
+{
+	std::scoped_lock<std::mutex> lck(m_odometryLock);
+	return m_x;
+}
+
+double MainWindow::getY()
+{
+	std::scoped_lock<std::mutex> lck(m_odometryLock);
+	return m_y;
+}
+
+double MainWindow::getFi()
+{
+	std::scoped_lock<std::mutex> lck(m_odometryLock);
+	return m_fi;
+}
+
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
 void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
@@ -294,7 +382,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 		/// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete. prikaz emit to presne takto spravi
 		/// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
 		///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
-		emit uiValuesChanged(m_x, m_y, m_fi);
+		emit uiValuesChanged(getX(), getY(), getFi());
 		///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
 		/// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
 		/// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
@@ -809,6 +897,10 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
+	if (m_robot == nullptr) {
+		return;
+	}
+
 	QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
@@ -831,10 +923,10 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 			if (m_distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR) {
 				border_rect = create_border_rect(rect, i);
 				brush.setStyle(Qt::SolidPattern);
-				brush.setColor(QColor(255, m_distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
-									  (uint8_t)MAP(m_avgDist[i], (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
-												   (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE,
-												   255.0, 30.0)));
+				brush.setColor(QColor(
+					255, m_distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
+					(uint8_t)MAP(m_avgDist[i], (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
+								 (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
 				painter.setBrush(brush);
 				painter.setPen(Qt::NoPen);
 				painter.drawRect(border_rect);
@@ -845,6 +937,10 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 
 void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 {
+	if (m_robot == nullptr) {
+		return;
+	}
+
 	int diffLeftEnc = robotdata.EncoderLeft - m_lastLeftEncoder;
 	int diffRightEnc = robotdata.EncoderRight - m_lastRightEncoder;
 
@@ -866,6 +962,7 @@ void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 
 	double l = (rightEncDist + leftEncDist) / 2.0;
 	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
 		m_fi = robotdata.GyroAngle / 100. * TO_RADIANS - m_fiCorrection;
 		m_x = m_x + l * std::cos(m_fi);
 		m_y = m_y + l * std::sin(m_fi);
