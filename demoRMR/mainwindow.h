@@ -23,6 +23,7 @@
 
 #include <QJoysticks.h>
 
+#include "object_detection.h"
 namespace Ui {
 class MainWindow;
 }
@@ -131,7 +132,7 @@ private:
 	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
 	BodyProgressBars *m_bodyProgressBars;
-
+    
 	int m_lastLeftEncoder;
 	int m_lastRightEncoder;
 	double m_fiCorrection;
@@ -139,6 +140,8 @@ private:
 	std::atomic<double> m_fi;
 	std::atomic<double> m_x;
 	std::atomic<double> m_y;
+
+    std::shared_ptr<ObjectDetection> m_ObjectDetection;
 };
 
 #endif // MAINWINDOW_H

@@ -29,6 +29,7 @@ set(HEADERS
 	ControllButtons.h
 	HelpWindow.h
 	BodyProgressBars.h
+    object_detection.h
 )
 
 set(SOURCES
@@ -38,6 +39,7 @@ set(SOURCES
 	ControllButtons.cpp
 	HelpWindow.cpp
 	BodyProgressBars.cpp
+    object_detection.cpp
 )
 
 set(UI

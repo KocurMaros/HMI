@@ -72,6 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
 	else
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
+    
 }
 
 MainWindow::~MainWindow()
@@ -512,6 +513,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 			m_rotationspeed = -value * (3.14159 / 2.0);
 		}
 	});
+    m_ObjectDetection = make_shared<ObjectDetection>(m_ipaddress);
+    m_ObjectDetection->detectObjects(10,10  );
 }
 
 void MainWindow::on_pushButton_clicked()
