@@ -132,7 +132,7 @@ private:
 	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
 	BodyProgressBars *m_bodyProgressBars;
-    
+    ObjectDetection *m_ObjectDetection;
 	int m_lastLeftEncoder;
 	int m_lastRightEncoder;
 	double m_fiCorrection;
@@ -141,7 +141,7 @@ private:
 	std::atomic<double> m_x;
 	std::atomic<double> m_y;
 
-    std::shared_ptr<ObjectDetection> m_ObjectDetection;
+    // std::shared_ptr<ObjectDetection> m_ObjectDetection;
 };
 
 #endif // MAINWINDOW_H

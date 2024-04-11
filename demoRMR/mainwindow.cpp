@@ -513,8 +513,9 @@ void MainWindow::on_pushButton_9_clicked() //start button
 			m_rotationspeed = -value * (3.14159 / 2.0);
 		}
 	});
-    m_ObjectDetection = make_shared<ObjectDetection>(m_ipaddress);
-    m_ObjectDetection->detectObjects(10,10  );
+	m_ObjectDetection = new ObjectDetection(this);
+    // m_ObjectDetection = make_shared<ObjectDetection>(m_ipaddress);
+    m_ObjectDetection->detectObjects(10,10 );
 }
 
 void MainWindow::on_pushButton_clicked()

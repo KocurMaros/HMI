@@ -1,20 +1,22 @@
-#ifndef OBJECT_DETECIION_H
-#define OBJECT_DETECTION_H
-
+#pragma once
 #include <string>
 
 #include <QObject>
+#include <QWidget>
+
+
 class ObjectDetection
 : public QWidget
 {
 	Q_OBJECT;
 public:
-    ObjectDetection(std::string url);
+    explicit ObjectDetection(QWidget *parent = nullptr);
     ~ObjectDetection();
 
     void detectObjects(float confThreshold, float nmsThreshold);
+signals:
+
+public slots:
 private:
     std::string m_url;
 };
-
-#endif // OBJECT_DETECTION_H
