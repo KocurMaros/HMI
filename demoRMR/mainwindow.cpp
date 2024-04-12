@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_ui->topRightLayout->insertWidget(0, m_connectionLed);
 	m_ui->pushButton_9->setStyleSheet("background-color: green");
+	m_ObjectDetection = ObjectDetection();
 
 	QImageReader reader = QImageReader(":/img/warning.png");
 
@@ -72,7 +73,6 @@ MainWindow::MainWindow(QWidget *parent)
 	else
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
-    
 }
 
 MainWindow::~MainWindow()
@@ -273,6 +273,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 		}
 		else if (forwardspeed != 0 && m_rotationspeed == 0) {
 			m_robot->setTranslationSpeed(forwardspeed);
+			
 		}
 		else if ((forwardspeed != 0 && m_rotationspeed != 0)) {
 			m_robot->setArcSpeed(forwardspeed, forwardspeed / m_rotationspeed);
@@ -293,12 +294,12 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 		/// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
 		///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
 		emit uiValuesChanged(m_x, m_y, m_fi);
+		
 		///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
 		/// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
 		/// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
 	}
 	m_datacounter++;
-
 	return 0;
 }
 
@@ -513,9 +514,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 			m_rotationspeed = -value * (3.14159 / 2.0);
 		}
 	});
-	m_ObjectDetection = new ObjectDetection(this);
-    // m_ObjectDetection = make_shared<ObjectDetection>(m_ipaddress);
-    m_ObjectDetection->detectObjects(10,10 );
+	start_pressed = true;
+	// m_ObjectDetection.detectObjects(frame[actIndex]);
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -805,6 +805,8 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
 	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
+	if(start_pressed)
+		m_ObjectDetection.detectObjects(frame[actIndex]);
 
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());

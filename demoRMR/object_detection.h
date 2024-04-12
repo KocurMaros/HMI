@@ -1,22 +1,18 @@
-#pragma once
 #include <string>
 
-#include <QObject>
-#include <QWidget>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
 
 
-class ObjectDetection
-: public QWidget
-{
-	Q_OBJECT;
+
+class ObjectDetection{
 public:
-    explicit ObjectDetection(QWidget *parent = nullptr);
+    ObjectDetection();
     ~ObjectDetection();
 
-    void detectObjects(float confThreshold, float nmsThreshold);
-signals:
-
-public slots:
+    void detectObjects(cv::Mat frame);
 private:
     std::string m_url;
+    cv::VideoCapture cap;
 };
