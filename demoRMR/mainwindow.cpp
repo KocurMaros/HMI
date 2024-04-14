@@ -20,7 +20,7 @@
 #include "CKobuki.h"
 
 #define BODY_PROGRESS_BAR_POS 3, 2
-#define SHORT_MAX 32767
+#define SHORT_MAX 65'535
 #define TO_RADIANS 3.14159 / 180.0
 
 // 11-15
@@ -44,6 +44,8 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
 	, m_useTeleView(true)
+	, m_lastLeftEncoder(0)
+	, m_lastRightEncoder(0)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -306,8 +308,6 @@ void MainWindow::paintSupervisorControl()
 
 	double x = getX() * 100 + 50;
 	double y = getY() * 100 + 50;
-
-	qDebug() << "x: " << x << " y: " << y;
 
 	int xrobot = rect.width() * (x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
 	int yrobot = rect.height() - rect.height() * (y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
