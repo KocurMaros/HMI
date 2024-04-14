@@ -45,8 +45,6 @@ void MapLoader::loadMap(const char filename[], TMapArea &mapss)
 		maxX = temp.point.x > maxX ? temp.point.x : maxX;
 		minY = temp.point.y < minY ? temp.point.y : minY;
 		maxY = temp.point.y > maxY ? temp.point.y : maxY;
-		;
-		;
 	}
 	free(freeMyCopy);
 
@@ -80,4 +78,3 @@ void MapLoader::loadMap(const char filename[], TMapArea &mapss)
 
 	fflush(stdout);
 }
-

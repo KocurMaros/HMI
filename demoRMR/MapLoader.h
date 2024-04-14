@@ -7,27 +7,25 @@ typedef struct
 	double x;
 	double y;
 
-}Point;
+} Point;
 
-typedef union
-{
+typedef union {
 	Point point;
 	double suradnice[2];
-}TMapPoint;
+} TMapPoint;
 
 typedef struct
 {
 	int numofpoints;
 	std::vector<TMapPoint> points;
-}TMapObject;
+} TMapObject;
 
 typedef struct
 {
 	TMapObject wall;
 	int numofObjects;
 	std::vector<TMapObject> obstacle;
-}TMapArea;
-
+} TMapArea;
 
 class MapLoader
 {
@@ -37,7 +35,7 @@ public:
 	double maxX;
 	double minY;
 	double maxY;
-	void loadMap(const char filename[],TMapArea &mapss);
+	void loadMap(const char filename[], TMapArea &mapss);
 };
 
 #endif // MAP_LOADER_H
