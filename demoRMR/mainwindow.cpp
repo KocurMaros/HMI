@@ -805,9 +805,11 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
 	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
-	if(start_pressed)
+	m_frames_c++;
+	if(m_frames_c > 255)
+		m_frames_c = 0;
+	if(start_pressed /*&& m_frames_c % 5 == 0*/)
 		m_ObjectDetection.detectObjects(frame[actIndex]);
-
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());
 

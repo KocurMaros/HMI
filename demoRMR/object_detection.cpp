@@ -8,6 +8,9 @@
 
 ObjectDetection::ObjectDetection()
 {
+    // Constructor implementatio
+    m_savedImg = false;
+    m_circleCounter = 0;
 }
 
 ObjectDetection::~ObjectDetection()
@@ -42,6 +45,11 @@ void ObjectDetection::detectObjects(cv::Mat frame)
         int radius = c[2];
         cv::circle( frame, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
     }
+    if(!m_savedImg && circles.size() != m_circleCounter && circles.size() > 0){
+        cv::imwrite("circles.jpg", frame);
+        m_savedImg = true;
+    }
+    
     // cv::imshow ("gray",gray);
     // cv::imshow ("Live",frame);
 }

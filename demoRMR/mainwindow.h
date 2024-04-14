@@ -143,7 +143,8 @@ private:
 	
 	ObjectDetection m_ObjectDetection;
 	bool start_pressed = false;
-    // std::shared_ptr<ObjectDetection> m_ObjectDetection;
+	uint8_t m_frames_c = 0;
+   // std::shared_ptr<ObjectDetection> m_ObjectDetection;
 };
 
 #endif // MAINWINDOW_H
