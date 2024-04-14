@@ -762,11 +762,16 @@ void MainWindow::on_actionShowHelp_triggered()
 
 void MainWindow::on_teleControlButton_clicked()
 {
+	m_ui->actionAdd_motion_buttons->setDisabled(false);
 	m_useTeleView = true;
 }
 
 void MainWindow::on_supervisorButton_clicked()
 {
+	if (m_motionButtonsVisible) {
+		on_actionAdd_motion_buttons_triggered();
+	}
+	m_ui->actionAdd_motion_buttons->setDisabled(true);
 	m_useTeleView = false;
 }
 
