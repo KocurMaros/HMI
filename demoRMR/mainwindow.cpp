@@ -343,6 +343,18 @@ double MainWindow::getFi()
 	return m_fi;
 }
 
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+	if (m_robot == nullptr || !m_useTeleView) {
+		return;
+	}
+
+	bool clickedInFrame = m_ui->frame->geometry().contains(event->pos());
+	if (clickedInFrame) {
+
+	}
+}
+
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
 void MainWindow::setUiValues(double robotX, double robotY, double robotFi)

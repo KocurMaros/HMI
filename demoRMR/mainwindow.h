@@ -74,6 +74,8 @@ private:
 	double getY();
 	double getFi();
 
+	void mousePressEvent(QMouseEvent *event) override;
+
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
