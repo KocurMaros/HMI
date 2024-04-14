@@ -22,7 +22,10 @@ target_include_directories(robot PUBLIC
 )
 
 # Link OpenCV libraries
-target_link_libraries(robot ${OpenCV_LIBRARIES})
+target_link_libraries(robot
+	${OpenCV_LIBRARIES}
+	Qt::Core
+)
 
 # Specify output directory
 set_target_properties(robot PROPERTIES

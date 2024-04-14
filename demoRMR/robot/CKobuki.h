@@ -12,6 +12,7 @@
 ////*************************************************************************************
 #ifndef KOBUKI_CLASS_123456789
 #define KOBUKI_CLASS_123456789
+#include <QObject>
 #define PI 3.14159 /* pi */
 #define MS_INSTRUCTION_DELAY 25
 
@@ -116,6 +117,7 @@ typedef struct
 	TExtraRequestData extraInfo;
 } TKobukiData;
 
+Q_DECLARE_METATYPE(TKobukiData);
 
 typedef long (*src_callback_kobuki_data)(void *user_data, TKobukiData &Kobuki_data);
 

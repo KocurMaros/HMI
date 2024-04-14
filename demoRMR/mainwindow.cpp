@@ -36,6 +36,8 @@ static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 	, m_ui(new Ui::MainWindow)
+	, m_odometryThread(new QThread(this))
+	, m_positionTracker(new PositionTracker())
 	, m_connectionLed(new QLed(this))
 	, m_robot(nullptr)
 	, m_ipaddress(IP_ADDRESSES[0].toStdString())
@@ -56,8 +58,6 @@ MainWindow::MainWindow(QWidget *parent)
 		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
 	m_datacounter = 0;
-	//  timer = new QTimer(this);
-	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
 	m_updateSkeletonPicture = 0;
@@ -78,6 +78,11 @@ MainWindow::MainWindow(QWidget *parent)
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
 
 	m_mapLoader.loadMap(MAP_PATH, m_mapArea);
+	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
+	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
+
+	m_positionTracker->moveToThread(m_odometryThread);
+	m_odometryThread->start();
 }
 
 MainWindow::~MainWindow()
@@ -374,20 +379,8 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
 	if (m_datacounter % 5) {
-		///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
-		// ui->lineEdit_2->setText(QString::number(robotdata.EncoderRight));
-		//ui->lineEdit_3->setText(QString::number(robotdata.EncoderLeft));
-		//ui->lineEdit_4->setText(QString::number(robotdata.GyroAngle));
-		/// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
-		/// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete. prikaz emit to presne takto spravi
-		/// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
-		///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
-		emit uiValuesChanged(getX(), getY(), getFi());
-		///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
-		/// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
-		/// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
+		emit uiValuesChanged(m_x, m_y, m_fi);
 	}
-	m_datacounter++;
 
 	return 0;
 }
@@ -531,6 +524,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	if (m_connectionLed->isInConnectedState()) {
 		qDebug() << "Disconnecting the UI";
+		m_robot->setTranslationSpeed(0);
 		m_robot.reset();
 
 		m_connectionLed->setToDisconnectedState();
@@ -775,6 +769,29 @@ void MainWindow::on_supervisorButton_clicked()
 	m_useTeleView = false;
 }
 
+void MainWindow::on_resultsReady_updateUi(double x, double y, double fi)
+{
+	if (!m_robotStartupLocation && m_datacounter % 5) {
+		x = 0;
+		y = 0;
+		m_fiCorrection = fi;
+		m_robotStartupLocation = true;
+	}
+
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		m_x = x;
+		m_y = y;
+		m_fi = fi - m_fiCorrection;
+	}
+
+	if (m_datacounter % 5) {
+		emit uiValuesChanged(x, y, fi);
+	}
+
+	m_datacounter++;
+}
+
 void MainWindow::inPaintEventProcessSkeleton()
 {
 	double left_zero = -M_PI / 2 - M_PI / 4;
@@ -822,7 +839,6 @@ void MainWindow::inPaintEventProcessSkeleton()
 	if (std::abs(m_prevRotationspeed - rotation) > 0.1) {
 		m_prevRotationspeed = rotation;
 		m_rotationspeed = rotation;
-		// cout << "Rotation: " << rotationspeed << endl;
 		change[1] = true;
 	}
 	if (change[0] || change[1]) {
@@ -946,37 +962,5 @@ void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 		return;
 	}
 
-	int diffLeftEnc = robotdata.EncoderLeft - m_lastLeftEncoder;
-	int diffRightEnc = robotdata.EncoderRight - m_lastRightEncoder;
-
-	if (m_lastRightEncoder > 60'000 && robotdata.EncoderRight < 1'000)
-		diffRightEnc += SHORT_MAX;
-	if (m_lastLeftEncoder > 60'000 && robotdata.EncoderLeft < 1'000)
-		diffLeftEnc += SHORT_MAX;
-
-	if (m_lastRightEncoder < 1'000 && robotdata.EncoderRight > 60'000)
-		diffRightEnc -= SHORT_MAX;
-	if (m_lastLeftEncoder < 1'000 && robotdata.EncoderLeft > 60'000)
-		diffLeftEnc -= SHORT_MAX;
-
-	auto leftEncDist = m_robot->tickToMeter * diffLeftEnc;
-	auto rightEncDist = m_robot->tickToMeter * diffRightEnc;
-
-	m_lastLeftEncoder = robotdata.EncoderLeft;
-	m_lastRightEncoder = robotdata.EncoderRight;
-
-	double l = (rightEncDist + leftEncDist) / 2.0;
-	{
-		std::scoped_lock<std::mutex> lck(m_odometryLock);
-		m_fi = robotdata.GyroAngle / 100. * TO_RADIANS - m_fiCorrection;
-		m_x = m_x + l * std::cos(m_fi);
-		m_y = m_y + l * std::sin(m_fi);
-
-		if (!m_robotStartupLocation && m_datacounter % 5) {
-			m_x = 0;
-			m_y = 0;
-			m_fiCorrection = m_fi;
-			m_robotStartupLocation = true;
-		}
-	}
+	emit positionResults(robotdata, m_fiCorrection);
 }

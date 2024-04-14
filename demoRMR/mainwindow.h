@@ -4,6 +4,8 @@
 #include "HelpWindow.h"
 #include "BodyProgressBars.h"
 #include "MapLoader.h"
+#include "PositionTracker.h"
+#include <QThread>
 #include "QLed.h"
 #include <QMainWindow>
 #include <QMessageBox>
@@ -90,9 +92,7 @@ private slots:
 	void on_actionShowHelp_triggered();
 	void on_teleControlButton_clicked();
 	void on_supervisorButton_clicked();
-
-	//protected:
-	//	void contextMenuEvent(QContextMenuEvent *event) override;
+	void on_resultsReady_updateUi(double x, double y, double fi);
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
@@ -100,10 +100,13 @@ public slots:
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 	void changeSpeed(double forwardspeed, double rotationspeed);
+	void positionResults(const TKobukiData &robotdat, double correction);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
 	Ui::MainWindow *m_ui;
+	QThread *m_odometryThread;
+	PositionTracker *m_positionTracker;
 	int m_updateLaserPicture;
 	LaserMeasurement m_copyOfLaserData;
 	std::string m_ipaddress;

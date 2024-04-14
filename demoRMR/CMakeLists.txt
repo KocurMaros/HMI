@@ -27,6 +27,7 @@ message("OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 set(HEADERS
 	BodyProgressBars.h
 	ControllButtons.h
+	PositionTracker.h
 	HelpWindow.h
 	MapLoader.h
 	mainwindow.h
@@ -36,6 +37,7 @@ set(HEADERS
 set(SOURCES
 	BodyProgressBars.cpp
 	ControllButtons.cpp
+	PositionTracker.cpp
 	HelpWindow.cpp
 	MapLoader.cpp
 	main.cpp
