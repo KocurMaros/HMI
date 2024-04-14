@@ -273,9 +273,9 @@ void MainWindow::paintSupervisorControl()
 	pero.setWidth(3);
 	pero.setColor(Qt::green);
 
-	QRect rect(20, 120, 700, 500);
+	QRect rect;
 	rect = m_ui->frame->geometry();
-	rect.translate(0, 15);
+	rect.translate(0, 37);
 	painter.drawRect(rect);
 
 	for (int i = 0; i < m_mapArea.wall.points.size(); i++) {
