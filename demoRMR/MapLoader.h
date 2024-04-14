@@ -2,6 +2,8 @@
 #define MAP_LOADER_H
 #include <vector>
 
+#include <QPointF>
+
 typedef struct
 {
 	double x;
@@ -27,15 +29,25 @@ typedef struct
 	std::vector<TMapObject> obstacle;
 } TMapArea;
 
+struct WallObject
+{
+	QPointF start;
+	QPointF end;
+	QPointF line;
+};
+
 class MapLoader
 {
 public:
-	MapLoader();
+	explicit MapLoader(double width, double height);
 	double minX;
 	double maxX;
 	double minY;
 	double maxY;
-	void loadMap(const char filename[], TMapArea &mapss);
+
+	double m_height;
+	double m_width;
+	QVector<WallObject> loadMap(const char filename[], TMapArea &mapss);
 };
 
 #endif // MAP_LOADER_H

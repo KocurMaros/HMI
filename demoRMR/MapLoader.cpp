@@ -3,8 +3,12 @@
 #include "stdio.h"
 #include "string.h"
 #include <limits>
+#include <qpoint.h>
+#include <qvector.h>
 
-MapLoader::MapLoader()
+MapLoader::MapLoader(double width, double height)
+	: m_width(width)
+	, m_height(height)
 {
 	minX = std::numeric_limits<double>::max();
 	maxX = std::numeric_limits<double>::min();
@@ -12,12 +16,12 @@ MapLoader::MapLoader()
 	maxY = std::numeric_limits<double>::min();
 }
 
-void MapLoader::loadMap(const char filename[], TMapArea &mapss)
+QVector<WallObject> MapLoader::loadMap(const char filename[], TMapArea &mapss)
 {
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL) {
 		printf("zly file\n");
-		return;
+		return {};
 	}
 
 	//tu nacitame obvodovu stenu
@@ -77,4 +81,32 @@ void MapLoader::loadMap(const char filename[], TMapArea &mapss)
 	}
 
 	fflush(stdout);
+
+	QVector<WallObject> objects;
+
+	for (int i = 0; i < mapss.wall.points.size(); i++) {
+		int xmin = m_width * (mapss.wall.points[i].point.x - minX) / (maxX - minX);
+		int xmax = m_width * (mapss.wall.points[(i + 1) % mapss.wall.points.size()].point.x - minX)
+			/ (maxX - minX);
+		int ymin = m_height - m_height * (mapss.wall.points[i].point.y - minY) / (maxY - minY);
+		int ymax = m_height
+			- m_height * (mapss.wall.points[(i + 1) % mapss.wall.points.size()].point.y - minY) / (maxY - minY);
+
+		objects.push_back({ QPointF(xmin, ymin), QPointF(xmax, ymax), QPointF(xmax - xmin, ymax - ymin) });
+		// painter.drawLine(rect.x() + xmin, rect.y() + ymin, rect.x() + xmax, rect.y() + ymax);
+	}
+
+	for (int i = 0; i < mapss.obstacle.size(); i++) {
+		for (int j = 0; j < mapss.obstacle[i].points.size(); j++) {
+			int xmin = m_width * (mapss.obstacle[i].points[j].point.x - minX) / (maxX - minX);
+			int xmax = m_width * (mapss.obstacle[i].points[(j + 1) % mapss.obstacle[i].points.size()].point.x - minX)
+				/ (maxX - minX);
+			int ymin = m_height - m_height * (mapss.obstacle[i].points[j].point.y - minY) / (maxY - minY);
+			int ymax = m_height
+				- m_height * (mapss.obstacle[i].points[(j + 1) % mapss.obstacle[i].points.size()].point.y - minY)
+					/ (maxY - minY);
+			objects.push_back({ QPointF(xmin, ymin), QPointF(xmax, ymax), QPointF(xmax - xmin, ymax - ymin) });
+		}
+	}
+	return objects;
 }
