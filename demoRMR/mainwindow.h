@@ -75,6 +75,7 @@ private:
 	double getFi();
 
 	void mousePressEvent(QMouseEvent *event) override;
+	QPointF createLineParams(const QPointF &p);
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;

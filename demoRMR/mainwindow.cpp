@@ -351,8 +351,26 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 	bool clickedInFrame = m_ui->frame->geometry().contains(event->pos());
 	if (clickedInFrame) {
-
+		QPointF line = createLineParams(event->pos());
+		
 	}
+}
+
+QPointF MainWindow::createLineParams(const QPointF &p)
+{
+	QPointF line;
+	// Compute slope (a)
+	if (getX() != p.x()) {
+		auto x = (p.y() - getY()) / (p.x() - getX());
+		line.setX(x);
+	}
+	else {
+		// If the line is vertical, slope is infinity, so set a to a large value
+		line.setY(1e9);
+	}
+	// Compute intercept (b)
+	line.ry() = getY() - line.x() * getX();
+	return line;
 }
 
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
