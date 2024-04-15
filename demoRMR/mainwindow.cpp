@@ -799,27 +799,40 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 		}
 	}
 }
-// void MainWindow::calculePositionOfObject(cv::Point center){
-    // //0 - 800 kamera pixel center
-//     for(size_t i=0; i < m_copyOfLaserData.numberOfScans; i++){
-//         if(m_copyOfLaserData.Data[k].scanAngle >= 330 || m_copyOfLaserData.Data[k].scanAngle < 30)
-
-//         else
-//     }
-// }
+double MainWindow::calculePositionOfObject(cv::Point center){
+    //0 - 800 kamera pixel center
+	double prob_angle;
+	if(center.x <= 400)
+		prob_angle = MAP(center.x, 0, 400, 330, 360);
+	else
+		prob_angle = MAP(center.x, 400, 800, 0, 30);
+	return prob_angle;
+	//dajak vratit k a vykreslit na obrazovku kde je objekt
+}
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
 	QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
 	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
-	m_frames_c++;
-	if(m_frames_c > 255)
-		m_frames_c = 0;
-	if(start_pressed /*&& m_frames_c % 5 == 0*/){
+
+	if(start_pressed){
 		cv::Point center = m_ObjectDetection.detectObjects(frame[actIndex]);
-        // calculePositionOfObject(center);
-        cout << center  << endl;
+        double center_of_object = calculePositionOfObject(center);
+        // cout << center  << endl;
+		size_t k = 0;
+		for(k = 0; k < m_copyOfLaserData.numberOfScans; k++)
+			if(m_copyOfLaserData.Data[k].scanAngle >= center_of_object && m_copyOfLaserData.Data[k-1].scanAngle < center_of_object)
+				break;
+		cout << k << " " << center_of_object << endl;
+		// int x = rect.width() - (m_copyOfLaserData.Data[k].scanDistance * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
+		// 		+ rect.topLeft().x();
+		// int y = rect.height() - (m_copyOfLaserData.Data[k].scanDistance * cos((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
+		// 		+ rect.topLeft().y();  //prepocet do obrazovky
+		// cout << "x: " << x << " y: " << y << endl;
+		// painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
+		// painter.drawEllipse(QPoint(x, y), 50, 50);
+
     }
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());

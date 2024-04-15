@@ -13,8 +13,6 @@ public:
 
     cv::Point detectObjects(cv::Mat frame);
 private:
-    std::string m_url;
-    cv::VideoCapture cap;
     bool m_savedImg;
     uint8_t m_circleCounter;
 };

@@ -65,7 +65,7 @@ private:
 	void paintEvent(QPaintEvent *event) override; // Q_DECL_OVERRIDE;
 	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
-
+	double calculePositionOfObject(cv::Point center);
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
