@@ -785,7 +785,8 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 				}
 			}
 			else {
-				painter.setPen(QPen(Qt::green, 3));
+                
+				    painter.setPen(QPen(Qt::green, 3));
 			}
 
 			int dist = m_copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
@@ -798,7 +799,14 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 		}
 	}
 }
+// void MainWindow::calculePositionOfObject(cv::Point center){
+    // //0 - 800 kamera pixel center
+//     for(size_t i=0; i < m_copyOfLaserData.numberOfScans; i++){
+//         if(m_copyOfLaserData.Data[k].scanAngle >= 330 || m_copyOfLaserData.Data[k].scanAngle < 30)
 
+//         else
+//     }
+// }
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
 	QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
@@ -808,8 +816,11 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 	m_frames_c++;
 	if(m_frames_c > 255)
 		m_frames_c = 0;
-	if(start_pressed /*&& m_frames_c % 5 == 0*/)
-		m_ObjectDetection.detectObjects(frame[actIndex]);
+	if(start_pressed /*&& m_frames_c % 5 == 0*/){
+		cv::Point center = m_ObjectDetection.detectObjects(frame[actIndex]);
+        // calculePositionOfObject(center);
+        cout << center  << endl;
+    }
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());
 

@@ -11,7 +11,7 @@ public:
     ObjectDetection();
     ~ObjectDetection();
 
-    void detectObjects(cv::Mat frame);
+    cv::Point detectObjects(cv::Mat frame);
 private:
     std::string m_url;
     cv::VideoCapture cap;
