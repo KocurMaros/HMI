@@ -351,10 +351,9 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 	if (m_mapLoader->isLineInCollision(robotPoint, event->pos())) {
 		qDebug() << "Line is in collision";
+		// TODO: Show message box.
 		return;
 	}
-
-
 
 	if (event->button() == Qt::LeftButton) {
 		m_endPosition = event->pos();
