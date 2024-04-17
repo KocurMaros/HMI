@@ -7,6 +7,7 @@
 #include "PositionTracker.h"
 #include <QThread>
 #include "QLed.h"
+#include "ui_mainwindow.h"
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTimer>
@@ -56,6 +57,7 @@ public:
 
 	int processThisCamera(cv::Mat cameraData);
 	int processThisSkeleton(skeleton skeledata);
+	QRect getFrameGeometry() const { return m_ui->frame->geometry(); }
 
 private:
 	void disableAllButtons(bool disable);
@@ -158,8 +160,8 @@ private:
 	double m_y;
 
 	bool m_useTeleView;
-	MapLoader m_mapLoader;
-	TMapArea m_mapArea;
+	std::shared_ptr<MapLoader> m_mapLoader;
+	QLineF m_trajectoryLine;
 };
 
 #endif // MAINWINDOW_H

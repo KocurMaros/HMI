@@ -1,8 +1,12 @@
 #ifndef MAP_LOADER_H
 #define MAP_LOADER_H
+#include <qobject.h>
 #include <vector>
 
 #include <QPointF>
+#include <QVector>
+
+#define DEAD_POINT QPointF(11,481.019)
 
 typedef struct
 {
@@ -33,13 +37,21 @@ struct WallObject
 {
 	QPointF start;
 	QPointF end;
-	QPointF line;
 };
 
+std::ostream &operator<<(std::ostream &os, const WallObject &obj);
+
 class MapLoader
+	: public QObject
 {
 public:
-	explicit MapLoader(double width, double height);
+	explicit MapLoader(QObject *parrent, double width, double height);
+	QPointF toMapPoint(const QPointF &point);
+	void loadMap(const char filename[]);
+	bool isLineInCollision(const QPointF &start, const QPointF &end);
+	QVector<WallObject> walls();
+	TMapArea mapArea() const { return m_mapArea; }
+
 	double minX;
 	double maxX;
 	double minY;
@@ -47,7 +59,8 @@ public:
 
 	double m_height;
 	double m_width;
-	QVector<WallObject> loadMap(const char filename[], TMapArea &mapss);
+	QVector<WallObject> m_walls;
+	TMapArea m_mapArea;
 };
 
 #endif // MAP_LOADER_H

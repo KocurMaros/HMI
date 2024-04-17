@@ -1,13 +1,33 @@
 #include "MapLoader.h"
+#include "mainwindow.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
 #include <limits>
-#include <qpoint.h>
-#include <qvector.h>
+#include <iostream>
+#include <QDebug>
+#include <qwindowdefs.h>
 
-MapLoader::MapLoader(double width, double height)
-	: m_width(width)
+static QPointF createLineParams(const QPointF &start, const QPointF &end)
+{
+	QPointF line;
+	// Compute slope (a)
+	if (start.x() != end.x()) {
+		auto x = (end.y() - start.y()) / (end.x() - start.x());
+		line.setX(x);
+	}
+	else {
+		// If the line is vertical, slope is infinity, so set a to a large value
+		line.setY(1e9);
+	}
+	// Compute intercept (b)
+	line.ry() = start.y() - line.x() * start.x();
+	return line;
+}
+
+MapLoader::MapLoader(QObject *parrent, double width, double height)
+	: QObject(parrent)
+	, m_width(width)
 	, m_height(height)
 {
 	minX = std::numeric_limits<double>::max();
@@ -16,12 +36,23 @@ MapLoader::MapLoader(double width, double height)
 	maxY = std::numeric_limits<double>::min();
 }
 
-QVector<WallObject> MapLoader::loadMap(const char filename[], TMapArea &mapss)
+QPointF MapLoader::toMapPoint(const QPointF &point)
+{
+	QRect rect;
+	rect = qobject_cast<MainWindow *>(parent())->getFrameGeometry();
+	rect.translate(0, 37);
+	double xrobot = rect.x() + rect.width() * (point.x() - minX) / (maxX - minX);
+	double yrobot = rect.y() + rect.height() - rect.height() * (point.y() - minY) / (maxY - minY);
+
+	return QPointF(xrobot, yrobot);
+}
+
+void MapLoader::loadMap(const char filename[])
 {
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL) {
 		printf("zly file\n");
-		return {};
+		return;
 	}
 
 	//tu nacitame obvodovu stenu
@@ -33,17 +64,17 @@ QVector<WallObject> MapLoader::loadMap(const char filename[], TMapArea &mapss)
 	char *freeMyCopy;
 	freeMyCopy = myCopy;
 	myCopy = strtok(myCopy, "[]");
-	mapss.wall.numofpoints = (atoi(myCopy));
-	printf("num of points %i\n", mapss.wall.numofpoints);
-	mapss.wall.points.reserve(mapss.wall.numofpoints);
-	for (int i = 0; i < mapss.wall.numofpoints; i++) {
+	m_mapArea.wall.numofpoints = (atoi(myCopy));
+	printf("num of points %i\n", m_mapArea.wall.numofpoints);
+	m_mapArea.wall.points.reserve(m_mapArea.wall.numofpoints);
+	for (int i = 0; i < m_mapArea.wall.numofpoints; i++) {
 		TMapPoint temp;
 		myCopy = strtok(NULL, "[,");
 		temp.point.x = atof(myCopy);
 		myCopy = strtok(NULL, "[,");
 		temp.point.y = atof(myCopy);
-		mapss.wall.points.push_back(temp);
-		//   mapss.wall.points[i/2].suradnice[i%2]=atof(myCopy);
+		m_mapArea.wall.points.push_back(temp);
+		//	 m_mapArea.wall.points[i/2].suradnice[i%2]=atof(myCopy);
 
 		minX = temp.point.x < minX ? temp.point.x : minX;
 		maxX = temp.point.x > maxX ? temp.point.x : maxX;
@@ -53,8 +84,8 @@ QVector<WallObject> MapLoader::loadMap(const char filename[], TMapArea &mapss)
 	free(freeMyCopy);
 
 	//tu nacitame jednotlive prekazky
-	mapss.numofObjects = 0;
-	mapss.obstacle.clear();
+	m_mapArea.numofObjects = 0;
+	m_mapArea.obstacle.clear();
 	while (fgets(myLine, 550, fp)) {
 		printf("%s\n", myLine);
 		myCopy = (char *)calloc(strlen(myLine) + 2, sizeof(char));
@@ -65,7 +96,7 @@ QVector<WallObject> MapLoader::loadMap(const char filename[], TMapArea &mapss)
 		if ((atoi(myCopy)) == 0)
 			break;
 		TMapObject tempObstacle;
-		mapss.numofObjects++;
+		m_mapArea.numofObjects++;
 
 		tempObstacle.numofpoints = (atoi(myCopy));
 		for (int i = 0; i < tempObstacle.numofpoints; i++) {
@@ -77,36 +108,84 @@ QVector<WallObject> MapLoader::loadMap(const char filename[], TMapArea &mapss)
 			tempObstacle.points.push_back(temp);
 		}
 		free(freeMyCopy);
-		mapss.obstacle.push_back(tempObstacle);
+		m_mapArea.obstacle.push_back(tempObstacle);
 	}
 
 	fflush(stdout);
 
-	QVector<WallObject> objects;
-
-	for (int i = 0; i < mapss.wall.points.size(); i++) {
-		int xmin = m_width * (mapss.wall.points[i].point.x - minX) / (maxX - minX);
-		int xmax = m_width * (mapss.wall.points[(i + 1) % mapss.wall.points.size()].point.x - minX)
-			/ (maxX - minX);
-		int ymin = m_height - m_height * (mapss.wall.points[i].point.y - minY) / (maxY - minY);
-		int ymax = m_height
-			- m_height * (mapss.wall.points[(i + 1) % mapss.wall.points.size()].point.y - minY) / (maxY - minY);
-
-		objects.push_back({ QPointF(xmin, ymin), QPointF(xmax, ymax), QPointF(xmax - xmin, ymax - ymin) });
-		// painter.drawLine(rect.x() + xmin, rect.y() + ymin, rect.x() + xmax, rect.y() + ymax);
+	auto objects = walls();
+	for (WallObject &wall : objects) {
+		std::cout << wall;
 	}
 
-	for (int i = 0; i < mapss.obstacle.size(); i++) {
-		for (int j = 0; j < mapss.obstacle[i].points.size(); j++) {
-			int xmin = m_width * (mapss.obstacle[i].points[j].point.x - minX) / (maxX - minX);
-			int xmax = m_width * (mapss.obstacle[i].points[(j + 1) % mapss.obstacle[i].points.size()].point.x - minX)
-				/ (maxX - minX);
-			int ymin = m_height - m_height * (mapss.obstacle[i].points[j].point.y - minY) / (maxY - minY);
-			int ymax = m_height
-				- m_height * (mapss.obstacle[i].points[(j + 1) % mapss.obstacle[i].points.size()].point.y - minY)
-					/ (maxY - minY);
-			objects.push_back({ QPointF(xmin, ymin), QPointF(xmax, ymax), QPointF(xmax - xmin, ymax - ymin) });
+	m_walls = std::move(objects);
+}
+
+bool MapLoader::isLineInCollision(const QPointF &start, const QPointF &end)
+{
+	for (auto &wall : m_walls) {
+		// calculate the distance to intersection point
+		float uA =
+				((wall.end.x() - wall.start.x()) * (start.y() - wall.start.y()) -
+				 (wall.end.y() - wall.start.y()) * (start.x() - wall.start.x())) /
+				((wall.end.y() - wall.start.y()) * (end.x() - start.x()) -
+				 (wall.end.x() - wall.start.x()) * (end.y() - start.y()));
+		float uB = ((end.x() - start.x()) * (start.y() - wall.start.y()) -
+								(end.y() - start.y()) * (start.x() - wall.start.x())) /
+							 ((wall.end.y() - wall.start.y()) * (end.x() - start.x()) -
+								(wall.end.x() - wall.start.x()) * (end.y() - start.y()));
+
+		// if uA and uB are between 0-1, lines are colliding
+		if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+			return true;
 		}
 	}
-	return objects;
+	return false;
+}
+
+std::ostream &operator<<(std::ostream &os, const WallObject &obj)
+{
+	os << "Start: " << obj.start.x() << ", " << obj.start.y() << std::endl;
+	os << "End: " << obj.end.x() << ", " << obj.end.y() << std::endl;
+	return os;
+}
+
+
+QVector<WallObject> MapLoader::walls()
+{
+	QVector<WallObject> objects;
+
+	for (int i = 0; i < m_mapArea.wall.points.size(); i++) {
+		double xmin = m_mapArea.wall.points[i].point.x;
+		double xmax = m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.x;
+		double ymin = m_mapArea.wall.points[i].point.y;
+		double ymax = m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.y;
+
+		auto min = toMapPoint({xmin, ymin});
+		auto max = toMapPoint({xmax, ymax});
+
+		objects.push_back({min, max});
+		// painter.drawLine(min, max);
+	}
+
+	// qDebug() << "Current position is " << m_mapLoader->toMapPoint({getX(), getY()});
+
+	for (int i = 0; i < m_mapArea.obstacle.size(); i++) {
+		for (int j = 0; j < m_mapArea.obstacle[i].points.size(); j++) {
+			double xmin = m_mapArea.obstacle[i].points[j].point.x;
+			double xmax = m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.x;
+			double ymin = m_mapArea.obstacle[i].points[j].point.y;
+			double ymax = m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.y;
+
+			auto min = toMapPoint({xmin, ymin});
+			auto max = toMapPoint({xmax, ymax});
+
+			// qDebug() << "Drawing line from " << min << " to " << max;
+			objects.push_back({min, max});
+			// painter.drawLine(min, max);
+		}
+	}
+
+	m_walls = std::move(objects);
+	return m_walls;
 }

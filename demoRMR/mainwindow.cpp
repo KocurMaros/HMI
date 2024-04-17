@@ -77,7 +77,8 @@ MainWindow::MainWindow(QWidget *parent)
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
 
-	m_mapLoader.loadMap(MAP_PATH, m_mapArea);
+	m_mapLoader = std::make_shared<MapLoader>(this, m_ui->frame->width(), m_ui->frame->height());
+	m_mapLoader->loadMap(MAP_PATH);
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
 
@@ -283,29 +284,13 @@ void MainWindow::paintSupervisorControl()
 	rect.translate(0, 37);
 	painter.drawRect(rect);
 
-	for (int i = 0; i < m_mapArea.wall.points.size(); i++) {
-		painter.setPen(pero);
-		int xmin = rect.width() * (m_mapArea.wall.points[i].point.x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
-		int xmax = rect.width() * (m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.x - m_mapLoader.minX)
-			/ (m_mapLoader.maxX - m_mapLoader.minX);
-		int ymin = rect.height() - rect.height() * (m_mapArea.wall.points[i].point.y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
-		int ymax = rect.height()
-			- rect.height() * (m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
-		painter.drawLine(rect.x() + xmin, rect.y() + ymin, rect.x() + xmax, rect.y() + ymax);
-	}
+	painter.setPen(pero);
 
-	for (int i = 0; i < m_mapArea.obstacle.size(); i++) {
-		for (int j = 0; j < m_mapArea.obstacle[i].points.size(); j++) {
-			painter.setPen(pero);
-			int xmin = rect.width() * (m_mapArea.obstacle[i].points[j].point.x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
-			int xmax = rect.width() * (m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.x - m_mapLoader.minX)
-				/ (m_mapLoader.maxX - m_mapLoader.minX);
-			int ymin = rect.height() - rect.height() * (m_mapArea.obstacle[i].points[j].point.y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
-			int ymax = rect.height()
-				- rect.height() * (m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.y - m_mapLoader.minY)
-					/ (m_mapLoader.maxY - m_mapLoader.minY);
-			painter.drawLine(rect.x() + xmin, rect.y() + ymin, rect.x() + xmax, rect.y() + ymax);
-		}
+	auto walls = m_mapLoader->walls();
+	for (const auto &wall : walls) {
+		auto min = wall.start;
+		auto max = wall.end;
+		painter.drawLine(min, max);
 	}
 
 	pero.setColor(Qt::red);
@@ -314,15 +299,17 @@ void MainWindow::paintSupervisorControl()
 	double x = getX() * 100 + 50;
 	double y = getY() * 100 + 50;
 
-	int xrobot = rect.width() * (x - m_mapLoader.minX) / (m_mapLoader.maxX - m_mapLoader.minX);
-	int yrobot = rect.height() - rect.height() * (y - m_mapLoader.minY) / (m_mapLoader.maxY - m_mapLoader.minY);
+	int xrobot = rect.width() * (x - m_mapLoader->minX) / (m_mapLoader->maxX - m_mapLoader->minX);
+	int yrobot = rect.height() - rect.height() * (y - m_mapLoader->minY) / (m_mapLoader->maxY - m_mapLoader->minY);
 
-	int xpolomer = rect.width() * (20) / (m_mapLoader.maxX - m_mapLoader.minX);
-	int ypolomer = rect.height() * (20) / (m_mapLoader.maxY - m_mapLoader.minY);
+	int xpolomer = rect.width() * (20) / (m_mapLoader->maxX - m_mapLoader->minX);
+	int ypolomer = rect.height() * (20) / (m_mapLoader->maxY - m_mapLoader->minY);
 
 	painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
 	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
 					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
+
+	painter.drawLine(m_trajectoryLine);
 }
 
 double MainWindow::getX()
@@ -345,15 +332,35 @@ double MainWindow::getFi()
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-	if (m_robot == nullptr || !m_useTeleView) {
+	if (m_robot == nullptr || m_useTeleView) {
+		qDebug() << "Robot is not connected or teleoperation is not enabled";
 		return;
 	}
 
 	bool clickedInFrame = m_ui->frame->geometry().contains(event->pos());
-	if (clickedInFrame) {
-		QPointF line = createLineParams(event->pos());
-		
+	if (!clickedInFrame) {
+		qDebug() << "Clicked outside the frame";
+		return;
 	}
+	qDebug() << "Clicked inside the frame";
+
+	QPointF line = createLineParams(event->pos());
+
+	qDebug() << "Line: " << line;
+	auto x = getX()*100 + 50;
+	auto y = getY()*100 + 50;
+	auto robotPoint = m_mapLoader->toMapPoint({x, y});
+
+	qDebug() << "Robot point: " << robotPoint << " Clicked point: " << event->pos();
+
+	if (m_mapLoader->isLineInCollision(robotPoint, event->pos())) {
+		qDebug() << "Line is in collision";
+	}
+	else {
+		qDebug() << "Line is NOT in collision";
+	}
+	m_trajectoryLine = QLineF(robotPoint, event->pos());
+
 }
 
 QPointF MainWindow::createLineParams(const QPointF &p)
@@ -788,6 +795,7 @@ void MainWindow::on_teleControlButton_clicked()
 {
 	m_ui->actionAdd_motion_buttons->setDisabled(false);
 	m_useTeleView = true;
+	update();
 }
 
 void MainWindow::on_supervisorButton_clicked()
@@ -797,6 +805,7 @@ void MainWindow::on_supervisorButton_clicked()
 	}
 	m_ui->actionAdd_motion_buttons->setDisabled(true);
 	m_useTeleView = false;
+	update();
 }
 
 void MainWindow::on_resultsReady_updateUi(double x, double y, double fi)
