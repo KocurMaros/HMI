@@ -161,7 +161,7 @@ private:
 
 	bool m_useTeleView;
 	std::shared_ptr<MapLoader> m_mapLoader;
-	QLineF m_trajectoryLine;
+	QPointF m_endPosition;
 };
 
 #endif // MAINWINDOW_H

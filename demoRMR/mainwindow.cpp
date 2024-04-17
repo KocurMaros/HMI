@@ -299,8 +299,8 @@ void MainWindow::paintSupervisorControl()
 	double x = getX() * 100 + 50;
 	double y = getY() * 100 + 50;
 
-	int xrobot = rect.width() * (x - m_mapLoader->minX) / (m_mapLoader->maxX - m_mapLoader->minX);
-	int yrobot = rect.height() - rect.height() * (y - m_mapLoader->minY) / (m_mapLoader->maxY - m_mapLoader->minY);
+	double xrobot = rect.width() * (x - m_mapLoader->minX) / (m_mapLoader->maxX - m_mapLoader->minX);
+	double yrobot = rect.height() - rect.height() * (y - m_mapLoader->minY) / (m_mapLoader->maxY - m_mapLoader->minY);
 
 	int xpolomer = rect.width() * (20) / (m_mapLoader->maxX - m_mapLoader->minX);
 	int ypolomer = rect.height() * (20) / (m_mapLoader->maxY - m_mapLoader->minY);
@@ -309,7 +309,7 @@ void MainWindow::paintSupervisorControl()
 	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
 					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
 
-	painter.drawLine(m_trajectoryLine);
+	painter.drawLine(QLineF({xrobot, yrobot}, m_endPosition));
 }
 
 double MainWindow::getX()
@@ -342,25 +342,23 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 		qDebug() << "Clicked outside the frame";
 		return;
 	}
-	qDebug() << "Clicked inside the frame";
 
 	QPointF line = createLineParams(event->pos());
 
-	qDebug() << "Line: " << line;
 	auto x = getX()*100 + 50;
 	auto y = getY()*100 + 50;
 	auto robotPoint = m_mapLoader->toMapPoint({x, y});
 
-	qDebug() << "Robot point: " << robotPoint << " Clicked point: " << event->pos();
-
 	if (m_mapLoader->isLineInCollision(robotPoint, event->pos())) {
 		qDebug() << "Line is in collision";
+		return;
 	}
-	else {
-		qDebug() << "Line is NOT in collision";
-	}
-	m_trajectoryLine = QLineF(robotPoint, event->pos());
 
+
+
+	if (event->button() == Qt::LeftButton) {
+		m_endPosition = event->pos();
+	}
 }
 
 QPointF MainWindow::createLineParams(const QPointF &p)
