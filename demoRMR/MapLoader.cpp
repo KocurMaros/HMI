@@ -121,6 +121,34 @@ void MapLoader::loadMap(const char filename[])
 	m_walls = std::move(objects);
 }
 
+double MapLoader::distance(QPointF p1, QPointF p2)
+{
+	return sqrt(pow(p2.x() - p1.x(), 2) + pow(p2.y() - p1.y(), 2));
+}
+
+// Function to calculate distance from a point to a line segment
+double MapLoader::distanceFromPointToLine(QPointF point, QPointF lineStart, QPointF lineEnd)
+{
+	double l2 = pow(distance(lineStart, lineEnd), 2); // Length of the line segment squared
+
+	// If both points are the same, return distance between the point and one of the endpoints
+	if (l2 == 0) {
+		return distance(point, lineStart);
+	}
+
+	// Parametric value of projection of point p onto the line segment
+	double t = ((point.x() - lineStart.x()) * (lineEnd.x() - lineStart.x()) + (point.y() - lineStart.y()) * (lineEnd.y() - lineStart.y())) / l2;
+
+	// Clamp t to ensure it's within the line segment
+	t = std::max(0.0, std::min(1.0, t));
+
+	// Projection point on the line segment
+	QPointF projection = {lineStart.x() + t * (lineEnd.x() - lineStart.x()), lineStart.y() + t * (lineEnd.y() - lineStart.y())};
+
+	// Return distance between point p and its projection on the line segment
+	return distance(point, projection);
+}
+
 bool MapLoader::isLineInCollision(const QPointF &start, const QPointF &end)
 {
 	for (auto &wall : m_walls) {
@@ -137,6 +165,11 @@ bool MapLoader::isLineInCollision(const QPointF &start, const QPointF &end)
 
 		// if uA and uB are between 0-1, lines are colliding
 		if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+			return true;
+		}
+
+		auto distance = distanceFromPointToLine(end, wall.start, wall.end);
+		if (distance < 29) {
 			return true;
 		}
 	}

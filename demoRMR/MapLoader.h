@@ -48,6 +48,8 @@ public:
 	explicit MapLoader(QObject *parrent, double width, double height);
 	QPointF toMapPoint(const QPointF &point);
 	void loadMap(const char filename[]);
+	double distance(QPointF p1, QPointF p2);
+	double distanceFromPointToLine(QPointF point, QPointF lineStart, QPointF lineEnd);
 	bool isLineInCollision(const QPointF &start, const QPointF &end);
 	QVector<WallObject> walls();
 	TMapArea mapArea() const { return m_mapArea; }
