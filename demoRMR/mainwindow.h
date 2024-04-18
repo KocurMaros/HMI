@@ -40,6 +40,11 @@ class MainWindow : public QMainWindow
 	friend class ControllButtons;
 	Q_OBJECT
 
+	enum UserMode {
+		Telecontrol,
+		Supervisor,
+	};
+
 public:
 	bool useCamera1;
 	// cv::VideoCapture cap;
@@ -95,9 +100,9 @@ private slots:
 	void on_actionAdd_motion_buttons_triggered();
 	void on_actionChangeHand_toggled();
 	void on_actionShowHelp_triggered();
-	void on_teleControlButton_clicked();
-	void on_supervisorButton_clicked();
 	void on_resultsReady_updateUi(double x, double y, double fi);
+	void on_actionTelecontrol_triggered();
+	void on_actionSupervisor_triggered();
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
@@ -159,9 +164,10 @@ private:
 	double m_x;
 	double m_y;
 
-	bool m_useTeleView;
 	std::shared_ptr<MapLoader> m_mapLoader;
-	QPointF m_endPosition;
+	QVector<QPointF> m_transitionPoints;
+	std::shared_ptr<QPointF> m_endPosition;
+	UserMode m_userMode;
 };
 
 #endif // MAINWINDOW_H

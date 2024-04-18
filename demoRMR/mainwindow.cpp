@@ -45,9 +45,10 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
-	, m_useTeleView(true)
 	, m_lastLeftEncoder(0)
 	, m_lastRightEncoder(0)
+	, m_endPosition(nullptr)
+	, m_userMode(UserMode::Telecontrol)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -122,7 +123,7 @@ QRectF create_border_rect(QRect rect, size_t i)
 
 void MainWindow::paintEvent(QPaintEvent *event)
 {
-	if (m_useTeleView) {
+	if (m_userMode == UserMode::Telecontrol) {
 		paintTeleControl();
 	}
 	else {
@@ -309,7 +310,28 @@ void MainWindow::paintSupervisorControl()
 	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
 					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
 
-	painter.drawLine(QLineF({xrobot, yrobot}, m_endPosition));
+	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot); 
+	for (size_t i = 0; i < m_transitionPoints.size(); i++) {
+		if (m_transitionPoints.size() == 0) {
+			break;
+		}
+
+		if (i == 0) {
+			painter.drawLine(QLineF(robotPos, m_transitionPoints[i]));
+		}
+		else {
+			painter.drawLine(m_transitionPoints[i-1], m_transitionPoints[i]);
+		}
+	}
+
+	if (m_endPosition) {
+		if (m_transitionPoints.size() > 0) {
+			painter.drawLine(QLineF(m_transitionPoints.back(), *m_endPosition));
+		}
+		else {
+			painter.drawLine(QLineF(robotPos, *m_endPosition));
+		}
+	}
 }
 
 double MainWindow::getX()
@@ -332,7 +354,7 @@ double MainWindow::getFi()
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-	if (m_robot == nullptr || m_useTeleView) {
+	if (m_robot == nullptr || m_userMode == UserMode::Telecontrol) {
 		qDebug() << "Robot is not connected or teleoperation is not enabled";
 		return;
 	}
@@ -347,16 +369,19 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 	auto x = getX()*100 + 50;
 	auto y = getY()*100 + 50;
-	auto robotPoint = m_mapLoader->toMapPoint({x, y});
+	auto startPoint = (m_transitionPoints.size() == 0 ? m_mapLoader->toMapPoint({x, y}) : m_transitionPoints.back());
 
-	if (m_mapLoader->isLineInCollision(robotPoint, event->pos())) {
+	if (m_mapLoader->isLineInCollision(startPoint, event->pos())) {
 		qDebug() << "Line is in collision";
 		// TODO: Show message box.
 		return;
 	}
 
-	if (event->button() == Qt::LeftButton) {
-		m_endPosition = event->pos();
+	if (event->button() == Qt::RightButton) {
+		m_transitionPoints.push_back(event->pos());
+	}
+	else if (event->button() == Qt::LeftButton) {
+		m_endPosition = std::make_shared<QPointF>(event->pos());
 	}
 }
 
@@ -375,6 +400,23 @@ QPointF MainWindow::createLineParams(const QPointF &p)
 	// Compute intercept (b)
 	line.ry() = getY() - line.x() * getX();
 	return line;
+}
+
+void MainWindow::on_actionTelecontrol_triggered()
+{
+	m_userMode = UserMode::Telecontrol;
+	m_ui->actionAdd_motion_buttons->setDisabled(false);
+	update();
+}
+
+void MainWindow::on_actionSupervisor_triggered()
+{
+	if (m_motionButtonsVisible) {
+		on_actionAdd_motion_buttons_triggered();
+	}
+	m_ui->actionAdd_motion_buttons->setDisabled(true);
+	m_userMode = UserMode::Supervisor;
+	update();
 }
 
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
@@ -786,23 +828,6 @@ void MainWindow::on_actionShowHelp_triggered()
 	m_helpWindow->show();
 
 	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() { m_helpWindow->close(); });
-}
-
-void MainWindow::on_teleControlButton_clicked()
-{
-	m_ui->actionAdd_motion_buttons->setDisabled(false);
-	m_useTeleView = true;
-	update();
-}
-
-void MainWindow::on_supervisorButton_clicked()
-{
-	if (m_motionButtonsVisible) {
-		on_actionAdd_motion_buttons_triggered();
-	}
-	m_ui->actionAdd_motion_buttons->setDisabled(true);
-	m_useTeleView = false;
-	update();
 }
 
 void MainWindow::on_resultsReady_updateUi(double x, double y, double fi)
