@@ -12,7 +12,6 @@
 
 #include "ControllButtons.h"
 
-
 #include <QImageReader>
 #include <QPoint>
 #include <math.h>
@@ -82,6 +81,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_mapLoader->loadMap(MAP_PATH);
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
+
+	// Object for managing the robot speed interactions.
+	m_trajectoryController = std::make_shared<RobotTrajectoryController>(m_robot, this);
 
 	m_positionTracker->moveToThread(m_odometryThread);
 	m_odometryThread->start();
@@ -516,6 +518,75 @@ int MainWindow::processThisSkeleton(skeleton skeledata)
 	memcpy(&m_skeleJoints, &skeledata, sizeof(skeleton));
 	m_updateSkeletonPicture = 1;
 	return 0;
+}
+
+QPair<double, double> MainWindow::calculateTrajectory()
+{
+	// Get current position and orientation (actual values)
+	auto [distanceToTarget, angleToTarget] = calculateTrajectoryTo(*m_endPosition);
+
+	return { distanceToTarget, angleToTarget };
+}
+
+QPair<double, double> MainWindow::calculateTrajectoryTo(const QPointF &point)
+{
+	// Get current position and orientation (actual values)
+	double current_x = 0;
+	double current_y = 0;
+
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		current_x = m_x;
+		current_y = m_y;
+	}
+
+	// Calculate angle to target
+	double angleToTarget = std::atan2(point.y() - current_y, point.x() - current_x);
+	double distanceToTarget = std::sqrt(std::pow(point.y() - current_y, 2) + std::pow(point.x() - current_x, 2));
+
+	return { distanceToTarget, angleToTarget };
+}
+
+double MainWindow::finalRotationError()
+{
+	auto [dir, rot] = calculateTrajectory();
+	double diff, fi;
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		fi = m_fi;
+	}
+
+	if (fi > PI / 2 && rot < -PI / 2) {
+		fi -= 2 * PI;
+	}
+	if (fi < -PI / 2 && rot > PI / 2) {
+		fi += 2 * PI;
+	}
+
+	diff = fi - rot;
+
+	return -diff;
+}
+
+double MainWindow::localRotationError(const QPointF &point)
+{
+	auto [dir, rot] = calculateTrajectoryTo(point);
+	double diff, fi;
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		fi = m_fi;
+	}
+
+	diff = fi - rot;
+
+	if (diff > PI) {
+		diff -= 2 * PI;
+	}
+	if (diff < -PI) {
+		diff += 2 * PI;
+	}
+
+	return -diff;
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)

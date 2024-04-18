@@ -5,6 +5,7 @@
 #include "BodyProgressBars.h"
 #include "MapLoader.h"
 #include "PositionTracker.h"
+#include "RobotTrajectoryController.h"
 #include <QThread>
 #include "QLed.h"
 #include "ui_mainwindow.h"
@@ -63,6 +64,10 @@ public:
 	int processThisCamera(cv::Mat cameraData);
 	int processThisSkeleton(skeleton skeledata);
 	QRect getFrameGeometry() const { return m_ui->frame->geometry(); }
+	QPair<double, double> calculateTrajectory();
+	QPair<double, double> calculateTrajectoryTo(const QPointF &point);
+	double finalRotationError();
+	double localRotationError(const QPointF &point);
 
 private:
 	void disableAllButtons(bool disable);
@@ -120,7 +125,7 @@ private:
 	int m_updateLaserPicture;
 	LaserMeasurement m_copyOfLaserData;
 	std::string m_ipaddress;
-	std::unique_ptr<Robot> m_robot;
+	std::shared_ptr<Robot> m_robot;
 	TKobukiData m_robotdata;
 	int m_datacounter;
 	int m_updateSkeletonPicture;
@@ -168,6 +173,8 @@ private:
 	QVector<QPointF> m_transitionPoints;
 	std::shared_ptr<QPointF> m_endPosition;
 	UserMode m_userMode;
+
+	std::shared_ptr<RobotTrajectoryController> m_trajectoryController;
 };
 
 #endif // MAINWINDOW_H

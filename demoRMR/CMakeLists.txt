@@ -32,6 +32,8 @@ set(HEADERS
 	MapLoader.h
 	mainwindow.h
 	stylesheeteditor.h
+	PidController.h
+	RobotTrajectoryController.h
 )
 
 set(SOURCES
@@ -43,6 +45,8 @@ set(SOURCES
 	main.cpp
 	mainwindow.cpp
 	stylesheeteditor.cpp
+	PidController.cpp
+	RobotTrajectoryController.cpp
 )
 
 set(UI
