@@ -47,6 +47,17 @@ QPointF MapLoader::toMapPoint(const QPointF &point)
 	return QPointF(xrobot, yrobot);
 }
 
+QPointF MapLoader::toWorldPoint(const QPointF &point)
+{
+	QRect rect;
+	rect = qobject_cast<MainWindow *>(parent())->getFrameGeometry();
+	rect.translate(0, 37);
+	double xrobot = (point.x() - rect.x()) / rect.width() * (maxX - minX) + minX;
+	double yrobot = (point.y() - rect.y() - rect.height()) / (-rect.height()) * (maxY - minY) + minY;
+
+	return QPointF(xrobot, yrobot);
+}
+
 void MapLoader::loadMap(const char filename[])
 {
 	FILE *fp = fopen(filename, "r");

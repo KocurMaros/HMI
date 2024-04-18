@@ -47,6 +47,7 @@ class MapLoader
 public:
 	explicit MapLoader(QObject *parrent, double width, double height);
 	QPointF toMapPoint(const QPointF &point);
+	QPointF toWorldPoint(const QPointF &point);
 	void loadMap(const char filename[]);
 	double distance(QPointF p1, QPointF p2);
 	double distanceFromPointToLine(QPointF point, QPointF lineStart, QPointF lineEnd);
