@@ -129,6 +129,7 @@ signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 	void changeSpeed(double forwardspeed, double rotationspeed);
 	void positionResults(const TKobukiData &robotdat, double correction);
+	void batteryLevel(int battery);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby

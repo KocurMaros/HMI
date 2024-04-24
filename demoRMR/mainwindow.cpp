@@ -75,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
+	connect(this, &MainWindow::batteryLevel, m_connectionLed, &QLed::on_batterLevel_received);
 	m_ui->topRightLayout->insertWidget(0, m_connectionLed);
 	m_ui->pushButton_9->setStyleSheet("background-color: green");
 
@@ -555,6 +556,8 @@ void MainWindow::on_rtc_removePoint()
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
 	calculateOdometry(robotdata);
+	int battery = 100 * (robotdata.Battery - 15.5) / (16.7 - 15.5);
+	emit batteryLevel(battery);
 
 	///tu mozete robit s datami z robota
 	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota

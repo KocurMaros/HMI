@@ -10,6 +10,7 @@ QLed::QLed(QWidget *parent)
 	, m_label(EMPTY_IP_ADDRESS)
 	, m_label2(DISCONNECTED)
 	, m_Width(LED_WIDTH)
+	, m_batteryLevel(0)
 {
 }
 
@@ -45,7 +46,7 @@ void QLed::paintEvent(QPaintEvent *e)
 
 	QFont font;
 	QFontMetrics fontMetrics(font);
-	int textLength = fontMetrics.width(" " + m_label + " ");
+	int textLength = fontMetrics.width(" " + QString::number(m_batteryLevel) + "% => "+ m_label + " ");
 	int textLength2 = fontMetrics.width(" " + m_label2 + " ");
 
 	if (m_Width >= 24) {
@@ -87,12 +88,12 @@ void QLed::drawLed(int p_length)
 	if (m_Width < 24) {
 		painter.setPen(m_ledColor);
 		QRect rect(m_Width, 0, p_length, height());
-		painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, " " + m_label + " ");
+		painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, " " + QString::number(m_batteryLevel) + "% => " + m_label + " ");
 	}
 	else {
 		painter.setPen(m_ledColor);
 		QRect rect(m_Width, 0, p_length, height() / 2);
-		painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, " " + m_label + " ");
+		painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, " " + QString::number(m_batteryLevel) + "% => " + m_label + " ");
 
 		QRect rect2(m_Width, height() / 2, p_length, height() / 2);
 		painter.drawText(rect2, Qt::AlignLeft | Qt::AlignVCenter, " " + m_label2 + " ");
