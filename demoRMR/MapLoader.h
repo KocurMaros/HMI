@@ -56,9 +56,6 @@ public:
 	QVector<WallObject> walls();
 	TMapArea mapArea() const { return m_mapArea; }
 
-// slots
-	void on_loadMapButton_clicked(bool clicked);
-
 	double minX;
 	double maxX;
 	double minY;

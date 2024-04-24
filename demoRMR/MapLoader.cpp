@@ -8,6 +8,8 @@
 #include <QDebug>
 #include <qwindowdefs.h>
 
+#define DOUBLE_MAX std::numeric_limits<double>::max()
+
 static QPointF createLineParams(const QPointF &start, const QPointF &end)
 {
 	QPointF line;
@@ -126,9 +128,6 @@ void MapLoader::loadMap(const char filename[])
 	fflush(stdout);
 
 	auto objects = walls();
-	for (WallObject &wall : objects) {
-		std::cout << wall;
-	}
 
 	m_walls = std::move(objects);
 }
@@ -163,20 +162,23 @@ double MapLoader::distanceFromPointToLine(QPointF point, QPointF lineStart, QPoi
 
 bool MapLoader::isLineInCollision(const QPointF &start, const QPointF &end)
 {
+	QLineF trajectory(start, end);
 	for (auto &wall : m_walls) {
-		// calculate the distance to intersection point
-		float uA = ((wall.end.x() - wall.start.x()) * (start.y() - wall.start.y()) - (wall.end.y() - wall.start.y()) * (start.x() - wall.start.x()))
-			/ ((wall.end.y() - wall.start.y()) * (end.x() - start.x()) - (wall.end.x() - wall.start.x()) * (end.y() - start.y()));
-		float uB = ((end.x() - start.x()) * (start.y() - wall.start.y()) - (end.y() - start.y()) * (start.x() - wall.start.x()))
-			/ ((wall.end.y() - wall.start.y()) * (end.x() - start.x()) - (wall.end.x() - wall.start.x()) * (end.y() - start.y()));
+		QPointF intersectionPoint = { DOUBLE_MAX, DOUBLE_MAX };
+		QLineF line(wall.start, wall.end);
 
-		// if uA and uB are between 0-1, lines are colliding
-		if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
-			return true;
+		line.intersect(trajectory, &intersectionPoint);
+		if (intersectionPoint == QPointF(DOUBLE_MAX, DOUBLE_MAX)) {
+			continue;
 		}
 
-		auto distance = distanceFromPointToLine(end, wall.start, wall.end);
-		if (distance < 29) {
+		if (distanceFromPointToLine(end, wall.start, wall.end) < 29) {
+			return true;
+		}
+		if (distanceFromPointToLine(wall.start, start, end) < 29) {
+			return true;
+		}
+		if (distanceFromPointToLine(wall.end, start, end) < 29) {
 			return true;
 		}
 	}
@@ -227,20 +229,4 @@ QVector<WallObject> MapLoader::walls()
 
 	m_walls = std::move(objects);
 	return m_walls;
-}
-
-void MapLoader::on_loadMapButton_clicked(bool clicked)
-{
-	// Open a file dialog and get the selected file
-	QString filePath = QFileDialog::getOpenFileName(qobject_cast<MainWindow *>(parent ()),
-													"Open File",
-													"",
-													"All Files (*.*);;Text Files (*.txt);;Image Files (*.png *.jpg *.bmp)");
-
-	// You can use the selected file path for further processing if needed
-	if (!filePath.isEmpty()) {
-		// Do something with the selected file path
-		// For example, print the file path to the console
-		qDebug() << "Selected file:" << filePath;
-	}
 }
