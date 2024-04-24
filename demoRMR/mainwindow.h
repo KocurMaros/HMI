@@ -98,6 +98,8 @@ private:
 	void pushButtonSupervisor();
 
 	void mousePressEvent(QMouseEvent *event) override;
+	void mouseReleaseEvent(QMouseEvent *event) override;
+	void mouseMoveEvent(QMouseEvent *event) override;
 	QPointF createLineParams(const QPointF &p);
 
 protected:
@@ -191,6 +193,9 @@ private:
 	std::shared_ptr<RobotTrajectoryController> m_trajectoryController;
 
 	QVector<QMetaObject::Connection> m_rtcConnections;
+	QPushButton *m_loadMapButton;
+	QMetaObject::Connection m_loadMapConnection;
+	bool m_dragNDrop;
 };
 
 #endif // MAINWINDOW_H

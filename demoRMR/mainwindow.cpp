@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_lastRightEncoder(0)
 	, m_endPosition(nullptr)
 	, m_userMode(UserMode::Supervisor)
+	, m_dragNDrop(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -58,13 +59,6 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->ipComboBox->addItem(IP_ADDRESSES[0]);
 	for (size_t i = 11; i < 15; i++) {
 		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
-	}
-
-	if (m_userMode == UserMode::Supervisor) {
-		on_actionSupervisor_triggered();
-	}
-	else {
-		on_actionTelecontrol_triggered();
 	}
 
 	m_datacounter = 0;
@@ -88,10 +82,19 @@ MainWindow::MainWindow(QWidget *parent)
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
 
+	if (m_userMode == UserMode::Supervisor) {
+		on_actionSupervisor_triggered();
+	}
+	else {
+		on_actionTelecontrol_triggered();
+	}
+
 	m_mapLoader = std::make_shared<MapLoader>(this, m_ui->frame->width(), m_ui->frame->height());
 	m_mapLoader->loadMap(MAP_PATH);
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
+
+	setMouseTracking(true);
 }
 
 MainWindow::~MainWindow()
@@ -320,21 +323,32 @@ void MainWindow::paintSupervisorControl()
 
 	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot);
 
+	auto lineColorSetter = [this, &pero, &painter](const QPointF &start, const QPointF &end) {
+		if (m_mapLoader->isLineInCollision(start, end)) {
+			pero.setColor(Qt::red);
+			painter.setPen(pero);
+		}
+		else {
+			pero.setColor(Qt::white);
+			painter.setPen(pero);
+		}
+	};
+
 	for (size_t i = 0; i < m_transitionPoints.size(); i++) {
 		if (m_transitionPoints.size() == 0) {
 			break;
 		}
 
-		pero.setColor(Qt::white);
-		painter.setPen(pero);
 		if (i == 0) {
+			lineColorSetter(robotPos, m_transitionPoints[i]);
 			painter.drawLine(QLineF(robotPos, m_transitionPoints[i]));
 		}
 		else {
+			lineColorSetter(m_transitionPoints[i - 1], m_transitionPoints[i]);
 			painter.drawLine(m_transitionPoints[i - 1], m_transitionPoints[i]);
 		}
 
-		pero.setColor(Qt::darkYellow);
+		pero.setColor(Qt::yellow);
 		painter.setPen(pero);
 		painter.drawEllipse(m_transitionPoints[i], 3, 3);
 	}
@@ -343,9 +357,11 @@ void MainWindow::paintSupervisorControl()
 	painter.setPen(pero);
 	if (m_endPosition) {
 		if (m_transitionPoints.size() > 0) {
+			lineColorSetter(m_transitionPoints.back(), *m_endPosition);
 			painter.drawLine(QLineF(m_transitionPoints.back(), *m_endPosition));
 		}
 		else {
+			lineColorSetter(robotPos, *m_endPosition);
 			painter.drawLine(QLineF(robotPos, *m_endPosition));
 		}
 	}
@@ -470,31 +486,58 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 	auto y = getY() * 100 + 50;
 	auto startPoint = (m_transitionPoints.size() == 0 ? m_mapLoader->toMapPoint({ x, y }) : m_transitionPoints.back());
 
-	if (m_mapLoader->isLineInCollision(startPoint, event->pos())) {
+	if (m_mapLoader->isLineInCollision(startPoint, event->pos()) && event->button() != Qt::MiddleButton) {
 		qDebug() << "Line is in collision";
 		// TODO: Show message box.
 		return;
 	}
 
+	QPoint pos = event->pos();
 	if (event->button() == Qt::RightButton) {
-		m_transitionPoints.push_back(event->pos());
+
+		QPointF *point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event, &pos](const QPointF &point){
+			return (pos - point).manhattanLength() <= DRAG_N_DROP_RANGE;
+		});
+
+		if (point != m_transitionPoints.end()) {
+			m_transitionPoints.erase(point);
+		}
+		else {
+			m_transitionPoints.push_back(pos);
+		}
 	}
 	else if (event->button() == Qt::LeftButton) {
-		m_endPosition = std::make_shared<QPointF>(event->pos());
+		m_endPosition = std::make_shared<QPointF>(pos);
 	}
 	else if (event->button() == Qt::MiddleButton) {
+		m_dragNDrop = true;
+	}
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event) 
+{
+	if (m_dragNDrop && event->button() == Qt::MiddleButton) {
+		m_dragNDrop = false;
+	}
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+	QPoint pos = event->pos();
+
+	if (m_dragNDrop) {
 		QPointF *point = m_transitionPoints.end();
-		if ((*m_endPosition - event->pos()).manhattanLength() <= DRAG_N_DROP_RANGE) {
+		if ((*m_endPosition - pos).manhattanLength() <= DRAG_N_DROP_RANGE) {
 			point = m_endPosition.get();
 		}
 		else {
-			point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event](const QPointF &point){
-				return (event->pos() - point).manhattanLength() <= DRAG_N_DROP_RANGE;
+			point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event, &pos](const QPointF &point){
+				return (pos - point).manhattanLength() <= DRAG_N_DROP_RANGE;
 			});
 		}
 
 		if (point != m_transitionPoints.end()) {
-			*point = event->pos();
+			*point = pos;
 		}
 	}
 }
@@ -771,6 +814,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		if (m_robot->isInEmgStop()) {
 			return;
 		}
+		m_transitionPoints.clear();
+		m_endPosition.reset();
 
 		for (auto &var : m_rtcConnections) {
 			disconnect(var);
@@ -779,13 +824,13 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 		qDebug() << "Disconnecting the UI";
 		emit moveForward(0);
-		m_robot.reset();
 
 		m_connectionLed->setToDisconnectedState();
 		m_ui->pushButton_9->setText("Connect");
 		m_ui->pushButton_9->setStyleSheet("");
 
 		m_copyOfLaserData.numberOfScans = 0;
+		m_robot.reset();
 
 		return;
 	}
