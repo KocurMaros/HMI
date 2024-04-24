@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QDebug>
 #include <QPainter>
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <mutex>
@@ -21,6 +22,7 @@
 #define BODY_PROGRESS_BAR_POS 3, 2
 #define SHORT_MAX 65'535
 #define TO_RADIANS 3.14159 / 180.0
+#define DRAG_N_DROP_RANGE 10
 
 // 11-15
 static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
@@ -479,6 +481,21 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 	else if (event->button() == Qt::LeftButton) {
 		m_endPosition = std::make_shared<QPointF>(event->pos());
 	}
+	else if (event->button() == Qt::MiddleButton) {
+		QPointF *point = m_transitionPoints.end();
+		if ((*m_endPosition - event->pos()).manhattanLength() <= DRAG_N_DROP_RANGE) {
+			point = m_endPosition.get();
+		}
+		else {
+			point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event](const QPointF &point){
+				return (event->pos() - point).manhattanLength() <= DRAG_N_DROP_RANGE;
+			});
+		}
+
+		if (point != m_transitionPoints.end()) {
+			*point = event->pos();
+		}
+	}
 }
 
 QPointF MainWindow::createLineParams(const QPointF &p)
@@ -706,7 +723,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = 200;
 		m_rotationspeed = 0;
 		setRobotDirection();
-		m_robot->setTranslationSpeed(forwardspeed);
+		emit moveForward(forwardspeed);
 		break;
 
 	case Qt::Key_S:
@@ -714,7 +731,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = -150;
 		m_rotationspeed = 0;
 		setRobotDirection();
-		m_robot->setTranslationSpeed(forwardspeed);
+		emit moveForward(forwardspeed);
 		break;
 
 	case Qt::Key_A:
@@ -722,7 +739,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = 0;
 		m_rotationspeed = 3.14159 / 2;
 		setRobotDirection();
-		m_robot->setRotationSpeed(m_rotationspeed);
+		emit changeRotation(m_rotationspeed);
 		break;
 
 	case Qt::Key_D:
@@ -730,14 +747,14 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = 0;
 		m_rotationspeed = -3.14159 / 2;
 		setRobotDirection();
-		m_robot->setRotationSpeed(m_rotationspeed);
+		emit changeRotation(m_rotationspeed);
 		break;
 
 	case Qt::Key_R:
 		forwardspeed = 0;
 		m_rotationspeed = 0;
 		setRobotDirection();
-		m_robot->setTranslationSpeed(forwardspeed);
+		emit moveForward(forwardspeed);
 		break;
 
 	case Qt::Key_Escape: {
@@ -751,7 +768,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 			return;
 		}
 
-		m_robot->setTranslationSpeed(0);
+		emit moveForward(0);
 		m_robot->setEmgStop(true);
 		m_connectionLed->setToEmgStopState();
 
@@ -779,7 +796,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		m_rtcConnections.clear();
 
 		qDebug() << "Disconnecting the UI";
-		m_robot->setTranslationSpeed(0);
+		emit moveForward(0);
 		m_robot.reset();
 
 		m_connectionLed->setToDisconnectedState();
@@ -803,6 +820,9 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	m_rtcConnections.push_back(
 		connect(this, &MainWindow::moveForward, m_trajectoryController.get(), &RobotTrajectoryController::onMoveForwardMove, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::changeRotation, m_trajectoryController.get(), &RobotTrajectoryController::onChangeRotationRotate, Qt::QueuedConnection));
+
 	m_rtcConnections.push_back(
 		connect(this, &MainWindow::arcResultsReady, m_trajectoryController.get(), &RobotTrajectoryController::handleArcResults, Qt::QueuedConnection));
 	m_rtcConnections.push_back(

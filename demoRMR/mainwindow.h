@@ -73,6 +73,7 @@ public:
 signals:
 	void arcResultsReady(double distance, double rotation, QVector<QPointF> points);
 	void moveForward(double speed);
+	void changeRotation(double angle);
 
 private:
 	void disableAllButtons(bool disable);
