@@ -559,10 +559,6 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	int battery = 100 * (robotdata.Battery - 15.5) / (16.7 - 15.5);
 	emit batteryLevel(battery);
 
-	///tu mozete robit s datami z robota
-	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
-	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
-	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
 	if (m_instance->count() > 0 || (m_useSkeleton && m_robot != nullptr)) {
 		if (forwardspeed == 0 && m_rotationspeed != 0) {
 			emit changeRotation(m_rotationspeed);
@@ -577,7 +573,6 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 			emit moveForward(0);
 		}
 	}
-	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
 	if (m_datacounter % 5) {
 		emit uiValuesChanged(m_x, m_y, m_fi);
@@ -586,25 +581,19 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	return 0;
 }
 
-///toto je calback na data z lidaru, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
-/// vola sa ked dojdu nove data z lidaru
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
 	memcpy(&m_copyOfLaserData, &laserData, sizeof(LaserMeasurement));
-	//tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
-	// ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 	m_updateLaserPicture = 1;
-	update(); //tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
+	update();
 
 	return 0;
 }
 
-///toto je calback na data z kamery, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
-/// vola sa ked dojdu nove data z kamery
 int MainWindow::processThisCamera(cv::Mat cameraData)
 {
-	cameraData.copyTo(frame[(actIndex + 1) % 3]); //kopirujem do nasej strukury
-	actIndex = (actIndex + 1) % 3;				  //aktualizujem kde je nova fotka
+	cameraData.copyTo(frame[(actIndex + 1) % 3]);
+	actIndex = (actIndex + 1) % 3;
 	m_updateLaserPicture = 1;
 	return 0;
 }
