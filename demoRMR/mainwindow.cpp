@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_lastLeftEncoder(0)
 	, m_lastRightEncoder(0)
 	, m_endPosition(nullptr)
-	, m_userMode(UserMode::Telecontrol)
+	, m_userMode(UserMode::Supervisor)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -57,6 +57,14 @@ MainWindow::MainWindow(QWidget *parent)
 	for (size_t i = 11; i < 15; i++) {
 		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
+
+	if (m_userMode == UserMode::Supervisor) {
+		on_actionSupervisor_triggered();
+	}
+	else {
+		on_actionTelecontrol_triggered();
+	}
+
 	m_datacounter = 0;
 	actIndex = -1;
 	useCamera1 = false;
