@@ -43,7 +43,7 @@ RobotTrajectoryController::RobotTrajectoryController(std::shared_ptr<Robot> robo
 	m_accelerationTimer.setInterval(timerInterval);
 	m_accelerationTimer.setSingleShot(false);
 
-	m_positionTimer.setInterval(timerInterval*2);
+	m_positionTimer.setInterval(timerInterval * 2);
 	m_positionTimer.setSingleShot(false);
 
 	m_stoppingTimer.setInterval(3'000);
@@ -217,7 +217,7 @@ void RobotTrajectoryController::on_accelerationTimerTimeout_control()
 		m_stoppingTimer.start();
 	}
 
-	static auto limit = [] (double &speed, const double target, double rate) {
+	static auto limit = [](double &speed, const double target, double rate) {
 		if (speed > 0 && target < 0) {
 			speed += rate;
 		}
@@ -269,7 +269,6 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 	}
 
 	if (std::abs(error) < maxCorrection) {
-
 		if (m_movementType == MovementType::Rotation && !m_arcExpected) {
 			emit requestMovement(localDistanceError());
 		}
@@ -285,13 +284,13 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 			emit requestRotation(localRotationError());
 		}
 		else if (m_movementType == MovementType::Arc) {
-			if (m_points.size() > 1){
+			if (m_points.size() > 1) {
 				m_points.removeFirst();
 				emit removePoint();
 			}
 
 			double rotation = localRotationError();
-			if (rotation > PI/2 || rotation < -PI/2) {
+			if (rotation > PI / 2 || rotation < -PI / 2) {
 				m_arcExpected = true;
 				m_forwardSpeed = 0;
 				m_rotationSpeed = 0;
@@ -320,7 +319,7 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 	else if (m_movementType == MovementType::Arc) {
 		u = m_controller->computeFromError(finalDistanceError(), true);
 		double o = m_rotationController->computeFromError(localRotationError());
-		setArcSpeed(u, u/o);
+		setArcSpeed(u, u / o);
 	}
 }
 
@@ -345,7 +344,7 @@ void RobotTrajectoryController::handleArcResults(double distance, double rotatio
 {
 	m_points = points;
 	qDebug() << "Transition points: " << m_points;
-	if (rotation > PI/2 || rotation < -PI/2) {
+	if (rotation > PI / 2 || rotation < -PI / 2) {
 		m_arcExpected = true;
 		rotateRobotTo(rotation);
 		return;
@@ -368,4 +367,3 @@ void RobotTrajectoryController::on_requestArc_move(double distance, double rotat
 {
 	moveByArcTo(distance, rotation);
 }
-

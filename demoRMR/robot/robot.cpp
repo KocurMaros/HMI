@@ -266,7 +266,7 @@ void Robot::skeletonprocess()
 	tv.tv_sec = 0;
 	tv.tv_usec = 10000;
 	::setsockopt(ske_s, SOL_SOCKET, SO_BROADCAST, &ske_broadcastene, sizeof(ske_broadcastene));
-	::setsockopt(ske_s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv,sizeof(tv));
+	::setsockopt(ske_s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
 #endif
 	// zero out the structure
 	memset((char *)&ske_si_me, 0, sizeof(ske_si_me));

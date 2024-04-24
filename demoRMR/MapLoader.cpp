@@ -155,7 +155,7 @@ double MapLoader::distanceFromPointToLine(QPointF point, QPointF lineStart, QPoi
 	t = std::max(0.0, std::min(1.0, t));
 
 	// Projection point on the line segment
-	QPointF projection = {lineStart.x() + t * (lineEnd.x() - lineStart.x()), lineStart.y() + t * (lineEnd.y() - lineStart.y())};
+	QPointF projection = { lineStart.x() + t * (lineEnd.x() - lineStart.x()), lineStart.y() + t * (lineEnd.y() - lineStart.y()) };
 
 	// Return distance between point p and its projection on the line segment
 	return distance(point, projection);
@@ -165,15 +165,10 @@ bool MapLoader::isLineInCollision(const QPointF &start, const QPointF &end)
 {
 	for (auto &wall : m_walls) {
 		// calculate the distance to intersection point
-		float uA =
-				((wall.end.x() - wall.start.x()) * (start.y() - wall.start.y()) -
-				 (wall.end.y() - wall.start.y()) * (start.x() - wall.start.x())) /
-				((wall.end.y() - wall.start.y()) * (end.x() - start.x()) -
-				 (wall.end.x() - wall.start.x()) * (end.y() - start.y()));
-		float uB = ((end.x() - start.x()) * (start.y() - wall.start.y()) -
-								(end.y() - start.y()) * (start.x() - wall.start.x())) /
-							 ((wall.end.y() - wall.start.y()) * (end.x() - start.x()) -
-								(wall.end.x() - wall.start.x()) * (end.y() - start.y()));
+		float uA = ((wall.end.x() - wall.start.x()) * (start.y() - wall.start.y()) - (wall.end.y() - wall.start.y()) * (start.x() - wall.start.x()))
+			/ ((wall.end.y() - wall.start.y()) * (end.x() - start.x()) - (wall.end.x() - wall.start.x()) * (end.y() - start.y()));
+		float uB = ((end.x() - start.x()) * (start.y() - wall.start.y()) - (end.y() - start.y()) * (start.x() - wall.start.x()))
+			/ ((wall.end.y() - wall.start.y()) * (end.x() - start.x()) - (wall.end.x() - wall.start.x()) * (end.y() - start.y()));
 
 		// if uA and uB are between 0-1, lines are colliding
 		if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
@@ -206,10 +201,10 @@ QVector<WallObject> MapLoader::walls()
 		double ymin = m_mapArea.wall.points[i].point.y;
 		double ymax = m_mapArea.wall.points[(i + 1) % m_mapArea.wall.points.size()].point.y;
 
-		auto min = toMapPoint({xmin, ymin});
-		auto max = toMapPoint({xmax, ymax});
+		auto min = toMapPoint({ xmin, ymin });
+		auto max = toMapPoint({ xmax, ymax });
 
-		objects.push_back({min, max});
+		objects.push_back({ min, max });
 		// painter.drawLine(min, max);
 	}
 
@@ -222,11 +217,11 @@ QVector<WallObject> MapLoader::walls()
 			double ymin = m_mapArea.obstacle[i].points[j].point.y;
 			double ymax = m_mapArea.obstacle[i].points[(j + 1) % m_mapArea.obstacle[i].points.size()].point.y;
 
-			auto min = toMapPoint({xmin, ymin});
-			auto max = toMapPoint({xmax, ymax});
+			auto min = toMapPoint({ xmin, ymin });
+			auto max = toMapPoint({ xmax, ymax });
 
 			// qDebug() << "Drawing line from " << min << " to " << max;
-			objects.push_back({min, max});
+			objects.push_back({ min, max });
 			// painter.drawLine(min, max);
 		}
 	}

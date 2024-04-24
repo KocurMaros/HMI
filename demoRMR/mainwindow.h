@@ -147,7 +147,7 @@ private:
 
 	QJoysticks *m_instance;
 
-	double forwardspeed;  //mm/s
+	double forwardspeed;	//mm/s
 	double m_rotationspeed; //omega/s
 	double m_prevForwardspeed;
 	double m_prevRotationspeed;

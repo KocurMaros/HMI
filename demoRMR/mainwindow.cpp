@@ -81,13 +81,13 @@ MainWindow::MainWindow(QWidget *parent)
 	m_mapLoader->loadMap(MAP_PATH);
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
-
 }
 
 MainWindow::~MainWindow()
 {
 	delete m_ui;
 }
+
 double MAP(double x, double in_min, double in_max, double out_min, double out_max)
 {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -320,7 +320,7 @@ void MainWindow::paintSupervisorControl()
 			painter.drawLine(QLineF(robotPos, m_transitionPoints[i]));
 		}
 		else {
-			painter.drawLine(m_transitionPoints[i-1], m_transitionPoints[i]);
+			painter.drawLine(m_transitionPoints[i - 1], m_transitionPoints[i]);
 		}
 
 		pero.setColor(Qt::darkYellow);
@@ -390,7 +390,6 @@ void MainWindow::bodyControlTeleview()
 
 		m_bodyProgressBars->deleteLater();
 	}
-
 }
 
 void MainWindow::bodyControlSupervisor()
@@ -402,9 +401,8 @@ void MainWindow::bodyControlSupervisor()
 
 	QVector<QPointF> points;
 	qDebug() << "Transition points: " << m_transitionPoints;
-	std::transform(m_transitionPoints.begin(), m_transitionPoints.end(), std::back_inserter(points), [this](const QPointF &point) {
-		return m_mapLoader->toWorldPoint(point);
-	});
+	std::transform(m_transitionPoints.begin(), m_transitionPoints.end(), std::back_inserter(points),
+				   [this](const QPointF &point) { return m_mapLoader->toWorldPoint(point); });
 
 	points.push_back(m_mapLoader->toWorldPoint(*m_endPosition));
 	// points.push_back(*m_endPosition);
@@ -457,9 +455,9 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 	QPointF line = createLineParams(event->pos());
 
-	auto x = getX()*100 + 50;
-	auto y = getY()*100 + 50;
-	auto startPoint = (m_transitionPoints.size() == 0 ? m_mapLoader->toMapPoint({x, y}) : m_transitionPoints.back());
+	auto x = getX() * 100 + 50;
+	auto y = getY() * 100 + 50;
+	auto startPoint = (m_transitionPoints.size() == 0 ? m_mapLoader->toMapPoint({ x, y }) : m_transitionPoints.back());
 
 	if (m_mapLoader->isLineInCollision(startPoint, event->pos())) {
 		qDebug() << "Line is in collision";
@@ -767,7 +765,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 			return;
 		}
 
-		for(auto &var : m_rtcConnections) {
+		for (auto &var : m_rtcConnections) {
 			disconnect(var);
 		}
 		m_rtcConnections.clear();
@@ -795,12 +793,12 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	m_trajectoryController = std::make_shared<RobotTrajectoryController>(m_robot, this);
 
-	m_rtcConnections.push_back(connect(this, &MainWindow::moveForward, m_trajectoryController.get(),
-									&RobotTrajectoryController::onMoveForwardMove, Qt::QueuedConnection));
-	m_rtcConnections.push_back(connect(this, &MainWindow::arcResultsReady, m_trajectoryController.get(),
-									&RobotTrajectoryController::handleArcResults, Qt::QueuedConnection));
-	m_rtcConnections.push_back(connect(m_trajectoryController.get(), &RobotTrajectoryController::removePoint,
-									this, &MainWindow::on_rtc_removePoint, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::moveForward, m_trajectoryController.get(), &RobotTrajectoryController::onMoveForwardMove, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::arcResultsReady, m_trajectoryController.get(), &RobotTrajectoryController::handleArcResults, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(m_trajectoryController.get(), &RobotTrajectoryController::removePoint, this, &MainWindow::on_rtc_removePoint, Qt::QueuedConnection));
 
 	m_positionTracker->moveToThread(m_odometryThread);
 	m_odometryThread->start();

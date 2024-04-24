@@ -25,7 +25,8 @@ public:
 		Arc
 	};
 
-	QString movementTypeToString(MovementType type) {
+	QString movementTypeToString(MovementType type)
+	{
 		switch (type) {
 		case MovementType::None:
 			return "None";

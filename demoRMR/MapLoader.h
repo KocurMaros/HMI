@@ -6,8 +6,6 @@
 #include <QPointF>
 #include <QVector>
 
-#define DEAD_POINT QPointF(11,481.019)
-
 typedef struct
 {
 	double x;
