@@ -127,6 +127,7 @@ public slots:
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 	void changeSpeed(double forwardspeed, double rotationspeed);
+	void changeArc(double forwardspeed, double rotationspeed);
 	void positionResults(const TKobukiData &robotdat, double correction);
 	void batteryLevel(int battery);
 

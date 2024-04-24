@@ -333,6 +333,11 @@ void RobotTrajectoryController::onChangeRotationRotate(double speed)
 	setRotationSpeed(speed, true);
 }
 
+void RobotTrajectoryController::onMoveArcMove(double speed, double rotation)
+{
+	setArcSpeed(speed, rotation);
+}
+
 void RobotTrajectoryController::handleLinResults(double distance, double rotation, QVector<QPointF> points)
 {
 	m_points = points;

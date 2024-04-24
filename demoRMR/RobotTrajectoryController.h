@@ -69,6 +69,7 @@ public slots:
 
 	void onMoveForwardMove(double speed);
 	void onChangeRotationRotate(double speed);
+	void onMoveArcMove(double speed, double rotation);
 	void handleLinResults(double distance, double rotation, QVector<QPointF> points);
 	void handleArcResults(double distance, double rotation, QVector<QPointF> points);
 

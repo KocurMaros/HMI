@@ -565,16 +565,16 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
 	if (m_instance->count() > 0 || (m_useSkeleton && m_robot != nullptr)) {
 		if (forwardspeed == 0 && m_rotationspeed != 0) {
-			m_robot->setRotationSpeed(m_rotationspeed);
+			emit changeRotation(m_rotationspeed);
 		}
 		else if (forwardspeed != 0 && m_rotationspeed == 0) {
-			m_robot->setTranslationSpeed(forwardspeed);
+			emit moveForward(forwardspeed);
 		}
 		else if ((forwardspeed != 0 && m_rotationspeed != 0)) {
-			m_robot->setArcSpeed(forwardspeed, forwardspeed / m_rotationspeed);
+			emit changeArc(forwardspeed, m_rotationspeed);
 		}
 		else {
-			m_robot->setTranslationSpeed(0);
+			emit moveForward(0);
 		}
 	}
 	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
@@ -815,6 +815,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		connect(this, &MainWindow::moveForward, m_trajectoryController.get(), &RobotTrajectoryController::onMoveForwardMove, Qt::QueuedConnection));
 	m_rtcConnections.push_back(
 		connect(this, &MainWindow::changeRotation, m_trajectoryController.get(), &RobotTrajectoryController::onChangeRotationRotate, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::changeArc, m_trajectoryController.get(), &RobotTrajectoryController::onMoveArcMove, Qt::QueuedConnection));
 
 	m_rtcConnections.push_back(
 		connect(this, &MainWindow::arcResultsReady, m_trajectoryController.get(), &RobotTrajectoryController::handleArcResults, Qt::QueuedConnection));
