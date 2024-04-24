@@ -18,6 +18,7 @@
 #include <QPoint>
 #include <math.h>
 #include <qdebug.h>
+#include <qpushbutton.h>
 #include "CKobuki.h"
 
 #define BODY_PROGRESS_BAR_POS 3, 2
@@ -91,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
 	}
 
 	m_mapLoader = std::make_shared<MapLoader>(this, m_ui->frame->width(), m_ui->frame->height());
-	m_mapLoader->loadMap(MAP_PATH);
+	// m_mapLoader->loadMap(MAP_PATH);
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
 
@@ -573,9 +574,15 @@ QPointF MainWindow::createLineParams(const QPointF &p)
 void MainWindow::on_actionTelecontrol_triggered()
 {
 	m_userMode = UserMode::Telecontrol;
+
 	m_ui->actionAdd_motion_buttons->setDisabled(false);
 	m_ui->bodyControlButton->setText("Body Control: off");
 	m_ui->pushButton->setText("Use camera");
+	m_ui->topRightLayout->removeWidget(m_loadMapButton);
+	m_loadMapButton->deleteLater();
+
+	disconnect(m_loadMapConnection);
+
 	update();
 }
 
@@ -587,8 +594,30 @@ void MainWindow::on_actionSupervisor_triggered()
 	m_ui->actionAdd_motion_buttons->setDisabled(true);
 	m_ui->bodyControlButton->setText("Execute");
 	m_ui->pushButton->setText("Clear points");
+
+	m_loadMapButton = new QPushButton("Load map", this);
+	m_loadMapButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
+	m_loadMapConnection = connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog);
+	m_ui->topRightLayout->addWidget(m_loadMapButton);
+
 	m_userMode = UserMode::Supervisor;
+
 	update();
+}
+
+void MainWindow::openFileDialog()
+{
+	// Open a file dialog and get the selected file
+	QString filePath = QFileDialog::getOpenFileName(this, "Open File", "../", "Text Files (*.txt)");
+
+	// You can use the selected file path for further processing if needed
+	if (!filePath.isEmpty()) {
+		// Do something with the selected file path
+		// For example, print the file path to the console
+		qDebug() << "Selected file:" << filePath;
+		m_mapLoader->loadMap(filePath);
+		update();
+	}
 }
 
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
@@ -821,6 +850,11 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::on_pushButton_9_clicked() //start button
 {
+	if (!m_mapLoader->isLoaded()) {
+		QMessageBox::warning(this, "Warning", "Map is not loaded. Please load the map first.");
+		return;
+	}
+
 	if (m_connectionLed->isInConnectedState()) {
 		if (m_robot->isInEmgStop()) {
 			return;

@@ -121,6 +121,7 @@ private slots:
 	void on_resultsReady_updateUi(double x, double y, double fi);
 	void on_actionTelecontrol_triggered();
 	void on_actionSupervisor_triggered();
+	void openFileDialog();
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
