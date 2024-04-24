@@ -77,7 +77,6 @@ signals:
 
 private:
 	void disableAllButtons(bool disable);
-	bool isIPValid(const QString &ip);
 	void inPaintEventProcessSkeleton();
 	void setRobotDirection();
 	void drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale = 20);

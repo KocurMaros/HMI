@@ -626,16 +626,6 @@ void MainWindow::disableAllButtons(bool disable)
 	comboBox->setDisabled(disable);
 }
 
-bool MainWindow::isIPValid(const QString &ip)
-{
-	QRegularExpression ipRegex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-
-	return ipRegex.match(ip).hasMatch();
-}
-
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
 	memcpy(&m_skeleJoints, &skeledata, sizeof(skeleton));
@@ -837,7 +827,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	QString tmpIP = m_ui->ipComboBox->currentText();
 	qDebug() << "Connecting to " << tmpIP;
 	m_ipaddress = tmpIP.toStdString();
-	qDebug() << "Address " << tmpIP << " " << isIPValid(tmpIP);
+	qDebug() << "Address " << tmpIP;
 
 	//ziskanie joystickov
 	m_instance = QJoysticks::getInstance();
