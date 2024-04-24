@@ -307,20 +307,29 @@ void MainWindow::paintSupervisorControl()
 	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
 					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
 
-	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot); 
+	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot);
+
 	for (size_t i = 0; i < m_transitionPoints.size(); i++) {
 		if (m_transitionPoints.size() == 0) {
 			break;
 		}
 
+		pero.setColor(Qt::white);
+		painter.setPen(pero);
 		if (i == 0) {
 			painter.drawLine(QLineF(robotPos, m_transitionPoints[i]));
 		}
 		else {
 			painter.drawLine(m_transitionPoints[i-1], m_transitionPoints[i]);
 		}
+
+		pero.setColor(Qt::darkYellow);
+		painter.setPen(pero);
+		painter.drawEllipse(m_transitionPoints[i], 3, 3);
 	}
 
+	pero.setColor(Qt::white);
+	painter.setPen(pero);
 	if (m_endPosition) {
 		if (m_transitionPoints.size() > 0) {
 			painter.drawLine(QLineF(m_transitionPoints.back(), *m_endPosition));
