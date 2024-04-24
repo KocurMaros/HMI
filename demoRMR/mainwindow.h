@@ -39,6 +39,7 @@ class ControllButtons;
 class MainWindow : public QMainWindow
 {
 	friend class ControllButtons;
+	friend class MapLoader;
 	Q_OBJECT
 
 	enum UserMode {
@@ -69,6 +70,10 @@ public:
 	double finalRotationError();
 	double localRotationError(const QPointF &point);
 
+signals:
+	void arcResultsReady(double distance, double rotation, QVector<QPointF> points);
+	void moveForward(double speed);
+
 private:
 	void disableAllButtons(bool disable);
 	bool isIPValid(const QString &ip);
@@ -85,6 +90,12 @@ private:
 	double getX();
 	double getY();
 	double getFi();
+
+	void bodyControlTeleview();
+	void bodyControlSupervisor();
+
+	void pushButtonTeleview();
+	void pushButtonSupervisor();
 
 	void mousePressEvent(QMouseEvent *event) override;
 	QPointF createLineParams(const QPointF &p);
@@ -111,6 +122,7 @@ private slots:
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
+	void on_rtc_removePoint();
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
@@ -175,6 +187,8 @@ private:
 	UserMode m_userMode;
 
 	std::shared_ptr<RobotTrajectoryController> m_trajectoryController;
+
+	QVector<QMetaObject::Connection> m_rtcConnections;
 };
 
 #endif // MAINWINDOW_H

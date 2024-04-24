@@ -277,14 +277,18 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 			emit requestArc(localDistanceError(), localRotationError());
 		}
 		else if (m_movementType == MovementType::Forward && finalDistanceError() > 0.05) {
-			if (m_points.size() > 1)
+			if (m_points.size() > 1) {
 				m_points.removeFirst();
+				emit removePoint();
+			}
 
 			emit requestRotation(localRotationError());
 		}
 		else if (m_movementType == MovementType::Arc) {
-			if (m_points.size() > 1)
+			if (m_points.size() > 1){
 				m_points.removeFirst();
+				emit removePoint();
+			}
 
 			double rotation = localRotationError();
 			if (rotation > PI/2 || rotation < -PI/2) {
@@ -340,6 +344,7 @@ void RobotTrajectoryController::handleLinResults(double distance, double rotatio
 void RobotTrajectoryController::handleArcResults(double distance, double rotation, QVector<QPointF> points)
 {
 	m_points = points;
+	qDebug() << "Transition points: " << m_points;
 	if (rotation > PI/2 || rotation < -PI/2) {
 		m_arcExpected = true;
 		rotateRobotTo(rotation);

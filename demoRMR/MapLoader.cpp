@@ -41,21 +41,22 @@ QPointF MapLoader::toMapPoint(const QPointF &point)
 	QRect rect;
 	rect = qobject_cast<MainWindow *>(parent())->getFrameGeometry();
 	rect.translate(0, 37);
+
 	double xrobot = rect.x() + rect.width() * (point.x() - minX) / (maxX - minX);
 	double yrobot = rect.y() + rect.height() - rect.height() * (point.y() - minY) / (maxY - minY);
 
 	return QPointF(xrobot, yrobot);
 }
 
-QPointF MapLoader::toWorldPoint(const QPointF &point)
+QPointF MapLoader::toWorldPoint(const QPointF &mapPoint)
 {
 	QRect rect;
-	rect = qobject_cast<MainWindow *>(parent())->getFrameGeometry();
-	rect.translate(0, 37);
-	double xrobot = (point.x() - rect.x()) / rect.width() * (maxX - minX) + minX;
-	double yrobot = (point.y() - rect.y() - rect.height()) / (-rect.height()) * (maxY - minY) + minY;
+	auto win = qobject_cast<MainWindow *>(parent());
 
-	return QPointF(xrobot, yrobot);
+	double mapX = ((mapPoint.x() - win->m_ui->frame->x()) * (maxX - minX) / win->m_ui->frame->width() + minX) / 100 - 0.5;
+	double mapY = ((win->m_ui->frame->height() - (mapPoint.y() - win->m_ui->frame->y())) * (maxY - minY) / win->m_ui->frame->height() + minY) / 100 - 0.25;
+
+	return QPointF(mapX, mapY);
 }
 
 void MapLoader::loadMap(const char filename[])

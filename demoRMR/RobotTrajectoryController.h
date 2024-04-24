@@ -41,6 +41,7 @@ public:
 
 	using Map = std::vector<std::vector<int>>;
 	RobotTrajectoryController(std::shared_ptr<Robot> robot, QObject *window, double timerInterval = 100);
+	explicit RobotTrajectoryController(RobotTrajectoryController &controller) = default;
 
 	void setTranslationSpeed(double velocity, bool stopPositionTimer = false, double accelerationRate = 50);
 	void setRotationSpeed(double omega, bool stopPositionTimer = false, double accelerationRate = 0.1);
@@ -49,6 +50,9 @@ public:
 	void rotateRobotTo(double rotation);
 	void moveForwardBy(double distance);
 	void moveByArcTo(double distance, double rotation);
+
+signals:
+	void removePoint();
 
 private:
 	bool isNear(double currentVelocity);

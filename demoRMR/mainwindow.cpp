@@ -82,11 +82,6 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
 
-	// Object for managing the robot speed interactions.
-	m_trajectoryController = std::make_shared<RobotTrajectoryController>(m_robot, this);
-
-	m_positionTracker->moveToThread(m_odometryThread);
-	m_odometryThread->start();
 }
 
 MainWindow::~MainWindow()
@@ -354,6 +349,90 @@ double MainWindow::getFi()
 	return m_fi;
 }
 
+void MainWindow::bodyControlTeleview()
+{
+	qDebug() << "Body control button clicked. Old: " << m_useSkeleton;
+	m_useSkeleton = (m_useSkeleton ? false : true);
+	qDebug() << "New: " << m_useSkeleton;
+
+	if (m_useSkeleton) {
+		m_bodyProgressBars = new BodyProgressBars(this);
+
+		connect(this, &MainWindow::changeSpeed, m_bodyProgressBars, &BodyProgressBars::setValues);
+
+		m_ui->bodyControlButton->setText("Body Control: on");
+
+		if (m_leftHandedMode) {
+			m_controllButtons->addProgressBars(m_bodyProgressBars);
+		}
+		else {
+			m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+		}
+	}
+	else {
+		m_ui->bodyControlButton->setText("Body Control: off");
+
+		if (m_leftHandedMode) {
+			m_controllButtons->removeProgressBars(m_bodyProgressBars);
+		}
+		else {
+			m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
+		}
+
+		m_bodyProgressBars->deleteLater();
+	}
+
+}
+
+void MainWindow::bodyControlSupervisor()
+{
+	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
+		return;
+	}
+
+	QVector<QPointF> points;
+	qDebug() << "Transition points: " << m_transitionPoints;
+	std::transform(m_transitionPoints.begin(), m_transitionPoints.end(), std::back_inserter(points), [this](const QPointF &point) {
+		return m_mapLoader->toWorldPoint(point);
+	});
+
+	points.push_back(m_mapLoader->toWorldPoint(*m_endPosition));
+	// points.push_back(*m_endPosition);
+	qDebug() << "Points: " << points;
+	auto [distanceToTarget, angleToTarget] = calculateTrajectoryTo(points.back());
+
+	emit arcResultsReady(distanceToTarget, angleToTarget, std::move(points));
+}
+
+void MainWindow::pushButtonTeleview()
+{
+	if (m_robot == nullptr) {
+		return;
+	}
+	if (useCamera1 == true) {
+		useCamera1 = false;
+
+		m_ui->pushButton->setText("use camera");
+	}
+	else {
+		useCamera1 = true;
+
+		m_ui->pushButton->setText("use laser");
+	}
+}
+
+void MainWindow::pushButtonSupervisor()
+{
+	if (m_robot == nullptr) {
+		return;
+	}
+
+	m_transitionPoints.clear();
+	m_endPosition.reset();
+	emit moveForward(0);
+}
+
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
 	if (m_robot == nullptr || m_userMode == UserMode::Telecontrol) {
@@ -408,6 +487,8 @@ void MainWindow::on_actionTelecontrol_triggered()
 {
 	m_userMode = UserMode::Telecontrol;
 	m_ui->actionAdd_motion_buttons->setDisabled(false);
+	m_ui->bodyControlButton->setText("Body Control: off");
+	m_ui->pushButton->setText("Use camera");
 	update();
 }
 
@@ -417,6 +498,8 @@ void MainWindow::on_actionSupervisor_triggered()
 		on_actionAdd_motion_buttons_triggered();
 	}
 	m_ui->actionAdd_motion_buttons->setDisabled(true);
+	m_ui->bodyControlButton->setText("Execute");
+	m_ui->pushButton->setText("Clear points");
 	m_userMode = UserMode::Supervisor;
 	update();
 }
@@ -428,6 +511,11 @@ void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
 	m_ui->lineEdit_2->setText(QString::number(robotX));
 	m_ui->lineEdit_3->setText(QString::number(robotY));
 	m_ui->lineEdit_4->setText(QString::number(robotFi));
+}
+
+void MainWindow::on_rtc_removePoint()
+{
+	m_transitionPoints.pop_front();
 }
 
 ///toto je calback na data z robota, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
@@ -665,11 +753,16 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::on_pushButton_9_clicked() //start button
 {
-	if (m_robot != nullptr && m_robot->isInEmgStop()) {
-		return;
-	}
-
 	if (m_connectionLed->isInConnectedState()) {
+		if (m_robot->isInEmgStop()) {
+			return;
+		}
+
+		for(auto &var : m_rtcConnections) {
+			disconnect(var);
+		}
+		m_rtcConnections.clear();
+
 		qDebug() << "Disconnecting the UI";
 		m_robot->setTranslationSpeed(0);
 		m_robot.reset();
@@ -683,12 +776,31 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		return;
 	}
 
+	// Object for managing the robot speed interactions.
+	m_robot.reset(new Robot(m_ipaddress));
+	// m_robot = std::make_shared<Robot>(m_ipaddress);
+
+	if (m_robot != nullptr && m_robot->isInEmgStop()) {
+		return;
+	}
+
+	m_trajectoryController = std::make_shared<RobotTrajectoryController>(m_robot, this);
+
+	m_rtcConnections.push_back(connect(this, &MainWindow::moveForward, m_trajectoryController.get(),
+									&RobotTrajectoryController::onMoveForwardMove, Qt::QueuedConnection));
+	m_rtcConnections.push_back(connect(this, &MainWindow::arcResultsReady, m_trajectoryController.get(),
+									&RobotTrajectoryController::handleArcResults, Qt::QueuedConnection));
+	m_rtcConnections.push_back(connect(m_trajectoryController.get(), &RobotTrajectoryController::removePoint,
+									this, &MainWindow::on_rtc_removePoint, Qt::QueuedConnection));
+
+	m_positionTracker->moveToThread(m_odometryThread);
+	m_odometryThread->start();
+
 	QString tmpIP = m_ui->ipComboBox->currentText();
 	qDebug() << "Connecting to " << tmpIP;
 	m_ipaddress = tmpIP.toStdString();
 	qDebug() << "Address " << tmpIP << " " << isIPValid(tmpIP);
 
-	m_robot = std::make_unique<Robot>(m_ipaddress);
 	//ziskanie joystickov
 	m_instance = QJoysticks::getInstance();
 	forwardspeed = 0;
@@ -751,15 +863,12 @@ void MainWindow::on_pushButton_clicked()
 	if (m_robot == nullptr) {
 		return;
 	}
-	if (useCamera1 == true) {
-		useCamera1 = false;
 
-		m_ui->pushButton->setText("use camera");
+	if (m_userMode == UserMode::Telecontrol) {
+		pushButtonTeleview();
 	}
 	else {
-		useCamera1 = true;
-
-		m_ui->pushButton->setText("use laser");
+		pushButtonSupervisor();
 	}
 }
 
@@ -790,35 +899,16 @@ void MainWindow::on_emgStopButton_clicked()
 
 void MainWindow::on_bodyControlButton_clicked()
 {
-	qDebug() << "Body control button clicked. Old: " << m_useSkeleton;
-	m_useSkeleton = (m_useSkeleton ? false : true);
-	qDebug() << "New: " << m_useSkeleton;
+	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
+		return;
+	}
 
-	if (m_useSkeleton) {
-		m_bodyProgressBars = new BodyProgressBars(this);
-
-		connect(this, &MainWindow::changeSpeed, m_bodyProgressBars, &BodyProgressBars::setValues);
-
-		m_ui->bodyControlButton->setText("Body Control: on");
-
-		if (m_leftHandedMode) {
-			m_controllButtons->addProgressBars(m_bodyProgressBars);
-		}
-		else {
-			m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
-		}
+	if (m_userMode == UserMode::Telecontrol) {
+		bodyControlTeleview();
 	}
 	else {
-		m_ui->bodyControlButton->setText("Body Control: off");
-
-		if (m_leftHandedMode) {
-			m_controllButtons->removeProgressBars(m_bodyProgressBars);
-		}
-		else {
-			m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
-		}
-
-		m_bodyProgressBars->deleteLater();
+		bodyControlSupervisor();
 	}
 }
 
