@@ -349,13 +349,9 @@ void RobotTrajectoryController::handleArcResults(double distance, double rotatio
 {
 	m_points = points;
 	qDebug() << "Transition points: " << m_points;
-	if (rotation > PI / 2 || rotation < -PI / 2) {
-		m_arcExpected = true;
-		rotateRobotTo(rotation);
-		return;
-	}
-
-	moveByArcTo(distance, rotation);
+	m_arcExpected = true;
+	rotateRobotTo(rotation);
+	return;
 }
 
 void RobotTrajectoryController::on_requestMovement_move(double distance)
