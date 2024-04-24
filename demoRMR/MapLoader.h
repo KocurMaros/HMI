@@ -5,6 +5,7 @@
 
 #include <QPointF>
 #include <QVector>
+#include <QFileDialog>
 
 typedef struct
 {
@@ -44,14 +45,19 @@ class MapLoader
 {
 public:
 	explicit MapLoader(QObject *parrent, double width, double height);
+	bool isLoaded() const { return !m_walls.isEmpty(); }
 	QPointF toMapPoint(const QPointF &point);
 	QPointF toWorldPoint(const QPointF &point);
 	void loadMap(const char filename[]);
+	void loadMap(const QString filename) { loadMap(filename.toStdString().c_str()); }
 	double distance(QPointF p1, QPointF p2);
 	double distanceFromPointToLine(QPointF point, QPointF lineStart, QPointF lineEnd);
 	bool isLineInCollision(const QPointF &start, const QPointF &end);
 	QVector<WallObject> walls();
 	TMapArea mapArea() const { return m_mapArea; }
+
+// slots
+	void on_loadMapButton_clicked(bool clicked);
 
 	double minX;
 	double maxX;
@@ -62,6 +68,7 @@ public:
 	double m_width;
 	QVector<WallObject> m_walls;
 	TMapArea m_mapArea;
+	QFileDialog *m_fileDialog;
 };
 
 #endif // MAP_LOADER_H

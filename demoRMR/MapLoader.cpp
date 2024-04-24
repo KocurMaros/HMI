@@ -190,7 +190,6 @@ std::ostream &operator<<(std::ostream &os, const WallObject &obj)
 	return os;
 }
 
-
 QVector<WallObject> MapLoader::walls()
 {
 	QVector<WallObject> objects;
@@ -228,4 +227,20 @@ QVector<WallObject> MapLoader::walls()
 
 	m_walls = std::move(objects);
 	return m_walls;
+}
+
+void MapLoader::on_loadMapButton_clicked(bool clicked)
+{
+	// Open a file dialog and get the selected file
+	QString filePath = QFileDialog::getOpenFileName(qobject_cast<MainWindow *>(parent ()),
+													"Open File",
+													"",
+													"All Files (*.*);;Text Files (*.txt);;Image Files (*.png *.jpg *.bmp)");
+
+	// You can use the selected file path for further processing if needed
+	if (!filePath.isEmpty()) {
+		// Do something with the selected file path
+		// For example, print the file path to the console
+		qDebug() << "Selected file:" << filePath;
+	}
 }
