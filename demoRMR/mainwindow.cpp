@@ -9,6 +9,7 @@
 #include <memory>
 #include <mutex>
 #include <qgridlayout.h>
+#include <qmessagebox.h>
 #include <qnamespace.h>
 
 #include "ControllButtons.h"
@@ -426,6 +427,16 @@ void MainWindow::bodyControlSupervisor()
 		return;
 	}
 
+	if (m_endPosition == nullptr) {
+		return;
+	}
+
+	if (isAnyLineInCollision()) {
+		QMessageBox::warning(this, "Collision", "Line is in collision");
+		return;
+	}
+
+
 	QVector<QPointF> points;
 	qDebug() << "Transition points: " << m_transitionPoints;
 	std::transform(m_transitionPoints.begin(), m_transitionPoints.end(), std::back_inserter(points),
@@ -488,7 +499,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 	if (m_mapLoader->isLineInCollision(startPoint, event->pos()) && event->button() != Qt::MiddleButton) {
 		qDebug() << "Line is in collision";
-		// TODO: Show message box.
+		QMessageBox::warning(this, "Collision", "Line is in collision");
 		return;
 	}
 
