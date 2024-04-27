@@ -6,11 +6,10 @@
 // #include <thread>
 
 
-ObjectDetection::ObjectDetection() : QObject()
+ObjectDetection::ObjectDetection(QObject *parent) : QObject(parent)
+    ,m_savedImg(false)
+    ,m_circleCounter(0)
 {
-    // Constructor implementatio
-    m_savedImg = false;
-    m_circleCounter = 0;
 }
 
 ObjectDetection::~ObjectDetection()
@@ -45,8 +44,9 @@ void ObjectDetection::detectObjects(cv::Mat frame)
         // circle outline
         int radius = c[2];
         cv::circle( frame, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
-        m_radius_circle = radius;
-        m_center_of_object = center;
+        // m_radius_circle = radius;
+        // m_center_of_object = center;
+        emit on_circleDetected(center);
     }
     if(!m_savedImg && circles.size() != m_circleCounter && circles.size() > 0){
         cv::imwrite("circles.jpg", frame);
@@ -54,8 +54,4 @@ void ObjectDetection::detectObjects(cv::Mat frame)
     }
     // cv::imshow ("gray",gray);
     // cv::imshow ("Live",frame);
-}
-
-void ObjectDetection::getCircleParam(){
-    //neznam ci return alebo parameters;
 }

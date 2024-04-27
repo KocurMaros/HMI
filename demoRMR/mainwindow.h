@@ -65,7 +65,7 @@ private:
 	void paintEvent(QPaintEvent *event) override; // Q_DECL_OVERRIDE;
 	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
-	double calculePositionOfObject(cv::Point center);
+
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
@@ -88,6 +88,7 @@ private slots:
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
+	void calculePositionOfObject(cv::Point center);
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
@@ -142,7 +143,7 @@ private:
 	std::atomic<double> m_x;
 	std::atomic<double> m_y;
 	
-    std::unique_ptr<ObjectDetection> m_ObjectDetection;
+    ObjectDetection *m_ObjectDetection;
 	// ObjectDetection m_ObjectDetection;
 	bool start_pressed = false;
 

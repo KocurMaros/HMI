@@ -8,15 +8,17 @@
 
 
 #include <QObject>
+
 class ObjectDetection : public QObject{
 Q_OBJECT
 public:
-    ObjectDetection();
+    ObjectDetection(QObject *parent = nullptr);
     ~ObjectDetection();
 
 public slots:
     void detectObjects(cv::Mat frame);
-    void getCircleParam();
+signals:
+    void on_circleDetected(cv::Point center);
 
 private:
     cv::Point m_center_of_object;

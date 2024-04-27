@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
-    , m_ObjectDetection()
+    , m_ObjectDetection(new ObjectDetection(this))
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -74,6 +74,8 @@ MainWindow::MainWindow(QWidget *parent)
 	else
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
+	qRegisterMetaType<cv::Mat>("cv::Mat");  //barz zaregistrovat typ, ktory chcete posielat cez signal slot
+	qRegisterMetaType<cv::Mat>("cv::Point"); 
 }
 
 MainWindow::~MainWindow()
@@ -505,7 +507,10 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
 	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
-    connect(this, &MainWindow::haffTransform, this, &ObjectDetection::detectObjects,Qt::QueuedConnection);
+    connect(this, &MainWindow::haffTransform, m_ObjectDetection, &ObjectDetection::detectObjects, Qt::QueuedConnection);
+	connect(m_ObjectDetection,&ObjectDetection::on_circleDetected, this, &MainWindow::calculePositionOfObject , Qt::QueuedConnection);
+	
+	
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
 	/// co vas vlastne zaujima? citanie komentov asi nie, inak by ste citali toto a ze tu je blbosti
 	connect(m_instance, &QJoysticks::axisChanged, [this](const int js, const int axis, const qreal value) {
@@ -804,14 +809,16 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 		}
     }
 }
-double MainWindow::calculePositionOfObject(cv::Point center){
+void MainWindow::calculePositionOfObject(cv::Point center){
     //0 - 800 kamera pixel center
 	double prob_angle;
-	if(center.x <= 400)
-		prob_angle = MAP(center.x, 0, 400, 330, 360);
-	else
-		prob_angle = MAP(center.x, 400, 800, 0, 30);
-	return prob_angle;
+	std::cout << "Center of object: " << center << std::endl;
+	// if(center.x <= 400)
+	// 	prob_angle = MAP(center.x, 0, 400, 330, 360);
+	// else
+	// 	prob_angle = MAP(center.x, 400, 800, 0, 30);
+	// std::cout << "Prob angle " << prob_angle << std::endl;
+	// return prob_angle;
 	//dajak vratit k a vykreslit na obrazovku kde je objekt
 }
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
@@ -921,9 +928,4 @@ void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 			m_robotStartupLocation = true;
 		}
 	}
-}
-
-void MainWindow::haffTransform(cv::Mat frame){
-    // m_ObjectDetection.detectObjects(frame);
-
 }
