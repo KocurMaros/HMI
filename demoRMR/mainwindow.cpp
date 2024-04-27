@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
+    , m_ObjectDetection()
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -63,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_ui->topRightLayout->insertWidget(0, m_connectionLed);
 	m_ui->pushButton_9->setStyleSheet("background-color: green");
-	m_ObjectDetection = ObjectDetection();
+	// m_ObjectDetection = ObjectDetection();
 
 	QImageReader reader = QImageReader(":/img/warning.png");
 
@@ -136,6 +137,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 	if (useCamera1 == true && actIndex > -1 && !m_reverseRobot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
 	{
 		drawImageData(painter, rect);
+        emit 
 		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
 			pero.setWidth(1);
 			drawLidarData(painter, pero, miniRect, 70);
@@ -503,7 +505,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
 	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
-
+    connect(this, &MainWindow::haffTransform, this, &ObjectDetection::detectObjects,Qt::QueuedConnection);
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
 	/// co vas vlastne zaujima? citanie komentov asi nie, inak by ste citali toto a ze tu je blbosti
 	connect(m_instance, &QJoysticks::axisChanged, [this](const int js, const int axis, const qreal value) {
@@ -785,10 +787,13 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 				}
 			}
 			else {
-                
-				    painter.setPen(QPen(Qt::green, 3));
+                if(m_copyOfLaserData.Data[k].scanAngle >= m_copyOfLaserData.Data[m_global_center_of_circle].scanAngle-10 && m_copyOfLaserData.Data[k].scanAngle < m_copyOfLaserData.Data[m_global_center_of_circle].scanAngle+10){
+                    // qDebug() << m_copyOfLaserData.Data[k].scanAngle;
+                    painter.setPen(QPen(Qt::magenta, 3));
+                }
+                else    
+                    painter.setPen(QPen(Qt::green, 3));
 			}
-
 			int dist = m_copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 			int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 				+ rect.topLeft().x(); //prepocet do obrazovky
@@ -797,7 +802,7 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 			if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
 				painter.drawEllipse(QPoint(xp, yp), 2, 2);
 		}
-	}
+    }
 }
 double MainWindow::calculePositionOfObject(cv::Point center){
     //0 - 800 kamera pixel center
@@ -817,14 +822,33 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
 
 	if(start_pressed){
-		cv::Point center = m_ObjectDetection.detectObjects(frame[actIndex]);
-        double center_of_object = calculePositionOfObject(center);
-        // cout << center  << endl;
-		size_t k = 0;
-		for(k = 0; k < m_copyOfLaserData.numberOfScans; k++)
-			if(m_copyOfLaserData.Data[k].scanAngle >= center_of_object && m_copyOfLaserData.Data[k-1].scanAngle < center_of_object)
-				break;
-		cout << k << " " << center_of_object << endl;
+        emit haffTransform(frame[actIndex]);
+        // if(m_frame_counter%5 == 0){
+        //     double center_of_object;
+        //     int radius_of_circle;
+        //     cv::Point center = m_ObjectDetection.detectObjects(frame[actIndex], &radius_of_circle);
+        //     calculePositionOfObject(center);
+        //     // cout << center  << endl;
+        //     uint8_t k = 0;
+        //     for(k = 0; k < m_copyOfLaserData.numberOfScans; k++)
+        //         if(m_copyOfLaserData.Data[k].scanAngle <= center_of_object && m_copyOfLaserData.Data[k-1].scanAngle > center_of_object)
+        //             break;
+        //     // k = k-7;
+        //     m_global_center_of_circle = k;
+            
+        //     qDebug() << k << " " << m_global_center_of_circle << " " << radius_of_circle << "------------------";
+        // }
+        // m_frame_counter++;
+        // painter.setPen(QPen(Qt::magenta, 3));
+        // for(size_t i = k-5 ; i < k+5; i++){
+        //     int dist = m_copyOfLaserData.Data[i].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
+        //     int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - m_copyOfLaserData.Data[i].scanAngle) * 3.14159 / 180.0))
+        //         + rect.topLeft().x(); //prepocet do obrazovky
+        //     int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - m_copyOfLaserData.Data[i].scanAngle) * 3.14159 / 180.0))
+        //         + rect.topLeft().y();  //prepocet do obrazovky
+        //     if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
+        //         painter.drawEllipse(QPoint(xp, yp), 10, 10);
+        // }
 		// int x = rect.width() - (m_copyOfLaserData.Data[k].scanDistance * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 		// 		+ rect.topLeft().x();
 		// int y = rect.height() - (m_copyOfLaserData.Data[k].scanDistance * cos((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
@@ -833,7 +857,7 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 		// painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
 		// painter.drawEllipse(QPoint(x, y), 50, 50);
 
-    }
+    }   
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());
 
@@ -897,4 +921,9 @@ void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 			m_robotStartupLocation = true;
 		}
 	}
+}
+
+void MainWindow::haffTransform(cv::Mat frame){
+    // m_ObjectDetection.detectObjects(frame);
+
 }

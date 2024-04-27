@@ -6,7 +6,7 @@
 // #include <thread>
 
 
-ObjectDetection::ObjectDetection()
+ObjectDetection::ObjectDetection() : QObject()
 {
     // Constructor implementatio
     m_savedImg = false;
@@ -19,11 +19,11 @@ ObjectDetection::~ObjectDetection()
 }
 
 
-cv::Point ObjectDetection::detectObjects(cv::Mat frame)
+void ObjectDetection::detectObjects(cv::Mat frame)
 {
     // std::cout << "Object detection started!" << std::endl;
 
-    if(frame.empty()) {std::cout << "ERRROR!";return cv::Point(0,0);}
+    if(frame.empty()) {std::cout << "ERRROR!";  }
     
     cv::Mat gray;
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
@@ -45,7 +45,8 @@ cv::Point ObjectDetection::detectObjects(cv::Mat frame)
         // circle outline
         int radius = c[2];
         cv::circle( frame, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
-        return center;
+        m_radius_circle = radius;
+        m_center_of_object = center;
     }
     if(!m_savedImg && circles.size() != m_circleCounter && circles.size() > 0){
         cv::imwrite("circles.jpg", frame);
@@ -53,4 +54,8 @@ cv::Point ObjectDetection::detectObjects(cv::Mat frame)
     }
     // cv::imshow ("gray",gray);
     // cv::imshow ("Live",frame);
+}
+
+void ObjectDetection::getCircleParam(){
+    //neznam ci return alebo parameters;
 }

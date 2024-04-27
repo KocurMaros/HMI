@@ -92,6 +92,7 @@ public slots:
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 	void changeSpeed(double forwardspeed, double rotationspeed);
+    void haffTransform(cv::Mat frame);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
@@ -141,9 +142,13 @@ private:
 	std::atomic<double> m_x;
 	std::atomic<double> m_y;
 	
-	ObjectDetection m_ObjectDetection;
+    std::unique_ptr<ObjectDetection> m_ObjectDetection;
+	// ObjectDetection m_ObjectDetection;
 	bool start_pressed = false;
+
+    uint8_t m_global_center_of_circle;
 	uint8_t m_frames_c = 0;
+    uint32_t m_frame_counter = 0;
    // std::shared_ptr<ObjectDetection> m_ObjectDetection;
 };
 
