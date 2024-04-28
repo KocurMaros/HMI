@@ -875,6 +875,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		m_ui->pushButton_9->setStyleSheet("");
 
 		m_copyOfLaserData.numberOfScans = 0;
+		m_trajectoryController.reset();
 		m_robot.reset();
 
 		return;
