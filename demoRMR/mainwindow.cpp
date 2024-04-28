@@ -324,11 +324,13 @@ void MainWindow::paintSupervisorControl()
 					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
 
 	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot);
+	bool isInCollision = false;
 
-	auto lineColorSetter = [this, &pero, &painter](const QPointF &start, const QPointF &end) {
+	auto lineColorSetter = [this, &isInCollision,  &pero, &painter](const QPointF &start, const QPointF &end) {
 		if (m_mapLoader->isLineInCollision(start, end)) {
 			pero.setColor(Qt::red);
 			painter.setPen(pero);
+			isInCollision = true;
 		}
 		else {
 			pero.setColor(Qt::white);
@@ -367,6 +369,8 @@ void MainWindow::paintSupervisorControl()
 			painter.drawLine(QLineF(robotPos, *m_endPosition));
 		}
 	}
+
+	m_inCollision = isInCollision;
 }
 
 double MainWindow::getX()
@@ -432,7 +436,7 @@ void MainWindow::bodyControlSupervisor()
 		return;
 	}
 
-	if (isAnyLineInCollision()) {
+	if (m_inCollision) {
 		QMessageBox::warning(this, "Collision", "Line is in collision");
 		return;
 	}
@@ -597,6 +601,8 @@ void MainWindow::on_actionSupervisor_triggered()
 
 	m_loadMapButton = new QPushButton("Load map", this);
 	m_loadMapButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
+	m_loadMapButton->setMinimumSize(m_ui->bodyControlButton->minimumSize());
+	m_loadMapButton->setMaximumSize(m_ui->bodyControlButton->maximumSize());
 	m_loadMapConnection = connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog);
 	m_ui->topRightLayout->addWidget(m_loadMapButton);
 

@@ -197,6 +197,7 @@ private:
 	QPushButton *m_loadMapButton;
 	QMetaObject::Connection m_loadMapConnection;
 	bool m_dragNDrop;
+	std::atomic<bool> m_inCollision;
 };
 
 #endif // MAINWINDOW_H
