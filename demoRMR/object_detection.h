@@ -18,7 +18,7 @@ public:
 public slots:
     void detectObjects(cv::Mat frame);
 signals:
-    void on_circleDetected(cv::Point center);
+    void on_circleDetected(cv::Point center_of_object);
 
 private:
     cv::Point m_center_of_object;

@@ -88,7 +88,7 @@ private slots:
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
-	void calculePositionOfObject(cv::Point center);
+	void calculePositionOfObject(cv::Point center_of_object);
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
@@ -147,9 +147,11 @@ private:
 	// ObjectDetection m_ObjectDetection;
 	bool start_pressed = false;
 
-    uint8_t m_global_center_of_circle;
-	uint8_t m_frames_c = 0;
+    double m_global_center_of_circle;
+	bool m_draw_c;
     uint32_t m_frame_counter = 0;
+	cv::Point m_objectOnMap;
+
    // std::shared_ptr<ObjectDetection> m_ObjectDetection;
 };
 

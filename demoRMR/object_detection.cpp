@@ -46,11 +46,12 @@ void ObjectDetection::detectObjects(cv::Mat frame)
         cv::circle( frame, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
         // m_radius_circle = radius;
         // m_center_of_object = center;
-        emit on_circleDetected(center);
-    }
-    if(!m_savedImg && circles.size() != m_circleCounter && circles.size() > 0){
-        cv::imwrite("circles.jpg", frame);
-        m_savedImg = true;
+        if(!m_savedImg && circles.size() != m_circleCounter && circles.size() > 0){
+            std::cout << "Circle detected!" << " " << c[0] << " " << c[1] << std::endl;
+            cv::imwrite("circles.jpg", frame);
+            emit on_circleDetected(center);
+            m_savedImg = true;
+        }
     }
     // cv::imshow ("gray",gray);
     // cv::imshow ("Live",frame);

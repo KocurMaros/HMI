@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
 	qRegisterMetaType<cv::Mat>("cv::Mat");  //barz zaregistrovat typ, ktory chcete posielat cez signal slot
-	qRegisterMetaType<cv::Mat>("cv::Point"); 
+	qRegisterMetaType<cv::Point>("cv::Point"); 
 }
 
 MainWindow::~MainWindow()
@@ -792,12 +792,7 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 				}
 			}
 			else {
-                if(m_copyOfLaserData.Data[k].scanAngle >= m_copyOfLaserData.Data[m_global_center_of_circle].scanAngle-10 && m_copyOfLaserData.Data[k].scanAngle < m_copyOfLaserData.Data[m_global_center_of_circle].scanAngle+10){
-                    // qDebug() << m_copyOfLaserData.Data[k].scanAngle;
-                    painter.setPen(QPen(Qt::magenta, 3));
-                }
-                else    
-                    painter.setPen(QPen(Qt::green, 3));
+				painter.setPen(QPen(Qt::green, 3));
 			}
 			int dist = m_copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 			int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
@@ -809,17 +804,30 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 		}
     }
 }
-void MainWindow::calculePositionOfObject(cv::Point center){
+void MainWindow::calculePositionOfObject(cv::Point center_of_object){
     //0 - 800 kamera pixel center
 	double prob_angle;
-	std::cout << "Center of object: " << center << std::endl;
-	// if(center.x <= 400)
-	// 	prob_angle = MAP(center.x, 0, 400, 330, 360);
-	// else
-	// 	prob_angle = MAP(center.x, 400, 800, 0, 30);
-	// std::cout << "Prob angle " << prob_angle << std::endl;
-	// return prob_angle;
-	//dajak vratit k a vykreslit na obrazovku kde je objekt
+	std::cout << "Center of object: " <<  center_of_object << std::endl;
+	if(center_of_object.x <= 400)
+		prob_angle = MAP(center_of_object.x, 0, 400, 330, 360);
+	else
+		prob_angle = MAP(center_of_object.x, 400, 800, 0, 30);
+	std::cout << "Prob angle: " << prob_angle << std::endl;
+	double dist = INT32_MAX;
+	int k;
+	for(k = 0; k < m_copyOfLaserData.numberOfScans; k++){
+		if(m_copyOfLaserData.Data[k].scanAngle >= prob_angle-5 && m_copyOfLaserData.Data[k].scanAngle <= prob_angle + 5)
+			if(dist > m_copyOfLaserData.Data[k].scanDistance){
+				dist = m_copyOfLaserData.Data[k].scanDistance;
+				break;
+			}
+	}
+	std::cout << "distance: " << dist << std::endl;
+	std::cout << "Scam angle: " << m_copyOfLaserData.Data[k].scanAngle << std::endl;
+	std::cout << "k: " << k << std::endl;
+	m_objectOnMap = cv::Point(dist * sin((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0), dist * cos((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0));  //distance from robot
+	m_draw_c = true;
+	std::cout << "Object on map: " << m_objectOnMap << std::endl;
 }
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
@@ -828,43 +836,8 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
 	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
 
-	if(start_pressed){
-        emit haffTransform(frame[actIndex]);
-        // if(m_frame_counter%5 == 0){
-        //     double center_of_object;
-        //     int radius_of_circle;
-        //     cv::Point center = m_ObjectDetection.detectObjects(frame[actIndex], &radius_of_circle);
-        //     calculePositionOfObject(center);
-        //     // cout << center  << endl;
-        //     uint8_t k = 0;
-        //     for(k = 0; k < m_copyOfLaserData.numberOfScans; k++)
-        //         if(m_copyOfLaserData.Data[k].scanAngle <= center_of_object && m_copyOfLaserData.Data[k-1].scanAngle > center_of_object)
-        //             break;
-        //     // k = k-7;
-        //     m_global_center_of_circle = k;
-            
-        //     qDebug() << k << " " << m_global_center_of_circle << " " << radius_of_circle << "------------------";
-        // }
-        // m_frame_counter++;
-        // painter.setPen(QPen(Qt::magenta, 3));
-        // for(size_t i = k-5 ; i < k+5; i++){
-        //     int dist = m_copyOfLaserData.Data[i].scanDistance / 20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
-        //     int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - m_copyOfLaserData.Data[i].scanAngle) * 3.14159 / 180.0))
-        //         + rect.topLeft().x(); //prepocet do obrazovky
-        //     int yp = rect.height() - (rect.height() / 2 + dist * 2 * cos((360.0 - m_copyOfLaserData.Data[i].scanAngle) * 3.14159 / 180.0))
-        //         + rect.topLeft().y();  //prepocet do obrazovky
-        //     if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
-        //         painter.drawEllipse(QPoint(xp, yp), 10, 10);
-        // }
-		// int x = rect.width() - (m_copyOfLaserData.Data[k].scanDistance * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
-		// 		+ rect.topLeft().x();
-		// int y = rect.height() - (m_copyOfLaserData.Data[k].scanDistance * cos((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
-		// 		+ rect.topLeft().y();  //prepocet do obrazovky
-		// cout << "x: " << x << " y: " << y << endl;
-		// painter.setPen(QPen(QColor(0, 255, 0, 40), 3));
-		// painter.drawEllipse(QPoint(x, y), 50, 50);
-
-    }   
+	if(start_pressed)
+        emit haffTransform(frame[actIndex]);  
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());
 
