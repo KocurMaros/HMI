@@ -887,13 +887,16 @@ void MainWindow::on_pushButton_9_clicked() //start button
 		return;
 	}
 
-	// Object for managing the robot speed interactions.
-	m_robot.reset(new Robot(m_ipaddress));
-	// m_robot = std::make_shared<Robot>(m_ipaddress);
-
 	if (m_robot != nullptr && m_robot->isInEmgStop()) {
 		return;
 	}
+
+	// Object for managing the robot speed interactions.
+	QString tmpIP = m_ui->ipComboBox->currentText();
+	m_ipaddress = tmpIP.toStdString();
+
+	qDebug() << "Connecting the UI to robot at IP address: " << m_ipaddress.c_str();
+	m_robot.reset(new Robot(m_ipaddress));
 
 	m_trajectoryController = std::make_shared<RobotTrajectoryController>(m_robot, this);
 
@@ -911,11 +914,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	m_positionTracker->moveToThread(m_odometryThread);
 	m_odometryThread->start();
-
-	QString tmpIP = m_ui->ipComboBox->currentText();
-	qDebug() << "Connecting to " << tmpIP;
-	m_ipaddress = tmpIP.toStdString();
-	qDebug() << "Address " << tmpIP;
 
 	//ziskanie joystickov
 	m_instance = QJoysticks::getInstance();
