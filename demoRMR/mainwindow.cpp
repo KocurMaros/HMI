@@ -645,7 +645,7 @@ void MainWindow::on_rtc_removePoint()
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
 	calculateOdometry(robotdata);
-	int battery = 100 * (robotdata.Battery - 15.5) / (16.7 - 15.5);
+	int battery = 100 * (robotdata.Battery - 155.) / (167. - 155.);
 	emit batteryLevel(battery);
 
 	if (m_instance->count() > 0 || (m_useSkeleton && m_robot != nullptr)) {
