@@ -3,11 +3,17 @@
 
 #include "HelpWindow.h"
 #include "BodyProgressBars.h"
+#include "MapLoader.h"
+#include "PositionTracker.h"
+#include "RobotTrajectoryController.h"
+#include <QThread>
 #include "QLed.h"
+#include "ui_mainwindow.h"
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTimer>
 #include <QKeyEvent>
+#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,7 +40,13 @@ class ControllButtons;
 class MainWindow : public QMainWindow
 {
 	friend class ControllButtons;
+	friend class MapLoader;
 	Q_OBJECT
+
+	enum UserMode {
+		Telecontrol,
+		Supervisor,
+	};
 
 public:
 	bool useCamera1;
@@ -53,10 +65,19 @@ public:
 
 	int processThisCamera(cv::Mat cameraData);
 	int processThisSkeleton(skeleton skeledata);
+	QRect getFrameGeometry() const { return m_ui->frame->geometry(); }
+	QPair<double, double> calculateTrajectory();
+	QPair<double, double> calculateTrajectoryTo(const QPointF &point);
+	double finalRotationError();
+	double localRotationError(const QPointF &point);
+
+signals:
+	void arcResultsReady(double distance, double rotation, QVector<QPointF> points);
+	void moveForward(double speed);
+	void changeRotation(double angle);
 
 private:
 	void disableAllButtons(bool disable);
-	bool isIPValid(const QString &ip);
 	void inPaintEventProcessSkeleton();
 	void setRobotDirection();
 	void drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int scale = 20);
@@ -65,6 +86,22 @@ private:
 	void paintEvent(QPaintEvent *event) override; // Q_DECL_OVERRIDE;
 	void parse_lidar_data(LaserMeasurement laserData, uint16_t *distance);
 	void calc_colisions_points(LaserMeasurement laserData, bool *colisions);
+	void paintTeleControl();
+	void paintSupervisorControl();
+	double getX();
+	double getY();
+	double getFi();
+
+	void bodyControlTeleview();
+	void bodyControlSupervisor();
+
+	void pushButtonTeleview();
+	void pushButtonSupervisor();
+
+	void mousePressEvent(QMouseEvent *event) override;
+	void mouseReleaseEvent(QMouseEvent *event) override;
+	void mouseMoveEvent(QMouseEvent *event) override;
+	QPointF createLineParams(const QPointF &p);
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
@@ -82,26 +119,33 @@ private slots:
 	void on_actionAdd_motion_buttons_triggered();
 	void on_actionChangeHand_toggled();
 	void on_actionShowHelp_triggered();
-
-	//protected:
-	//	void contextMenuEvent(QContextMenuEvent *event) override;
+	void on_resultsReady_updateUi(double x, double y, double fi);
+	void on_actionTelecontrol_triggered();
+	void on_actionSupervisor_triggered();
+	void openFileDialog();
 
 public slots:
 	void setUiValues(double robotX, double robotY, double robotFi);
 	void calculePositionOfObject(cv::Point center_of_object);
+	void on_rtc_removePoint();
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 	void changeSpeed(double forwardspeed, double rotationspeed);
     void haffTransform(cv::Mat frame);
+	void changeArc(double forwardspeed, double rotationspeed);
+	void positionResults(const TKobukiData &robotdat, double correction);
+	void batteryLevel(int battery);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
 	Ui::MainWindow *m_ui;
+	QThread *m_odometryThread;
+	PositionTracker *m_positionTracker;
 	int m_updateLaserPicture;
 	LaserMeasurement m_copyOfLaserData;
 	std::string m_ipaddress;
-	std::unique_ptr<Robot> m_robot;
+	std::shared_ptr<Robot> m_robot;
 	TKobukiData m_robotdata;
 	int m_datacounter;
 	int m_updateSkeletonPicture;
@@ -111,7 +155,7 @@ private:
 
 	QJoysticks *m_instance;
 
-	double forwardspeed;  //mm/s
+	double forwardspeed;	//mm/s
 	double m_rotationspeed; //omega/s
 	double m_prevForwardspeed;
 	double m_prevRotationspeed;
@@ -139,9 +183,7 @@ private:
 	int m_lastRightEncoder;
 	double m_fiCorrection;
 	bool m_robotStartupLocation;
-	std::atomic<double> m_fi;
-	std::atomic<double> m_x;
-	std::atomic<double> m_y;
+
 	
     ObjectDetection *m_ObjectDetection;
 	// ObjectDetection m_ObjectDetection;
@@ -153,6 +195,24 @@ private:
 	cv::Point m_objectOnMap;
 
    // std::shared_ptr<ObjectDetection> m_ObjectDetection;
+
+	std::mutex m_odometryLock;
+	double m_fi;
+	double m_x;
+	double m_y;
+
+	std::shared_ptr<MapLoader> m_mapLoader;
+	QVector<QPointF> m_transitionPoints;
+	std::shared_ptr<QPointF> m_endPosition;
+	UserMode m_userMode;
+
+	std::shared_ptr<RobotTrajectoryController> m_trajectoryController;
+
+	QVector<QMetaObject::Connection> m_rtcConnections;
+	QPushButton *m_loadMapButton;
+	QMetaObject::Connection m_loadMapConnection;
+	bool m_dragNDrop;
+	std::atomic<bool> m_inCollision;
 };
 
 #endif // MAINWINDOW_H

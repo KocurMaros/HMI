@@ -18,21 +18,35 @@ find_package(SDL2 REQUIRED)
 add_subdirectory(robot)
 add_subdirectory(QJoysticks-master)
 add_subdirectory(QLed)
+add_definitions(-DMAP_PATH="${CMAKE_CURRENT_SOURCE_DIR}/priestor.txt")
+add_definitions(-std=c++17)
 
 message("SDL_LIBRARIES: ${SDL_LIBRARIES}")
 message("SDL_INCLUDE_DIRS: ${SDL_INCLUDE_DIRS}")
 message("OpenCV_LIBS: ${OpenCV_LIBS}")
 message("OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 set(HEADERS
+	BodyProgressBars.h
+	ControllButtons.h
+	PositionTracker.h
+	HelpWindow.h
+	MapLoader.h
 	mainwindow.h
 	stylesheeteditor.h
 	ControllButtons.h
 	HelpWindow.h
 	BodyProgressBars.h
     object_detection.h
+	PidController.h
+	RobotTrajectoryController.h
 )
 
 set(SOURCES
+	BodyProgressBars.cpp
+	ControllButtons.cpp
+	PositionTracker.cpp
+	HelpWindow.cpp
+	MapLoader.cpp
 	main.cpp
 	mainwindow.cpp
 	stylesheeteditor.cpp
@@ -40,6 +54,8 @@ set(SOURCES
 	HelpWindow.cpp
 	BodyProgressBars.cpp
     object_detection.cpp
+	PidController.cpp
+	RobotTrajectoryController.cpp
 )
 
 set(UI

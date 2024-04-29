@@ -1,0 +1,6 @@
+#!/usr/bin/zsh
+
+cd build
+make clean
+cd ..
+

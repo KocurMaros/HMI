@@ -4,23 +4,27 @@
 #include <QComboBox>
 #include <QDebug>
 #include <QPainter>
+#include <algorithm>
 #include <cmath>
 #include <memory>
+#include <mutex>
 #include <qgridlayout.h>
+#include <qmessagebox.h>
 #include <qnamespace.h>
 
 #include "ControllButtons.h"
-
 
 #include <QImageReader>
 #include <QPoint>
 #include <math.h>
 #include <qdebug.h>
+#include <qpushbutton.h>
 #include "CKobuki.h"
 
 #define BODY_PROGRESS_BAR_POS 3, 2
-#define SHORT_MAX 32767
+#define SHORT_MAX 65'535
 #define TO_RADIANS 3.14159 / 180.0
+#define DRAG_N_DROP_RANGE 10
 
 // 11-15
 static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
@@ -35,6 +39,8 @@ static QString IP_ADDRESSES[2] { "127.0.0.1", "192.168.1." };
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 	, m_ui(new Ui::MainWindow)
+	, m_odometryThread(new QThread(this))
+	, m_positionTracker(new PositionTracker())
 	, m_connectionLed(new QLed(this))
 	, m_robot(nullptr)
 	, m_ipaddress(IP_ADDRESSES[0].toStdString())
@@ -43,6 +49,11 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
     , m_ObjectDetection(new ObjectDetection(this))
+	, m_lastLeftEncoder(0)
+	, m_lastRightEncoder(0)
+	, m_endPosition(nullptr)
+	, m_userMode(UserMode::Supervisor)
+	, m_dragNDrop(false)
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -52,9 +63,8 @@ MainWindow::MainWindow(QWidget *parent)
 	for (size_t i = 11; i < 15; i++) {
 		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
+
 	m_datacounter = 0;
-	//  timer = new QTimer(this);
-	//	connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
 	actIndex = -1;
 	useCamera1 = false;
 	m_updateSkeletonPicture = 0;
@@ -62,6 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_datacounter = 0;
 	m_styleSheetEditor = new StyleSheetEditor(this);
 
+	connect(this, &MainWindow::batteryLevel, m_connectionLed, &QLed::on_batterLevel_received);
 	m_ui->topRightLayout->insertWidget(0, m_connectionLed);
 	m_ui->pushButton_9->setStyleSheet("background-color: green");
 	// m_ObjectDetection = ObjectDetection();
@@ -76,12 +87,27 @@ MainWindow::MainWindow(QWidget *parent)
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
 	qRegisterMetaType<cv::Mat>("cv::Mat");  //barz zaregistrovat typ, ktory chcete posielat cez signal slot
 	qRegisterMetaType<cv::Point>("cv::Point"); 
+
+	if (m_userMode == UserMode::Supervisor) {
+		on_actionSupervisor_triggered();
+	}
+	else {
+		on_actionTelecontrol_triggered();
+	}
+
+	m_mapLoader = std::make_shared<MapLoader>(this, m_ui->frame->width(), m_ui->frame->height());
+	// m_mapLoader->loadMap(MAP_PATH);
+	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
+	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
+
+	setMouseTracking(true);
 }
 
 MainWindow::~MainWindow()
 {
 	delete m_ui;
 }
+
 double MAP(double x, double in_min, double in_max, double out_min, double out_max)
 {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -114,71 +140,11 @@ QRectF create_border_rect(QRect rect, size_t i)
 
 void MainWindow::paintEvent(QPaintEvent *event)
 {
-	QPainter painter(this);
-	///prekreslujem obrazovku len vtedy, ked viem ze mam nove data. paintevent sa
-	/// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
-	painter.setBrush(Qt::black); //cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
-
-	QPen pero;
-	pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
-	pero.setWidth(3);			  //hrubka pera -3pixely
-	pero.setColor(Qt::green);	  //farba je zelena
-
-	QRect rect;
-	rect = m_ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
-	rect.translate(0, 37);
-	painter.drawRect(rect);
-
-	QRect miniRect;
-	if (!m_useSkeleton && !m_motionButtonsVisible) {
-		miniRect = m_ui->minLidarFrame->geometry();
-		miniRect.translate(0, 37);
-		painter.drawRect(miniRect);
-	}
-
-	if (useCamera1 == true && actIndex > -1 && !m_reverseRobot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
-	{
-		drawImageData(painter, rect);
-        emit 
-		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
-			pero.setWidth(1);
-			drawLidarData(painter, pero, miniRect, 70);
-
-			painter.setBrush(Qt::black);
-			pero.setColor(Qt::magenta);
-			painter.setPen(pero);
-			int xrobot = miniRect.width() / 2;
-			int yrobot = miniRect.height() / 2;
-			int xpolomer = 10;
-			int ypolomer = 10;
-
-			painter.drawEllipse(QPoint(miniRect.x() + xrobot, miniRect.y() + yrobot), xpolomer, ypolomer);
-			painter.drawLine(miniRect.x() + xrobot, miniRect.y() + yrobot, miniRect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-							 miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
-		}
+	if (m_userMode == UserMode::Telecontrol) {
+		paintTeleControl();
 	}
 	else {
-		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
-			drawImageData(painter, miniRect, true);
-		}
-		drawLidarData(painter, pero, rect);
-
-		painter.setBrush(Qt::black);
-		pero.setColor(Qt::magenta);
-		painter.setPen(pero);
-		int xrobot = rect.width() / 2;
-		int yrobot = rect.height() / 2;
-		int xpolomer = 20;
-		int ypolomer = 20;
-
-		painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
-		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
-						 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
-	}
-
-	if (m_updateSkeletonPicture == 1 && m_useSkeleton) {
-		m_updateSkeletonPicture = 0;
-		inPaintEventProcessSkeleton();
+		paintSupervisorControl();
 	}
 }
 
@@ -252,6 +218,437 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 	}
 }
 
+void MainWindow::paintTeleControl()
+{
+	QPainter painter(this);
+	///prekreslujem obrazovku len vtedy, ked viem ze mam nove data. paintevent sa
+	/// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
+	painter.setBrush(Qt::black); //cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
+
+	QPen pero;
+	pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
+	pero.setWidth(3);			  //hrubka pera -3pixely
+	pero.setColor(Qt::green);	  //farba je zelena
+
+	QRect rect;
+	rect = m_ui->frame->geometry(); //ziskate porametre stvorca,do ktoreho chcete kreslit
+	rect.translate(0, 37);
+	painter.drawRect(rect);
+
+	QRect miniRect;
+	if (!m_useSkeleton && !m_motionButtonsVisible) {
+		miniRect = m_ui->minLidarFrame->geometry();
+		miniRect.translate(0, 37);
+		painter.drawRect(miniRect);
+	}
+
+	if (useCamera1 == true && actIndex > -1 && !m_reverseRobot) /// ak zobrazujem data z kamery a aspon niektory frame vo vectore je naplneny
+	{
+		drawImageData(painter, rect);
+		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
+			pero.setWidth(1);
+			drawLidarData(painter, pero, miniRect, 70);
+
+			painter.setBrush(Qt::black);
+			pero.setColor(Qt::magenta);
+			painter.setPen(pero);
+			int xrobot = miniRect.width() / 2;
+			int yrobot = miniRect.height() / 2;
+			int xpolomer = 10;
+			int ypolomer = 10;
+
+			painter.drawEllipse(QPoint(miniRect.x() + xrobot, miniRect.y() + yrobot), xpolomer, ypolomer);
+			painter.drawLine(miniRect.x() + xrobot, miniRect.y() + yrobot, miniRect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+							 miniRect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+		}
+	}
+	else {
+		if (!m_useSkeleton && !m_motionButtonsVisible || m_ui->minLidarFrame->geometry().height() < 50) {
+			drawImageData(painter, miniRect, true);
+		}
+		drawLidarData(painter, pero, rect);
+
+		painter.setBrush(Qt::black);
+		pero.setColor(Qt::magenta);
+		painter.setPen(pero);
+		int xrobot = rect.width() / 2;
+		int yrobot = rect.height() / 2;
+		int xpolomer = 20;
+		int ypolomer = 20;
+
+		painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+		painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - 90) * 3.14159 / 180),
+						 rect.y() + ((yrobot + ypolomer * sin((360 - 90) * 3.14159 / 180))));
+	}
+
+	if (m_updateSkeletonPicture == 1 && m_useSkeleton) {
+		m_updateSkeletonPicture = 0;
+		inPaintEventProcessSkeleton();
+	}
+}
+
+void MainWindow::paintSupervisorControl()
+{
+	QPainter painter(this);
+	painter.setBrush(Qt::black);
+
+	QPen pero;
+	pero.setStyle(Qt::SolidLine);
+	pero.setWidth(3);
+	pero.setColor(Qt::green);
+
+	QRect rect;
+	rect = m_ui->frame->geometry();
+	rect.translate(0, 37);
+	painter.drawRect(rect);
+
+	painter.setPen(pero);
+
+	auto walls = m_mapLoader->walls();
+	for (const auto &wall : walls) {
+		auto min = wall.start;
+		auto max = wall.end;
+		painter.drawLine(min, max);
+	}
+
+	pero.setColor(Qt::red);
+	painter.setPen(pero);
+
+	double x = getX() * 100 + 50;
+	double y = getY() * 100 + 50;
+
+	double xrobot = rect.width() * (x - m_mapLoader->minX) / (m_mapLoader->maxX - m_mapLoader->minX);
+	double yrobot = rect.height() - rect.height() * (y - m_mapLoader->minY) / (m_mapLoader->maxY - m_mapLoader->minY);
+
+	int xpolomer = rect.width() * (20) / (m_mapLoader->maxX - m_mapLoader->minX);
+	int ypolomer = rect.height() * (20) / (m_mapLoader->maxY - m_mapLoader->minY);
+
+	painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
+					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
+
+	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot);
+	bool isInCollision = false;
+
+	auto lineColorSetter = [this, &isInCollision,  &pero, &painter](const QPointF &start, const QPointF &end) {
+		if (m_mapLoader->isLineInCollision(start, end)) {
+			pero.setColor(Qt::red);
+			painter.setPen(pero);
+			isInCollision = true;
+		}
+		else {
+			pero.setColor(Qt::white);
+			painter.setPen(pero);
+		}
+	};
+	if(m_draw_c){
+		// m_draw_c = false;
+		pero.setColor(Qt::red);
+		painter.setPen(pero);
+		painter.drawEllipse(QPoint(rect.x() + xrobot + m_objectOnMap.x , rect.y() + yrobot + m_objectOnMap.y), 10, 10);
+
+		std::cout << "x: " << xrobot + m_objectOnMap.x << " y: " << yrobot + m_objectOnMap.y << std::endl;
+	}
+	if(isInCollision){
+		QBrush brush;
+		brush.setStyle(Qt::SolidPattern);
+		brush.setColor(Qt::red);
+		painter.setBrush(brush);
+		painter.setPen(Qt::NoPen);
+
+		painter.drawRect(QRect(rect.x(), rect.y(), rect.width() / 50, rect.height()));	//lavy
+		painter.drawRect(QRect(rect.x()+rect.width()- rect.width()/50, rect.y(), rect.width()/50, rect.height())); //pravy
+		painter.drawRect(QRect(rect.x(), rect.y(), rect.width(), rect.height()/50));	//horny
+		painter.drawRect(QRect(rect.x(), rect.y()+rect.height()- rect.height() / 50, rect.width(), rect.height() / 50)); //dolny
+	}
+	for (size_t i = 0; i < m_transitionPoints.size(); i++) {
+		if (m_transitionPoints.size() == 0) {
+			break;
+		}
+
+		if (i == 0) {
+			lineColorSetter(robotPos, m_transitionPoints[i]);
+			painter.drawLine(QLineF(robotPos, m_transitionPoints[i]));
+		}
+		else {
+			lineColorSetter(m_transitionPoints[i - 1], m_transitionPoints[i]);
+			painter.drawLine(m_transitionPoints[i - 1], m_transitionPoints[i]);
+		}
+
+		pero.setColor(Qt::yellow);
+		painter.setPen(pero);
+		painter.drawEllipse(m_transitionPoints[i], 3, 3);
+	}
+
+	pero.setColor(Qt::white);
+	painter.setPen(pero);
+	if (m_endPosition) {
+		if (m_transitionPoints.size() > 0) {
+			lineColorSetter(m_transitionPoints.back(), *m_endPosition);
+			painter.drawLine(QLineF(m_transitionPoints.back(), *m_endPosition));
+		}
+		else {
+			lineColorSetter(robotPos, *m_endPosition);
+			painter.drawLine(QLineF(robotPos, *m_endPosition));
+		}
+	}
+
+	m_inCollision = isInCollision;
+}
+
+double MainWindow::getX()
+{
+	std::scoped_lock<std::mutex> lck(m_odometryLock);
+	return m_x;
+}
+
+double MainWindow::getY()
+{
+	std::scoped_lock<std::mutex> lck(m_odometryLock);
+	return m_y;
+}
+
+double MainWindow::getFi()
+{
+	std::scoped_lock<std::mutex> lck(m_odometryLock);
+	return m_fi;
+}
+
+void MainWindow::bodyControlTeleview()
+{
+	qDebug() << "Body control button clicked. Old: " << m_useSkeleton;
+	m_useSkeleton = (m_useSkeleton ? false : true);
+	qDebug() << "New: " << m_useSkeleton;
+
+	if (m_useSkeleton) {
+		m_bodyProgressBars = new BodyProgressBars(this);
+
+		connect(this, &MainWindow::changeSpeed, m_bodyProgressBars, &BodyProgressBars::setValues);
+
+		m_ui->bodyControlButton->setText("Body Control: on");
+
+		if (m_leftHandedMode) {
+			m_controllButtons->addProgressBars(m_bodyProgressBars);
+		}
+		else {
+			m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
+		}
+	}
+	else {
+		m_ui->bodyControlButton->setText("Body Control: off");
+
+		if (m_leftHandedMode) {
+			m_controllButtons->removeProgressBars(m_bodyProgressBars);
+		}
+		else {
+			m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
+		}
+
+		m_bodyProgressBars->deleteLater();
+	}
+}
+
+void MainWindow::bodyControlSupervisor()
+{
+	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
+		return;
+	}
+
+	if (m_endPosition == nullptr) {
+		return;
+	}
+
+	if (m_inCollision) {
+		QMessageBox::warning(this, "Collision", "Line is in collision");
+		return;
+	}
+
+
+	QVector<QPointF> points;
+	qDebug() << "Transition points: " << m_transitionPoints;
+	std::transform(m_transitionPoints.begin(), m_transitionPoints.end(), std::back_inserter(points),
+				   [this](const QPointF &point) { return m_mapLoader->toWorldPoint(point); });
+
+	points.push_back(m_mapLoader->toWorldPoint(*m_endPosition));
+	// points.push_back(*m_endPosition);
+	qDebug() << "Points: " << points;
+	auto [distanceToTarget, angleToTarget] = calculateTrajectoryTo(points.back());
+
+	emit arcResultsReady(distanceToTarget, angleToTarget, std::move(points));
+}
+
+void MainWindow::pushButtonTeleview()
+{
+	if (m_robot == nullptr) {
+		return;
+	}
+	if (useCamera1 == true) {
+		useCamera1 = false;
+
+		m_ui->pushButton->setText("use camera");
+	}
+	else {
+		useCamera1 = true;
+
+		m_ui->pushButton->setText("use laser");
+	}
+}
+
+void MainWindow::pushButtonSupervisor()
+{
+	if (m_robot == nullptr) {
+		return;
+	}
+
+	m_transitionPoints.clear();
+	m_endPosition.reset();
+	emit moveForward(0);
+}
+
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+	if (m_robot == nullptr || m_userMode == UserMode::Telecontrol) {
+		qDebug() << "Robot is not connected or teleoperation is not enabled";
+		return;
+	}
+
+	bool clickedInFrame = m_ui->frame->geometry().contains(event->pos());
+	if (!clickedInFrame) {
+		qDebug() << "Clicked outside the frame";
+		return;
+	}
+
+	QPointF line = createLineParams(event->pos());
+
+	auto x = getX() * 100 + 50;
+	auto y = getY() * 100 + 50;
+	auto startPoint = (m_transitionPoints.size() == 0 ? m_mapLoader->toMapPoint({ x, y }) : m_transitionPoints.back());
+
+	if (m_mapLoader->isLineInCollision(startPoint, event->pos()) && event->button() != Qt::MiddleButton) {
+		qDebug() << "Line is in collision";
+		QMessageBox::warning(this, "Collision", "Line is in collision");
+		return;
+	}
+
+	QPoint pos = event->pos();
+	if (event->button() == Qt::RightButton) {
+
+		QPointF *point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event, &pos](const QPointF &point){
+			return (pos - point).manhattanLength() <= DRAG_N_DROP_RANGE;
+		});
+
+		if (point != m_transitionPoints.end()) {
+			m_transitionPoints.erase(point);
+		}
+		else {
+			m_transitionPoints.push_back(pos);
+		}
+	}
+	else if (event->button() == Qt::LeftButton) {
+		m_endPosition = std::make_shared<QPointF>(pos);
+	}
+	else if (event->button() == Qt::MiddleButton) {
+		m_dragNDrop = true;
+	}
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event) 
+{
+	if (m_dragNDrop && event->button() == Qt::MiddleButton) {
+		m_dragNDrop = false;
+	}
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+	QPoint pos = event->pos();
+
+	if (m_dragNDrop) {
+		QPointF *point = m_transitionPoints.end();
+		if ((*m_endPosition - pos).manhattanLength() <= DRAG_N_DROP_RANGE) {
+			point = m_endPosition.get();
+		}
+		else {
+			point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event, &pos](const QPointF &point){
+				return (pos - point).manhattanLength() <= DRAG_N_DROP_RANGE;
+			});
+		}
+
+		if (point != m_transitionPoints.end()) {
+			*point = pos;
+		}
+	}
+}
+
+QPointF MainWindow::createLineParams(const QPointF &p)
+{
+	QPointF line;
+	// Compute slope (a)
+	if (getX() != p.x()) {
+		auto x = (p.y() - getY()) / (p.x() - getX());
+		line.setX(x);
+	}
+	else {
+		// If the line is vertical, slope is infinity, so set a to a large value
+		line.setY(1e9);
+	}
+	// Compute intercept (b)
+	line.ry() = getY() - line.x() * getX();
+	return line;
+}
+
+void MainWindow::on_actionTelecontrol_triggered()
+{
+	m_userMode = UserMode::Telecontrol;
+
+	m_ui->actionAdd_motion_buttons->setDisabled(false);
+	m_ui->bodyControlButton->setText("Body Control: off");
+	m_ui->pushButton->setText("Use camera");
+	m_ui->topRightLayout->removeWidget(m_loadMapButton);
+	m_loadMapButton->deleteLater();
+
+	disconnect(m_loadMapConnection);
+
+	update();
+}
+
+void MainWindow::on_actionSupervisor_triggered()
+{
+	if (m_motionButtonsVisible) {
+		on_actionAdd_motion_buttons_triggered();
+	}
+	m_ui->actionAdd_motion_buttons->setDisabled(true);
+	m_ui->bodyControlButton->setText("Execute");
+	m_ui->pushButton->setText("Clear points");
+
+	m_loadMapButton = new QPushButton("Load map", this);
+	m_loadMapButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
+	m_loadMapButton->setMinimumSize(m_ui->bodyControlButton->minimumSize());
+	m_loadMapButton->setMaximumSize(m_ui->bodyControlButton->maximumSize());
+	m_loadMapConnection = connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog);
+	m_ui->topRightLayout->addWidget(m_loadMapButton);
+
+	m_userMode = UserMode::Supervisor;
+
+	update();
+}
+
+void MainWindow::openFileDialog()
+{
+	// Open a file dialog and get the selected file
+	QString filePath = QFileDialog::getOpenFileName(this, "Open File", "../", "Text Files (*.txt)");
+
+	// You can use the selected file path for further processing if needed
+	if (!filePath.isEmpty()) {
+		// Do something with the selected file path
+		// For example, print the file path to the console
+		qDebug() << "Selected file:" << filePath;
+		m_mapLoader->loadMap(filePath);
+		update();
+	}
+}
+
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
 void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
@@ -261,71 +658,54 @@ void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
 	m_ui->lineEdit_4->setText(QString::number(robotFi));
 }
 
+void MainWindow::on_rtc_removePoint()
+{
+	m_transitionPoints.pop_front();
+}
+
 ///toto je calback na data z robota, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
 /// vola sa vzdy ked dojdu nove data z robota. nemusite nic riesit, proste sa to stane
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
 	calculateOdometry(robotdata);
+	int battery = 100 * (robotdata.Battery - 15.5) / (16.7 - 15.5);
+	emit batteryLevel(battery);
 
-	///tu mozete robit s datami z robota
-	/// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
-	///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
-	/// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky... kazdopadne, aktualne to blokuje gombiky cize tak
 	if (m_instance->count() > 0 || (m_useSkeleton && m_robot != nullptr)) {
 		if (forwardspeed == 0 && m_rotationspeed != 0) {
-			m_robot->setRotationSpeed(m_rotationspeed);
+			emit changeRotation(m_rotationspeed);
 		}
 		else if (forwardspeed != 0 && m_rotationspeed == 0) {
-			m_robot->setTranslationSpeed(forwardspeed);
-			
+			emit moveForward(forwardspeed);
 		}
 		else if ((forwardspeed != 0 && m_rotationspeed != 0)) {
-			m_robot->setArcSpeed(forwardspeed, forwardspeed / m_rotationspeed);
+			emit changeArc(forwardspeed, m_rotationspeed);
 		}
 		else {
-			m_robot->setTranslationSpeed(0);
+			emit moveForward(0);
 		}
 	}
-	///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
 	if (m_datacounter % 5) {
-		///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
-		// ui->lineEdit_2->setText(QString::number(robotdata.EncoderRight));
-		//ui->lineEdit_3->setText(QString::number(robotdata.EncoderLeft));
-		//ui->lineEdit_4->setText(QString::number(robotdata.GyroAngle));
-		/// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
-		/// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete. prikaz emit to presne takto spravi
-		/// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
-		///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
 		emit uiValuesChanged(m_x, m_y, m_fi);
-		
-		///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
-		/// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
-		/// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
 	}
-	m_datacounter++;
+
 	return 0;
 }
 
-///toto je calback na data z lidaru, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
-/// vola sa ked dojdu nove data z lidaru
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
 	memcpy(&m_copyOfLaserData, &laserData, sizeof(LaserMeasurement));
-	//tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
-	// ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 	m_updateLaserPicture = 1;
-	update(); //tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
+	update();
 
 	return 0;
 }
 
-///toto je calback na data z kamery, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked
-/// vola sa ked dojdu nove data z kamery
 int MainWindow::processThisCamera(cv::Mat cameraData)
 {
-	cameraData.copyTo(frame[(actIndex + 1) % 3]); //kopirujem do nasej strukury
-	actIndex = (actIndex + 1) % 3;				  //aktualizujem kde je nova fotka
+	cameraData.copyTo(frame[(actIndex + 1) % 3]);
+	actIndex = (actIndex + 1) % 3;
 	m_updateLaserPicture = 1;
 	return 0;
 }
@@ -347,21 +727,80 @@ void MainWindow::disableAllButtons(bool disable)
 	comboBox->setDisabled(disable);
 }
 
-bool MainWindow::isIPValid(const QString &ip)
-{
-	QRegularExpression ipRegex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
-							   "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-
-	return ipRegex.match(ip).hasMatch();
-}
-
 int MainWindow::processThisSkeleton(skeleton skeledata)
 {
 	memcpy(&m_skeleJoints, &skeledata, sizeof(skeleton));
 	m_updateSkeletonPicture = 1;
 	return 0;
+}
+
+QPair<double, double> MainWindow::calculateTrajectory()
+{
+	// Get current position and orientation (actual values)
+	auto [distanceToTarget, angleToTarget] = calculateTrajectoryTo(*m_endPosition);
+
+	return { distanceToTarget, angleToTarget };
+}
+
+QPair<double, double> MainWindow::calculateTrajectoryTo(const QPointF &point)
+{
+	// Get current position and orientation (actual values)
+	double current_x = 0;
+	double current_y = 0;
+
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		current_x = m_x;
+		current_y = m_y;
+	}
+
+	// Calculate angle to target
+	double angleToTarget = std::atan2(point.y() - current_y, point.x() - current_x);
+	double distanceToTarget = std::sqrt(std::pow(point.y() - current_y, 2) + std::pow(point.x() - current_x, 2));
+
+	return { distanceToTarget, angleToTarget };
+}
+
+double MainWindow::finalRotationError()
+{
+	auto [dir, rot] = calculateTrajectory();
+	double diff, fi;
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		fi = m_fi;
+	}
+
+	if (fi > PI / 2 && rot < -PI / 2) {
+		fi -= 2 * PI;
+	}
+	if (fi < -PI / 2 && rot > PI / 2) {
+		fi += 2 * PI;
+	}
+
+	diff = fi - rot;
+
+	return -diff;
+}
+
+double MainWindow::localRotationError(const QPointF &point)
+{
+	auto [dir, rot] = calculateTrajectoryTo(point);
+	double diff, fi;
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		fi = m_fi;
+	}
+
+	diff = fi - rot;
+
+	if (diff > PI) {
+		diff -= 2 * PI;
+	}
+	if (diff < -PI) {
+		diff += 2 * PI;
+	}
+
+	return -diff;
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -378,7 +817,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = 200;
 		m_rotationspeed = 0;
 		setRobotDirection();
-		m_robot->setTranslationSpeed(forwardspeed);
+		emit moveForward(forwardspeed);
 		break;
 
 	case Qt::Key_S:
@@ -386,7 +825,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = -150;
 		m_rotationspeed = 0;
 		setRobotDirection();
-		m_robot->setTranslationSpeed(forwardspeed);
+		emit moveForward(forwardspeed);
 		break;
 
 	case Qt::Key_A:
@@ -394,7 +833,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = 0;
 		m_rotationspeed = 3.14159 / 2;
 		setRobotDirection();
-		m_robot->setRotationSpeed(m_rotationspeed);
+		emit changeRotation(m_rotationspeed);
 		break;
 
 	case Qt::Key_D:
@@ -402,14 +841,14 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 		forwardspeed = 0;
 		m_rotationspeed = -3.14159 / 2;
 		setRobotDirection();
-		m_robot->setRotationSpeed(m_rotationspeed);
+		emit changeRotation(m_rotationspeed);
 		break;
 
 	case Qt::Key_R:
 		forwardspeed = 0;
 		m_rotationspeed = 0;
 		setRobotDirection();
-		m_robot->setTranslationSpeed(forwardspeed);
+		emit moveForward(forwardspeed);
 		break;
 
 	case Qt::Key_Escape: {
@@ -423,7 +862,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 			return;
 		}
 
-		m_robot->setTranslationSpeed(0);
+		emit moveForward(0);
 		m_robot->setEmgStop(true);
 		m_connectionLed->setToEmgStopState();
 
@@ -440,29 +879,67 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::on_pushButton_9_clicked() //start button
 {
-	if (m_robot != nullptr && m_robot->isInEmgStop()) {
+	if (!m_mapLoader->isLoaded()) {
+		QMessageBox::warning(this, "Warning", "Map is not loaded. Please load the map first.");
 		return;
 	}
 
 	if (m_connectionLed->isInConnectedState()) {
+		if (m_robot->isInEmgStop()) {
+			return;
+		}
+		m_transitionPoints.clear();
+		m_endPosition.reset();
+
+		for (auto &var : m_rtcConnections) {
+			disconnect(var);
+		}
+		m_rtcConnections.clear();
+
 		qDebug() << "Disconnecting the UI";
-		m_robot.reset();
+		emit moveForward(0);
 
 		m_connectionLed->setToDisconnectedState();
 		m_ui->pushButton_9->setText("Connect");
 		m_ui->pushButton_9->setStyleSheet("");
 
 		m_copyOfLaserData.numberOfScans = 0;
+		m_trajectoryController.reset();
+		m_robot.reset();
 
 		return;
 	}
 
+	// Object for managing the robot speed interactions.
+	m_robot.reset(new Robot(m_ipaddress));
+	// m_robot = std::make_shared<Robot>(m_ipaddress);
+
+	if (m_robot != nullptr && m_robot->isInEmgStop()) {
+		return;
+	}
+
+	m_trajectoryController = std::make_shared<RobotTrajectoryController>(m_robot, this);
+
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::moveForward, m_trajectoryController.get(), &RobotTrajectoryController::onMoveForwardMove, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::changeRotation, m_trajectoryController.get(), &RobotTrajectoryController::onChangeRotationRotate, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::changeArc, m_trajectoryController.get(), &RobotTrajectoryController::onMoveArcMove, Qt::QueuedConnection));
+
+	m_rtcConnections.push_back(
+		connect(this, &MainWindow::arcResultsReady, m_trajectoryController.get(), &RobotTrajectoryController::handleArcResults, Qt::QueuedConnection));
+	m_rtcConnections.push_back(
+		connect(m_trajectoryController.get(), &RobotTrajectoryController::removePoint, this, &MainWindow::on_rtc_removePoint, Qt::QueuedConnection));
+
+	m_positionTracker->moveToThread(m_odometryThread);
+	m_odometryThread->start();
+
 	QString tmpIP = m_ui->ipComboBox->currentText();
 	qDebug() << "Connecting to " << tmpIP;
 	m_ipaddress = tmpIP.toStdString();
-	qDebug() << "Address " << tmpIP << " " << isIPValid(tmpIP);
+	qDebug() << "Address " << tmpIP;
 
-	m_robot = std::make_unique<Robot>(m_ipaddress);
 	//ziskanie joystickov
 	m_instance = QJoysticks::getInstance();
 	forwardspeed = 0;
@@ -530,15 +1007,12 @@ void MainWindow::on_pushButton_clicked()
 	if (m_robot == nullptr) {
 		return;
 	}
-	if (useCamera1 == true) {
-		useCamera1 = false;
 
-		m_ui->pushButton->setText("use camera");
+	if (m_userMode == UserMode::Telecontrol) {
+		pushButtonTeleview();
 	}
 	else {
-		useCamera1 = true;
-
-		m_ui->pushButton->setText("use laser");
+		pushButtonSupervisor();
 	}
 }
 
@@ -569,35 +1043,16 @@ void MainWindow::on_emgStopButton_clicked()
 
 void MainWindow::on_bodyControlButton_clicked()
 {
-	qDebug() << "Body control button clicked. Old: " << m_useSkeleton;
-	m_useSkeleton = (m_useSkeleton ? false : true);
-	qDebug() << "New: " << m_useSkeleton;
+	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
+		return;
+	}
 
-	if (m_useSkeleton) {
-		m_bodyProgressBars = new BodyProgressBars(this);
-
-		connect(this, &MainWindow::changeSpeed, m_bodyProgressBars, &BodyProgressBars::setValues);
-
-		m_ui->bodyControlButton->setText("Body Control: on");
-
-		if (m_leftHandedMode) {
-			m_controllButtons->addProgressBars(m_bodyProgressBars);
-		}
-		else {
-			m_ui->topGridLayout->addWidget(m_bodyProgressBars, BODY_PROGRESS_BAR_POS);
-		}
+	if (m_userMode == UserMode::Telecontrol) {
+		bodyControlTeleview();
 	}
 	else {
-		m_ui->bodyControlButton->setText("Body Control: off");
-
-		if (m_leftHandedMode) {
-			m_controllButtons->removeProgressBars(m_bodyProgressBars);
-		}
-		else {
-			m_ui->topGridLayout->removeWidget(m_bodyProgressBars);
-		}
-
-		m_bodyProgressBars->deleteLater();
+		bodyControlSupervisor();
 	}
 }
 
@@ -680,6 +1135,28 @@ void MainWindow::on_actionShowHelp_triggered()
 	connect(m_helpWindow->ui.closeButton, &QPushButton::clicked, [this]() { m_helpWindow->close(); });
 }
 
+void MainWindow::on_resultsReady_updateUi(double x, double y, double fi)
+{
+	if (!m_robotStartupLocation && m_datacounter % 5) {
+		x = 0;
+		y = 0;
+		m_fiCorrection = fi;
+		m_robotStartupLocation = true;
+	}
+
+	{
+		std::scoped_lock<std::mutex> lck(m_odometryLock);
+		m_x = x;
+		m_y = y;
+		m_fi = fi - m_fiCorrection;
+	}
+
+	if (m_datacounter % 5) {
+		emit uiValuesChanged(x, y, fi);
+	}
+
+	m_datacounter++;
+}
 
 void MainWindow::inPaintEventProcessSkeleton()
 {
@@ -728,7 +1205,6 @@ void MainWindow::inPaintEventProcessSkeleton()
 	if (std::abs(m_prevRotationspeed - rotation) > 0.1) {
 		m_prevRotationspeed = rotation;
 		m_rotationspeed = rotation;
-		// cout << "Rotation: " << rotationspeed << endl;
 		change[1] = true;
 	}
 	if (change[0] || change[1]) {
@@ -818,19 +1294,23 @@ void MainWindow::calculePositionOfObject(cv::Point center_of_object){
 	for(k = 0; k < m_copyOfLaserData.numberOfScans; k++){
 		if(m_copyOfLaserData.Data[k].scanAngle >= prob_angle-5 && m_copyOfLaserData.Data[k].scanAngle <= prob_angle + 5)
 			if(dist > m_copyOfLaserData.Data[k].scanDistance){
-				dist = m_copyOfLaserData.Data[k].scanDistance;
+				dist = m_copyOfLaserData.Data[k].scanDistance/9.0;
 				break;
 			}
 	}
 	std::cout << "distance: " << dist << std::endl;
 	std::cout << "Scam angle: " << m_copyOfLaserData.Data[k].scanAngle << std::endl;
 	std::cout << "k: " << k << std::endl;
-	m_objectOnMap = cv::Point(dist * sin((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0), dist * cos((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0));  //distance from robot
+	m_objectOnMap = cv::Point(dist * cos((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0), dist * sin((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0));  //distance from robot
 	m_draw_c = true;
 	std::cout << "Object on map: " << m_objectOnMap << std::endl;
 }
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
+	if (m_robot == nullptr) {
+		return;
+	}
+
 	QImage image = QImage((uchar *)frame[actIndex].data, frame[actIndex].cols, frame[actIndex].rows, frame[actIndex].step,
 						  QImage::Format_RGB888); //kopirovanie cvmat do qimage
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
@@ -855,10 +1335,10 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 			if (m_distanceFromWall[i] != lidarDistance::FAR && i != lidarSectors::REAR) {
 				border_rect = create_border_rect(rect, i);
 				brush.setStyle(Qt::SolidPattern);
-				brush.setColor(QColor(255, m_distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
-									  (uint8_t)MAP(m_avgDist[i], (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
-												   (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE,
-												   255.0, 30.0)));
+				brush.setColor(QColor(
+					255, m_distanceFromWall[i] == lidarDistance::CLOSE ? 0 : 255, 0,
+					(uint8_t)MAP(m_avgDist[i], (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::CLOSE : 0.0,
+								 (m_distanceFromWall[i] == lidarDistance::MEDIUM) ? (double)lidarDistance::MEDIUM : (double)lidarDistance::CLOSE, 255.0, 30.0)));
 				painter.setBrush(brush);
 				painter.setPen(Qt::NoPen);
 				painter.drawRect(border_rect);
@@ -869,36 +1349,9 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 
 void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 {
-	int diffLeftEnc = robotdata.EncoderLeft - m_lastLeftEncoder;
-	int diffRightEnc = robotdata.EncoderRight - m_lastRightEncoder;
-
-	if (m_lastRightEncoder > 60'000 && robotdata.EncoderRight < 1'000)
-		diffRightEnc += SHORT_MAX;
-	if (m_lastLeftEncoder > 60'000 && robotdata.EncoderLeft < 1'000)
-		diffLeftEnc += SHORT_MAX;
-
-	if (m_lastRightEncoder < 1'000 && robotdata.EncoderRight > 60'000)
-		diffRightEnc -= SHORT_MAX;
-	if (m_lastLeftEncoder < 1'000 && robotdata.EncoderLeft > 60'000)
-		diffLeftEnc -= SHORT_MAX;
-
-	auto leftEncDist = m_robot->tickToMeter * diffLeftEnc;
-	auto rightEncDist = m_robot->tickToMeter * diffRightEnc;
-
-	m_lastLeftEncoder = robotdata.EncoderLeft;
-	m_lastRightEncoder = robotdata.EncoderRight;
-
-	double l = (rightEncDist + leftEncDist) / 2.0;
-	{
-		m_fi = robotdata.GyroAngle / 100. * TO_RADIANS - m_fiCorrection;
-		m_x = m_x + l * std::cos(m_fi);
-		m_y = m_y + l * std::sin(m_fi);
-
-		if (!m_robotStartupLocation && m_datacounter % 5) {
-			m_x = 0;
-			m_y = 0;
-			m_fiCorrection = m_fi;
-			m_robotStartupLocation = true;
-		}
+	if (m_robot == nullptr) {
+		return;
 	}
+
+	emit positionResults(robotdata, m_fiCorrection);
 }

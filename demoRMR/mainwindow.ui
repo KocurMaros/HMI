@@ -15,12 +15,9 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="5">
-     <layout class="QHBoxLayout" name="controllerLayout"/>
-    </item>
     <item row="0" column="5">
      <layout class="QGridLayout" name="topGridLayout">
-      <item row="0" column="2">
+      <item row="0" column="0">
        <widget class="QFrame" name="frame">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
@@ -42,7 +39,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4">
+      <item row="0" column="2">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <layout class="QVBoxLayout" name="topRightLayout">
@@ -259,9 +256,18 @@
     <property name="title">
      <string>Settings</string>
     </property>
+    <widget class="QMenu" name="menuUser_mode">
+     <property name="title">
+      <string>User mode</string>
+     </property>
+     <addaction name="actionTelecontrol"/>
+     <addaction name="actionSupervisor"/>
+    </widget>
     <addaction name="changeStyleSheet"/>
     <addaction name="actionAdd_motion_buttons"/>
     <addaction name="actionChangeHand"/>
+    <addaction name="separator"/>
+    <addaction name="menuUser_mode"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -302,6 +308,25 @@
   <action name="actionShowHelp">
    <property name="text">
     <string>Show Help</string>
+   </property>
+  </action>
+  <action name="actionTelecontrol">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Telecontrol</string>
+   </property>
+  </action>
+  <action name="actionSupervisor">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Supervisor</string>
    </property>
   </action>
  </widget>

@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+pushd build
+
+nice make -j16
+if [ $? -ne 0 ]; then
+	exit 1
+fi
+popd
+

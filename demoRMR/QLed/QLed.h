@@ -28,6 +28,9 @@ public:
 	void setToEmgStopState();
 	bool isInConnectedState() const { return m_ledColor != COLOR_DISCONNECTED; }
 
+// slots:
+	void on_batterLevel_received(int level) { m_batteryLevel = level; update(); }
+
 private:
 	inline void setLedColor(const QColor &c) { m_ledColor = c; }
 	inline void setText(const QString &s) { m_label = s; }
@@ -43,6 +46,7 @@ private:
 	QString m_label2;
 	QString m_ip;
 	double m_Width;
+	int m_batteryLevel;
 };
 
 
