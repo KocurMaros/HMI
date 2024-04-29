@@ -602,9 +602,9 @@ void MainWindow::on_actionSupervisor_triggered()
 	m_loadMapButton = new QPushButton("Load map", this);
 	m_loadMapButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
 	m_loadMapButton->setMinimumSize(m_ui->bodyControlButton->minimumSize());
-	m_loadMapButton->setMaximumSize(m_ui->bodyControlButton->maximumSize());
+	m_loadMapButton->setSizePolicy(m_ui->bodyControlButton->sizePolicy());
 	m_loadMapConnection = connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog);
-	m_ui->topRightLayout->addWidget(m_loadMapButton);
+	m_ui->topRightLayout->addWidget(m_loadMapButton, 0, Qt::AlignHCenter);
 
 	m_userMode = UserMode::Supervisor;
 
