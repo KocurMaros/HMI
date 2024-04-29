@@ -41,6 +41,13 @@ void PositionTracker::calculateOdometry(const TKobukiData &robotdata, double cor
 	m_x = m_x + l * std::cos(m_fi);
 	m_y = m_y + l * std::sin(m_fi);
 
+	if (!m_robotStartupLocation) {
+		m_x = 0;
+		m_y = 0;
+		m_fiCorrection = m_fi;
+		m_robotStartupLocation = true;
+	}
+
 	emit resultsReady(m_x, m_y, m_fi);
 }
 
