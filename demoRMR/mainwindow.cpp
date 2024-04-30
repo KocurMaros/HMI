@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//  cap.open("http://192.168.1.11:8000/stream.mjpg");
 	m_ui->setupUi(this);
 	m_ui->ipComboBox->addItem(IP_ADDRESSES[0]);
-	for (size_t i = 11; i < 15; i++) {
+	for (size_t i = 11; i <= 15; i++) {
 		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
 
