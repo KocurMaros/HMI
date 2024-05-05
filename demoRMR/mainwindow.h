@@ -191,6 +191,16 @@ private:
 
     double m_global_center_of_circle;
 	bool m_draw_c;
+	bool m_draw_c_was;
+	double object_pos_x;
+	double object_pos_y;
+	double robot_x_find_object;
+	double robot_y_find_object;
+	double robot_fi_find_object;
+	// double m_prev_size_window_width;
+	// double m_prev_size_window_height;
+	bool m_detection_update_lidar;
+
     uint32_t m_frame_counter = 0;
 	cv::Point m_objectOnMap;
 

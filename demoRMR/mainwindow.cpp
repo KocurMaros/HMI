@@ -343,11 +343,30 @@ void MainWindow::paintSupervisorControl()
 	};
 	if(m_draw_c){
 		// m_draw_c = false;
+		// m_draw_c_was = true;
+		double cm2pixels = rect.width()*5.0 / (m_mapLoader->maxX - m_mapLoader->minX);
 		pero.setColor(Qt::red);
 		painter.setPen(pero);
-		painter.drawEllipse(QPoint(rect.x() + xrobot + m_objectOnMap.x , rect.y() + yrobot + m_objectOnMap.y), 10, 10);
-
-		std::cout << "x: " << xrobot + m_objectOnMap.x << " y: " << yrobot + m_objectOnMap.y << std::endl;
+		object_pos_x = rect.x() + xrobot + m_objectOnMap.x;
+		object_pos_y = rect.y() + yrobot - m_objectOnMap.y;
+		if(object_pos_x < rect.x()+10)
+			object_pos_x = rect.x() + xrobot + m_objectOnMap.x+20;
+		if(object_pos_x > rect.x()+rect.width()-10)
+			object_pos_x = rect.x() + xrobot + m_objectOnMap.x-20;
+		if(object_pos_y < rect.y()+10)
+			object_pos_y = rect.y() + yrobot - m_objectOnMap.y+20;
+		if(object_pos_y > rect.y()+rect.height()-10)
+			object_pos_y = rect.y() + yrobot - m_objectOnMap.y-20;
+		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		std::cout << "x: " << rect.x() + xrobot + m_objectOnMap.x << " y: " <<  rect.y() + yrobot - m_objectOnMap.y << std::endl;
+		std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
+	}
+	if(m_draw_c_was){
+		pero.setColor(Qt::red);
+		painter.setPen(pero);
+		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		// std::cout << "x: " << object_pos_x << " y: " << object_pos_y << std::endl;
+		// std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
 	}
 	if(isInCollision){
 		QBrush brush;
@@ -697,6 +716,8 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
 	memcpy(&m_copyOfLaserData, &laserData, sizeof(LaserMeasurement));
 	m_updateLaserPicture = 1;
+	if(m_detection_update_lidar)
+		m_detection_update_lidar = false;
 	update();
 
 	return 0;
@@ -1280,28 +1301,78 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 		}
     }
 }
+double deg2rad(double deg)
+{
+    return deg * M_PI / 180.0;
+}
+double shift_theta(double theta)
+{
+    return 360.0 - theta;
+}
+/*
+[180 0 0 -180]
+*/
+double shift_theta_robot(double theta)
+{
+    if(theta < 0){
+        return theta + 360.0;
+    }
+    else{
+        return theta;
+    }
+}
 void MainWindow::calculePositionOfObject(cv::Point center_of_object){
     //0 - 800 kamera pixel center
+	m_detection_update_lidar = true;
+	while(m_detection_update_lidar){}
 	double prob_angle;
 	std::cout << "Center of object: " <<  center_of_object << std::endl;
 	if(center_of_object.x <= 400)
-		prob_angle = MAP(center_of_object.x, 0, 400, 330, 360);
+		prob_angle = MAP(center_of_object.x, 0, 420, 30, 0);
 	else
-		prob_angle = MAP(center_of_object.x, 400, 800, 0, 30);
+		prob_angle = MAP(center_of_object.x, 420, 840, 360, 330);
 	std::cout << "Prob angle: " << prob_angle << std::endl;
 	double dist = INT32_MAX;
 	int k;
+	double threshold = 1;
+	double angle_norm;
 	for(k = 0; k < m_copyOfLaserData.numberOfScans; k++){
-		if(m_copyOfLaserData.Data[k].scanAngle >= prob_angle-5 && m_copyOfLaserData.Data[k].scanAngle <= prob_angle + 5)
-			if(dist > m_copyOfLaserData.Data[k].scanDistance){
-				dist = m_copyOfLaserData.Data[k].scanDistance/9.0;
-				break;
+		angle_norm = shift_theta( m_copyOfLaserData.Data[k].scanAngle);
+		if(prob_angle-threshold < 0){
+			if(angle_norm >= 360 + prob_angle - threshold || angle_norm <= prob_angle + threshold){
+				if(dist > m_copyOfLaserData.Data[k].scanDistance && m_copyOfLaserData.Data[k].scanDistance != 0){
+					dist = m_copyOfLaserData.Data[k].scanDistance/10.0;
+					break;
+				}
 			}
+		}else if(prob_angle+threshold > 360){
+			if(angle_norm >= prob_angle - threshold || angle_norm <= prob_angle + threshold - 360){
+				if(dist > m_copyOfLaserData.Data[k].scanDistance && m_copyOfLaserData.Data[k].scanDistance != 0){
+					dist = m_copyOfLaserData.Data[k].scanDistance/10.0;
+					break;
+				}
+			}
+		}else{
+			if(angle_norm >= prob_angle - threshold && angle_norm <= prob_angle + threshold){
+				if(dist > m_copyOfLaserData.Data[k].scanDistance && m_copyOfLaserData.Data[k].scanDistance != 0){
+					dist = m_copyOfLaserData.Data[k].scanDistance/10.0;
+					break;
+				}
+			}
+		}
 	}
 	std::cout << "distance: " << dist << std::endl;
-	std::cout << "Scam angle: " << m_copyOfLaserData.Data[k].scanAngle << std::endl;
+	std::cout << "Scan angle: " << angle_norm << std::endl;
 	std::cout << "k: " << k << std::endl;
-	m_objectOnMap = cv::Point(dist * cos((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0), dist * sin((m_copyOfLaserData.Data[k].scanAngle) * M_PI / 180.0));  //distance from robot
+	robot_x_find_object = m_x;
+	robot_y_find_object = m_y;
+	if(m_fi < 0)
+		robot_fi_find_object = m_fi+2*M_PI;
+	else
+		robot_fi_find_object = m_fi;
+	std::cout << "norm angle " << angle_norm << std::endl;
+	std::cout << "robot fi " << shift_theta_robot(m_fi*180.0/M_PI) << std::endl;
+	m_objectOnMap = cv::Point(dist * cos((shift_theta_robot(m_fi*180.0/M_PI) + angle_norm) * M_PI / 180.0), dist * sin((shift_theta_robot(m_fi*180.0/M_PI) + angle_norm)  * M_PI / 180.0));  //distance from robot
 	m_draw_c = true;
 	std::cout << "Object on map: " << m_objectOnMap << std::endl;
 }
