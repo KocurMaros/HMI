@@ -123,10 +123,11 @@ private slots:
 	void on_actionTelecontrol_triggered();
 	void on_actionSupervisor_triggered();
 	void openFileDialog();
+	void calculePositionOfObject(cv::Point center_of_object);
 
 public slots:
+    void updateLidarCircle(cv::Point center_of_object);
 	void setUiValues(double robotX, double robotY, double robotFi);
-	void calculePositionOfObject(cv::Point center_of_object);
 	void on_rtc_removePoint();
 
 signals:
@@ -136,6 +137,7 @@ signals:
 	void changeArc(double forwardspeed, double rotationspeed);
 	void positionResults(const TKobukiData &robotdat, double correction);
 	void batteryLevel(int battery);
+    void randomSignalObjectDetectionCircleOtherThreadRandom(cv::Point m_objectDetected);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
@@ -203,7 +205,7 @@ private:
 
     uint32_t m_frame_counter = 0;
 	cv::Point m_objectOnMap;
-
+    cv::Point m_objectDetected;
    // std::shared_ptr<ObjectDetection> m_ObjectDetection;
 
 	std::mutex m_odometryLock;

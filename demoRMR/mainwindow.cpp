@@ -350,13 +350,13 @@ void MainWindow::paintSupervisorControl()
 		object_pos_x = rect.x() + xrobot + m_objectOnMap.x;
 		object_pos_y = rect.y() + yrobot - m_objectOnMap.y;
 		if(object_pos_x < rect.x()+10)
-			object_pos_x = rect.x() + xrobot + m_objectOnMap.x+20;
+			object_pos_x = rect.x() + xrobot + m_objectOnMap.x+30;
 		if(object_pos_x > rect.x()+rect.width()-10)
-			object_pos_x = rect.x() + xrobot + m_objectOnMap.x-20;
+			object_pos_x = rect.x() + xrobot + m_objectOnMap.x-30;
 		if(object_pos_y < rect.y()+10)
-			object_pos_y = rect.y() + yrobot - m_objectOnMap.y+20;
+			object_pos_y = rect.y() + yrobot - m_objectOnMap.y+30;
 		if(object_pos_y > rect.y()+rect.height()-10)
-			object_pos_y = rect.y() + yrobot - m_objectOnMap.y-20;
+			object_pos_y = rect.y() + yrobot - m_objectOnMap.y-30;
 		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
 		std::cout << "x: " << rect.x() + xrobot + m_objectOnMap.x << " y: " <<  rect.y() + yrobot - m_objectOnMap.y << std::endl;
 		std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
@@ -716,8 +716,10 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
 	memcpy(&m_copyOfLaserData, &laserData, sizeof(LaserMeasurement));
 	m_updateLaserPicture = 1;
-	if(m_detection_update_lidar)
-		m_detection_update_lidar = false;
+	if(m_detection_update_lidar){
+        m_detection_update_lidar = false;
+		emit randomSignalObjectDetectionCircleOtherThreadRandom(m_objectDetected);
+    }
 	update();
 
 	return 0;
@@ -1006,8 +1008,9 @@ void MainWindow::on_pushButton_9_clicked() //start button
 	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
 	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
     connect(this, &MainWindow::haffTransform, m_ObjectDetection, &ObjectDetection::detectObjects, Qt::QueuedConnection);
-	connect(m_ObjectDetection,&ObjectDetection::on_circleDetected, this, &MainWindow::calculePositionOfObject , Qt::QueuedConnection);
-	
+	connect(m_ObjectDetection,&ObjectDetection::on_circleDetected, this, &MainWindow::updateLidarCircle , Qt::QueuedConnection);
+
+	connect(this,&MainWindow::randomSignalObjectDetectionCircleOtherThreadRandom, this, &MainWindow::calculePositionOfObject , Qt::QueuedConnection);
 	
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
 	/// co vas vlastne zaujima? citanie komentov asi nie, inak by ste citali toto a ze tu je blbosti
@@ -1321,10 +1324,12 @@ double shift_theta_robot(double theta)
         return theta;
     }
 }
+void MainWindow::updateLidarCircle(cv::Point center_of_object){
+    m_objectDetected = center_of_object;
+    m_detection_update_lidar = true;
+}
 void MainWindow::calculePositionOfObject(cv::Point center_of_object){
     //0 - 800 kamera pixel center
-	m_detection_update_lidar = true;
-	while(m_detection_update_lidar){}
 	double prob_angle;
 	std::cout << "Center of object: " <<  center_of_object << std::endl;
 	if(center_of_object.x <= 400)
