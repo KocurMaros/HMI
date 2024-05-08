@@ -1,3 +1,4 @@
+% !TEX root = ../example_paper.tex
 \section{Užívateľské okno}
 
 \subsection{Pôvodný dizajn}
@@ -219,4 +220,17 @@ hodnoty. Toto zobrazenie vidime na \ref{fig:progres-bars}.
 Zaroven, ako si mozeme vsimnut, tak maly frame, krory sme mali na pravo od hlavnej zobrazujucej plochy nam zanikol.
 Stalo sa to z dovodu, ze sme nemali dostatok miesta na jeho vykreslenie. Preto, aby sme neposkytovali necitatelne
 inforamcie, tak sme sa rozhodli tento frame odstranit.
+
+\newpage
+
+\subsection{Navadzanie na body}
+
+Navádzanie na body je spravené cez body zadané operátorom. Body si ďalej berieme
+z vektora a navádzame ne cez kružnice. Na príchodzích bodoch robot nezastavuje.
+Príchodzie body sú zobrazené na mape bodmi pre lepšiu viditeľnosť. Tieto body moze operator vymazat alebo zacat
+vykonavat trajektoriu. Ak uzivatel opatovne klikne na dane body, tak ich zrusi. Tieto body moze uzivatel presuvat
+pomocou stredneho tlacidla na misi. Ak by ich uzivatel presunul do takej pozicie, zeby robot narazil do prekazky, tak sa
+trajektoria vykresli na cerveno a nebude vediet tuto trajektoriu vykonat.
+
+Nacitavanie mapy je inicializovane operatorom.
 
