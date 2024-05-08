@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "BodyProgressBars.h"
+#include "FloodPlanner.h"
 #include "HelpWindow.h"
 #include "MapLoader.h"
 #include "PositionTracker.h"
@@ -75,6 +76,7 @@ signals:
 	void arcResultsReady(double distance, double rotation, QVector<QPointF> points);
 	void moveForward(double speed);
 	void changeRotation(double angle);
+	void requestPath(const QPointF &start, const QPointF &end);
 
 private:
 	void disableAllButtons(bool disable);
@@ -129,6 +131,8 @@ public slots:
     void updateLidarCircle(cv::Point center_of_object);
 	void setUiValues(double robotX, double robotY, double robotFi);
 	void on_rtc_removePoint();
+	void handlePath(QVector<QPointF> path);
+	void returnHomeActivated();
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
@@ -222,9 +226,13 @@ private:
 
 	QVector<QMetaObject::Connection> m_rtcConnections;
 	QPushButton *m_loadMapButton;
+	QPushButton *m_returnHomeButton;
 	QMetaObject::Connection m_loadMapConnection;
 	bool m_dragNDrop;
 	std::atomic<bool> m_inCollision;
+
+	std::shared_ptr<FloodPlanner> m_floodPlanner;
+	QPointF m_dockPosition;
 };
 
 #endif // MAINWINDOW_H

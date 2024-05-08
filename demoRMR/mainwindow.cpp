@@ -98,6 +98,11 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
 
+	m_floodPlanner = std::make_shared<FloodPlanner>(MAP_PATH);
+
+	connect(this, &MainWindow::requestPath, m_floodPlanner.get(), &FloodPlanner::on_requestPath_plan, Qt::QueuedConnection);
+	connect(m_floodPlanner.get(), &FloodPlanner::pathPlanned, this, &MainWindow::handlePath, Qt::QueuedConnection);
+
 	setMouseTracking(true);
 }
 
@@ -621,7 +626,7 @@ void MainWindow::on_actionTelecontrol_triggered()
 
 	m_ui->actionAdd_motion_buttons->setDisabled(false);
 	m_ui->bodyControlButton->setText("Body Control: off");
-	m_ui->pushButton->setText("Use camera");
+	m_ui->pushButton->setText("󰄀   Use camera");
 	m_ui->topRightLayout->removeWidget(m_loadMapButton);
 	m_loadMapButton->deleteLater();
 
@@ -645,6 +650,13 @@ void MainWindow::on_actionSupervisor_triggered()
 	m_loadMapButton->setSizePolicy(m_ui->bodyControlButton->sizePolicy());
 	m_loadMapConnection = connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog);
 	m_ui->topRightLayout->addWidget(m_loadMapButton, 0, Qt::AlignHCenter);
+
+	m_returnHomeButton = new QPushButton("   Return Home", this);
+	m_returnHomeButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
+	m_returnHomeButton->setMinimumSize(m_ui->bodyControlButton->minimumSize());
+	m_returnHomeButton->setSizePolicy(m_ui->bodyControlButton->sizePolicy());
+	m_loadMapConnection = connect(m_returnHomeButton, &QPushButton::clicked, this, &MainWindow::returnHomeActivated);
+	m_ui->topRightLayout->addWidget(m_returnHomeButton, 0, Qt::AlignHCenter);
 
 	m_userMode = UserMode::Supervisor;
 
@@ -678,6 +690,21 @@ void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
 void MainWindow::on_rtc_removePoint()
 {
 	m_transitionPoints.pop_front();
+}
+
+void MainWindow::handlePath(QVector<QPointF> path)
+{
+	path.push_back(m_dockPosition);
+	auto [distance, angle] = calculateTrajectoryTo(m_dockPosition);
+
+	emit arcResultsReady(distance, angle, path);
+}
+
+
+void MainWindow::returnHomeActivated()
+{
+	QPointF start(m_x, m_y);
+	emit requestPath(start, m_dockPosition);
 }
 
 ///toto je calback na data z robota, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked

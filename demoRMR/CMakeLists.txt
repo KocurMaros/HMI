@@ -39,6 +39,7 @@ set(HEADERS
     object_detection.h
 	PidController.h
 	RobotTrajectoryController.h
+	FloodPlanner.h
 )
 
 set(SOURCES
@@ -56,6 +57,7 @@ set(SOURCES
     object_detection.cpp
 	PidController.cpp
 	RobotTrajectoryController.cpp
+	FloodPlanner.cpp
 )
 
 set(UI
