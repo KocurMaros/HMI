@@ -234,6 +234,47 @@ trajektoria vykresli na cerveno a nebude vediet tuto trajektoriu vykonat.
 
 Nacitavanie mapy je inicializovane operatorom.
 
+Príchodzie body sú zobrazené na mape bodmi pre lepšiu viditeľnosť. Tieto body môže operátor vymazať alebo začať
+vykonávať trajektóriu. Ak užívateľ opätovne klikne na dane body, tak ich zruší. Tieto body môže užívateľ presúvať
+pomocou stredného tlačidla na myši. Ak by ich užívateľ presunul do takej pozície, aby robot narazil do prekážky, tak sa
+trajektória vykreslí na červeno a nebude vedieť túto trajektóriu vykonať.
+
+Načítavanie mapy je inicializované operátorom. Výzor aplikácie je zobrazený na \ref{fig:map}.
+
+\begin{figure}[!htbp]
+	\centering
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/supervisor_view.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/supervisor_loaded_map.png}
+	\end{subfigure}
+
+	\vspace{1cm}
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/supervisor_loaded_map_start.png}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/supervisor_motion.png}
+	\end{subfigure}
+
+	\caption{ Zobrazenie mapy a bodov na mape. }
+	\label{fig:map}
+\end{figure}
+
+Ako vidíme na obrazoch \ref{fig:map}, zobrazujeme mapu, body na mape, trajektóriu a stav robota.
+Taktiež si môžeme všimnúť, že sme pridali do aplikácie aj zobrazenie aktuálneho percentuálneho
+stavu batérie robota. Tento stav ale pri simulátore nefunguje a preto vidíme na obrázku stav
+batérie ako \textit{-1291}.
+
+Navádzanie robota na dane body je spravené cez počítanie odometrie a následne výpočet trajektórie
+použitím P regulátora s antiwindup zapojením. Navigáciu nebudeme ďalej rozoberať, keďže nie je hlavnou sivastou
+tohto predmetu a zadania. Pre bližšie informácie k navigácii sa obráťte na dokumentáciu k projektu
+z predmetu \textit{Riadenie mobilných robotov}.
+
+
 \section{Detekcia objektov}
 Na detekciu objektov sme si zvolili kruh, ktorý detekujeme pomocou kamery a dát z lidaru ho vykresľujeme do mapy. 
 
