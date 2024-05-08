@@ -1,25 +1,23 @@
 #include "CKobuki.h"
+#include "ControllButtons.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QComboBox>
-#include <QDebug>
-#include <QPainter>
+
 #include <algorithm>
+#include <cmath>
 #include <cmath>
 #include <memory>
 #include <mutex>
-#include <qgridlayout.h>
-#include <qmessagebox.h>
+
 #include <qnamespace.h>
-
-#include "ControllButtons.h"
-
+#include <QComboBox>
+#include <QDebug>
+#include <QGridLayout>
 #include <QImageReader>
+#include <QMessageBox>
+#include <QPainter>
 #include <QPoint>
-#include <math.h>
-#include <qdebug.h>
-#include <qpushbutton.h>
-#include "CKobuki.h"
+#include <QPushButton>
 
 #define BODY_PROGRESS_BAR_POS 3, 2
 #define SHORT_MAX 65'535

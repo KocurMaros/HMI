@@ -1,35 +1,35 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "HelpWindow.h"
 #include "BodyProgressBars.h"
+#include "HelpWindow.h"
 #include "MapLoader.h"
 #include "PositionTracker.h"
-#include "RobotTrajectoryController.h"
-#include <QThread>
 #include "QLed.h"
+#include "RobotTrajectoryController.h"
+#include "object_detection.h"
+#include "robot.h"
+#include "stylesheeteditor.h"
 #include "ui_mainwindow.h"
+
+#include <QJoysticks.h>
+#include <QKeyEvent>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QThread>
 #include <QTimer>
-#include <QKeyEvent>
 #include <mutex>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
+
+#include <sys/types.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "robot.h"
-#include "stylesheeteditor.h"
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <sys/types.h>
-
-#include <QJoysticks.h>
-
-#include "object_detection.h"
 namespace Ui {
 class MainWindow;
 }
