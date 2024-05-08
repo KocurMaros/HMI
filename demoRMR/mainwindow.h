@@ -227,12 +227,14 @@ private:
 	QVector<QMetaObject::Connection> m_rtcConnections;
 	QPushButton *m_loadMapButton;
 	QPushButton *m_returnHomeButton;
-	QMetaObject::Connection m_loadMapConnection;
+	QVector<QMetaObject::Connection> m_supervisorConnections;
 	bool m_dragNDrop;
 	std::atomic<bool> m_inCollision;
 
 	std::shared_ptr<FloodPlanner> m_floodPlanner;
+	QThread *m_floodPlannerThread;
 	QPointF m_dockPosition;
+	bool m_goingHome;
 };
 
 #endif // MAINWINDOW_H

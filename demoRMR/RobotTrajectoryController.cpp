@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "PidController.h"
 #include "qnamespace.h"
 #include "RobotTrajectoryController.h"
 #include <QDebug>
@@ -260,7 +259,7 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 	}
 	else if (m_movementType == MovementType::Arc) {
 		error = localDistanceError();
-		if (finalDistanceError() == localRotationError()) {
+		if (finalDistanceError() == localDistanceError()) {
 			maxCorrection = 0.05;
 		}
 		else {
@@ -268,7 +267,8 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 		}
 	}
 
-	if (std::abs(error) < maxCorrection) {
+	// qDebug() << "Error: " << error << " Max correction: " << maxCorrection;
+	if (std::abs(error) < maxCorrection || std::abs(finalDistanceError()) < maxCorrection) {
 		if (m_movementType == MovementType::Rotation && !m_arcExpected) {
 			emit requestMovement(localDistanceError());
 		}
@@ -287,6 +287,11 @@ void RobotTrajectoryController::on_positionTimerTimeout_changePosition()
 			if (m_points.size() > 1) {
 				m_points.removeFirst();
 				emit removePoint();
+			}
+
+			if (finalDistanceError() < maxCorrection) {
+				on_stoppingTimerTimeout_stop();
+				return;
 			}
 
 			double rotation = localRotationError();
@@ -348,10 +353,9 @@ void RobotTrajectoryController::handleLinResults(double distance, double rotatio
 void RobotTrajectoryController::handleArcResults(double distance, double rotation, QVector<QPointF> points)
 {
 	m_points = points;
-	qDebug() << "Transition points: " << m_points;
 	m_arcExpected = true;
+	qDebug() << "Arc results: " << distance << " " << rotation;
 	rotateRobotTo(rotation);
-	return;
 }
 
 void RobotTrajectoryController::on_requestMovement_move(double distance)
@@ -368,3 +372,15 @@ void RobotTrajectoryController::on_requestArc_move(double distance, double rotat
 {
 	moveByArcTo(distance, rotation);
 }
+
+std::ostream &operator<<(std::ostream &os, const RobotTrajectoryController::Map &map)
+{
+	for (size_t i = 0; i < map.size(); i++) {
+		for (size_t j = 0; j < map[i].size(); j++) {
+			os << (map[i][j] > 5 ? '#' : ' ');
+		}
+		os << std::endl;
+	}
+	return os;
+}
+

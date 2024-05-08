@@ -52,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_endPosition(nullptr)
 	, m_userMode(UserMode::Supervisor)
 	, m_dragNDrop(false)
+	, m_floodPlannerThread(new QThread(this))
 {
 	//tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
 	//192.168.1.11toto je na niektory realny robot.. na lokal budete davat "127.0.0.1"
@@ -98,10 +99,13 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
 
-	m_floodPlanner = std::make_shared<FloodPlanner>(MAP_PATH);
+	m_floodPlanner = std::make_shared<FloodPlanner>("/home/fildo7525/Documents/STU/LS/RMR/demoRMR-all/demoRMR/map.txt");
 
 	connect(this, &MainWindow::requestPath, m_floodPlanner.get(), &FloodPlanner::on_requestPath_plan, Qt::QueuedConnection);
 	connect(m_floodPlanner.get(), &FloodPlanner::pathPlanned, this, &MainWindow::handlePath, Qt::QueuedConnection);
+
+	m_floodPlanner->moveToThread(m_floodPlannerThread);
+	m_floodPlannerThread->start();
 
 	setMouseTracking(true);
 }
@@ -326,11 +330,11 @@ void MainWindow::paintSupervisorControl()
 	int xpolomer = rect.width() * (20) / (m_mapLoader->maxX - m_mapLoader->minX);
 	int ypolomer = rect.height() * (20) / (m_mapLoader->maxY - m_mapLoader->minY);
 
-	painter.drawEllipse(QPoint(rect.x() + xrobot, rect.y() + yrobot), xpolomer, ypolomer);
+	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot);
+	painter.drawEllipse(robotPos, xpolomer, ypolomer);
 	painter.drawLine(rect.x() + xrobot, rect.y() + yrobot, rect.x() + xrobot + xpolomer * cos((360 - m_fi * 180. / M_PI) * 3.14159 / 180),
 					 rect.y() + (yrobot + ypolomer * sin((360 - getFi() * 180. / M_PI) * 3.14159 / 180)));
 
-	QPointF robotPos(rect.x() + xrobot, rect.y() + yrobot);
 	bool isInCollision = false;
 
 	auto lineColorSetter = [this, &isInCollision,  &pero, &painter](const QPointF &start, const QPointF &end) {
@@ -360,14 +364,17 @@ void MainWindow::paintSupervisorControl()
 			object_pos_y = rect.y() + yrobot - m_objectOnMap.y+30;
 		if(object_pos_y > rect.y()+rect.height()-10)
 			object_pos_y = rect.y() + yrobot - m_objectOnMap.y-30;
-		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
-		std::cout << "x: " << rect.x() + xrobot + m_objectOnMap.x << " y: " <<  rect.y() + yrobot - m_objectOnMap.y << std::endl;
-		std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
+
+		if (QPointF(object_pos_x, object_pos_y) != robotPos) {
+			painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		}
+		// std::cout << "x: " << rect.x() + xrobot + m_objectOnMap.x << " y: " <<  rect.y() + yrobot - m_objectOnMap.y << std::endl;
+		// std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
 	}
 	if(m_draw_c_was){
 		pero.setColor(Qt::red);
 		painter.setPen(pero);
-		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		// painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
 		// std::cout << "x: " << object_pos_x << " y: " << object_pos_y << std::endl;
 		// std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
 	}
@@ -409,7 +416,7 @@ void MainWindow::paintSupervisorControl()
 			lineColorSetter(m_transitionPoints.back(), *m_endPosition);
 			painter.drawLine(QLineF(m_transitionPoints.back(), *m_endPosition));
 		}
-		else {
+		else if (!m_goingHome) {
 			lineColorSetter(robotPos, *m_endPosition);
 			painter.drawLine(QLineF(robotPos, *m_endPosition));
 		}
@@ -503,6 +510,7 @@ void MainWindow::bodyControlSupervisor()
 void MainWindow::pushButtonTeleview()
 {
 	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
 		return;
 	}
 	if (useCamera1 == true) {
@@ -520,6 +528,7 @@ void MainWindow::pushButtonTeleview()
 void MainWindow::pushButtonSupervisor()
 {
 	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
 		return;
 	}
 
@@ -627,10 +636,16 @@ void MainWindow::on_actionTelecontrol_triggered()
 	m_ui->actionAdd_motion_buttons->setDisabled(false);
 	m_ui->bodyControlButton->setText("Body Control: off");
 	m_ui->pushButton->setText("󰄀   Use camera");
+
 	m_ui->topRightLayout->removeWidget(m_loadMapButton);
 	m_loadMapButton->deleteLater();
 
-	disconnect(m_loadMapConnection);
+	m_ui->topRightLayout->removeWidget(m_returnHomeButton);
+	m_returnHomeButton->deleteLater();
+
+	for(auto &var : m_supervisorConnections) {
+		disconnect(var);
+	}
 
 	update();
 }
@@ -641,21 +656,21 @@ void MainWindow::on_actionSupervisor_triggered()
 		on_actionAdd_motion_buttons_triggered();
 	}
 	m_ui->actionAdd_motion_buttons->setDisabled(true);
-	m_ui->bodyControlButton->setText("Execute");
-	m_ui->pushButton->setText("Clear points");
+	m_ui->bodyControlButton->setText("  Execute");
+	m_ui->pushButton->setText("  Clear points");
 
-	m_loadMapButton = new QPushButton("Load map", this);
+	m_loadMapButton = new QPushButton("󰦄  Load map", this);
 	m_loadMapButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
 	m_loadMapButton->setMinimumSize(m_ui->bodyControlButton->minimumSize());
 	m_loadMapButton->setSizePolicy(m_ui->bodyControlButton->sizePolicy());
-	m_loadMapConnection = connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog);
+	m_supervisorConnections.push_back(connect(m_loadMapButton, &QPushButton::clicked, this, &MainWindow::openFileDialog));
 	m_ui->topRightLayout->addWidget(m_loadMapButton, 0, Qt::AlignHCenter);
 
-	m_returnHomeButton = new QPushButton("   Return Home", this);
+	m_returnHomeButton = new QPushButton("  Return Home", this);
 	m_returnHomeButton->setStyleSheet(m_ui->bodyControlButton->styleSheet());
 	m_returnHomeButton->setMinimumSize(m_ui->bodyControlButton->minimumSize());
 	m_returnHomeButton->setSizePolicy(m_ui->bodyControlButton->sizePolicy());
-	m_loadMapConnection = connect(m_returnHomeButton, &QPushButton::clicked, this, &MainWindow::returnHomeActivated);
+	m_supervisorConnections.push_back(connect(m_returnHomeButton, &QPushButton::clicked, this, &MainWindow::returnHomeActivated));
 	m_ui->topRightLayout->addWidget(m_returnHomeButton, 0, Qt::AlignHCenter);
 
 	m_userMode = UserMode::Supervisor;
@@ -689,6 +704,10 @@ void MainWindow::setUiValues(double robotX, double robotY, double robotFi)
 
 void MainWindow::on_rtc_removePoint()
 {
+	if (m_transitionPoints.size() == 0) {
+		return;
+	}
+
 	m_transitionPoints.pop_front();
 }
 
@@ -697,6 +716,9 @@ void MainWindow::handlePath(QVector<QPointF> path)
 	path.push_back(m_dockPosition);
 	auto [distance, angle] = calculateTrajectoryTo(m_dockPosition);
 
+	qDebug() << "Path: " << path;
+	m_goingHome = true;
+	m_endPosition = std::make_shared<QPointF>(path.back());
 	emit arcResultsReady(distance, angle, path);
 }
 
@@ -704,6 +726,8 @@ void MainWindow::handlePath(QVector<QPointF> path)
 void MainWindow::returnHomeActivated()
 {
 	QPointF start(m_x, m_y);
+	qDebug() << "Returning home from: " << start << " to: " << m_dockPosition;
+	pushButtonSupervisor();
 	emit requestPath(start, m_dockPosition);
 }
 
@@ -1052,6 +1076,7 @@ void MainWindow::on_pushButton_9_clicked() //start button
 void MainWindow::on_pushButton_clicked()
 {
 	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
 		return;
 	}
 
@@ -1066,6 +1091,7 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::on_emgStopButton_clicked()
 {
 	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
 		return;
 	}
 
@@ -1196,6 +1222,12 @@ void MainWindow::on_resultsReady_updateUi(double x, double y, double fi)
 		m_x = x;
 		m_y = y;
 		m_fi = fi - m_fiCorrection;
+	}
+
+	if (std::abs(x) < 0.1 && std::abs(y) < 0.1 && m_goingHome) {
+		m_goingHome = false;
+		emit moveForward(0);
+		m_endPosition.reset();
 	}
 
 	if (m_datacounter % 5) {
@@ -1407,6 +1439,7 @@ void MainWindow::calculePositionOfObject(cv::Point center_of_object){
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
 	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
 		return;
 	}
 
@@ -1449,6 +1482,7 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 void MainWindow::calculateOdometry(const TKobukiData &robotdata)
 {
 	if (m_robot == nullptr) {
+		qDebug() << "Robot is not connected";
 		return;
 	}
 

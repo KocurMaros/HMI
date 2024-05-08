@@ -57,7 +57,9 @@ void FloodPlanner::on_requestPath_plan(const QPointF &start, const QPointF &end)
 	QPoint s = toMapCoord(start);
 	QPoint e = toMapCoord(end);
 
-	if (!isTileValid(*m_map, e)) {
+	qDebug() << "Start: " << start << " End: " << end;
+
+	if (!isTileValid(*m_map, s) || !isTileValid(*m_map, e)) {
 		qDebug() << "Invalid start or end point";
 		printMapWithPath(QVector<QPoint> { s, e });
 		return;
@@ -212,12 +214,14 @@ QVector<QPointF> FloodPlanner::planPath(const QPoint &start, const QPoint &end, 
 {
 	Map map = *m_map;
 
+	qDebug() << "Getting nearest cfree points.";
 	auto s = nearestCFreePoint(start, type);
 	auto e = nearestCFreePoint(end, type);
 
 	std::cout << "Cfree:\n";
 	printMapWithPath(QVector<QPoint> { s, e });
 
+	qDebug() << "Marking tiles.";
 	markTiles(map, e, s, type);
 
 	std::cout << "Flooded:\n";
