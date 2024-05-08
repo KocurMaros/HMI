@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
 	, m_leftHandedMode(false)
 	, m_helpWindow(nullptr)
 	, m_useSkeleton(false)
+    , m_ObjectDetection(new ObjectDetection(this))
 	, m_lastLeftEncoder(0)
 	, m_lastRightEncoder(0)
 	, m_endPosition(nullptr)
@@ -59,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//  cap.open("http://192.168.1.11:8000/stream.mjpg");
 	m_ui->setupUi(this);
 	m_ui->ipComboBox->addItem(IP_ADDRESSES[0]);
-	for (size_t i = 11; i < 15; i++) {
+	for (size_t i = 11; i <= 15; i++) {
 		m_ui->ipComboBox->addItem(IP_ADDRESSES[1] + QString::number(i));
 	}
 
@@ -74,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(this, &MainWindow::batteryLevel, m_connectionLed, &QLed::on_batterLevel_received);
 	m_ui->topRightLayout->insertWidget(0, m_connectionLed);
 	m_ui->pushButton_9->setStyleSheet("background-color: green");
+	// m_ObjectDetection = ObjectDetection();
 
 	QImageReader reader = QImageReader(":/img/warning.png");
 
@@ -83,6 +85,8 @@ MainWindow::MainWindow(QWidget *parent)
 	else
 		qDebug() << "Image loaded";
 	m_colisionImage = m_colisionImage.scaled(150, 150, Qt::KeepAspectRatio);
+	qRegisterMetaType<cv::Mat>("cv::Mat");  //barz zaregistrovat typ, ktory chcete posielat cez signal slot
+	qRegisterMetaType<cv::Point>("cv::Point"); 
 
 	if (m_userMode == UserMode::Supervisor) {
 		on_actionSupervisor_triggered();
@@ -337,7 +341,45 @@ void MainWindow::paintSupervisorControl()
 			painter.setPen(pero);
 		}
 	};
+	if(m_draw_c){
+		// m_draw_c = false;
+		// m_draw_c_was = true;
+		double cm2pixels = rect.width()*5.0 / (m_mapLoader->maxX - m_mapLoader->minX);
+		pero.setColor(Qt::red);
+		painter.setPen(pero);
+		object_pos_x = rect.x() + xrobot + m_objectOnMap.x;
+		object_pos_y = rect.y() + yrobot - m_objectOnMap.y;
+		if(object_pos_x < rect.x()+10)
+			object_pos_x = rect.x() + xrobot + m_objectOnMap.x+30;
+		if(object_pos_x > rect.x()+rect.width()-10)
+			object_pos_x = rect.x() + xrobot + m_objectOnMap.x-30;
+		if(object_pos_y < rect.y()+10)
+			object_pos_y = rect.y() + yrobot - m_objectOnMap.y+30;
+		if(object_pos_y > rect.y()+rect.height()-10)
+			object_pos_y = rect.y() + yrobot - m_objectOnMap.y-30;
+		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		std::cout << "x: " << rect.x() + xrobot + m_objectOnMap.x << " y: " <<  rect.y() + yrobot - m_objectOnMap.y << std::endl;
+		std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
+	}
+	if(m_draw_c_was){
+		pero.setColor(Qt::red);
+		painter.setPen(pero);
+		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		// std::cout << "x: " << object_pos_x << " y: " << object_pos_y << std::endl;
+		// std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
+	}
+	if(isInCollision){
+		QBrush brush;
+		brush.setStyle(Qt::SolidPattern);
+		brush.setColor(Qt::red);
+		painter.setBrush(brush);
+		painter.setPen(Qt::NoPen);
 
+		painter.drawRect(QRect(rect.x(), rect.y(), rect.width() / 50, rect.height()));	//lavy
+		painter.drawRect(QRect(rect.x()+rect.width()- rect.width()/50, rect.y(), rect.width()/50, rect.height())); //pravy
+		painter.drawRect(QRect(rect.x(), rect.y(), rect.width(), rect.height()/50));	//horny
+		painter.drawRect(QRect(rect.x(), rect.y()+rect.height()- rect.height() / 50, rect.width(), rect.height() / 50)); //dolny
+	}
 	for (size_t i = 0; i < m_transitionPoints.size(); i++) {
 		if (m_transitionPoints.size() == 0) {
 			break;
@@ -674,6 +716,10 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
 	memcpy(&m_copyOfLaserData, &laserData, sizeof(LaserMeasurement));
 	m_updateLaserPicture = 1;
+	if(m_detection_update_lidar){
+        m_detection_update_lidar = false;
+		emit randomSignalObjectDetectionCircleOtherThreadRandom(m_objectDetected);
+    }
 	update();
 
 	return 0;
@@ -959,7 +1005,11 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 	//tu sa nastartuju vlakna ktore citaju data z lidaru a robota
 	connect(this, SIGNAL(uiValuesChanged(double, double, double)), this, SLOT(setUiValues(double, double, double)));
+    connect(this, &MainWindow::haffTransform, m_ObjectDetection, &ObjectDetection::detectObjects, Qt::QueuedConnection);
+	connect(m_ObjectDetection,&ObjectDetection::on_circleDetected, this, &MainWindow::updateLidarCircle , Qt::QueuedConnection);
 
+	connect(this,&MainWindow::randomSignalObjectDetectionCircleOtherThreadRandom, this, &MainWindow::calculePositionOfObject , Qt::QueuedConnection);
+	
 	/// prepojenie joysticku s jeho callbackom... zas cez lambdu. neviem ci som to niekde spominal,ale lambdy su super. okrem toho mam este rad ternarne operatory a spolocneske hry ale to tiez nikoho nezaujima
 	/// co vas vlastne zaujima? citanie komentov asi nie, inak by ste citali toto a ze tu je blbosti
 	connect(m_instance, &QJoysticks::axisChanged, [this](const int js, const int axis, const qreal value) {
@@ -970,6 +1020,8 @@ void MainWindow::on_pushButton_9_clicked() //start button
 			m_rotationspeed = -value * (3.14159 / 2.0);
 		}
 	});
+	start_pressed = true;
+	// m_ObjectDetection.detectObjects(frame[actIndex]);
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -1240,7 +1292,6 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 			else {
 				painter.setPen(QPen(Qt::green, 3));
 			}
-
 			int dist = m_copyOfLaserData.Data[k].scanDistance / scale; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
 			int xp = rect.width() - (rect.width() / 2 + dist * 2 * sin((360.0 - m_copyOfLaserData.Data[k].scanAngle) * 3.14159 / 180.0))
 				+ rect.topLeft().x(); //prepocet do obrazovky
@@ -1249,9 +1300,85 @@ void MainWindow::drawLidarData(QPainter &painter, QPen &pen, QRect &rect, int sc
 			if (rect.contains(xp, yp)) //ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
 				painter.drawEllipse(QPoint(xp, yp), 2, 2);
 		}
-	}
+    }
 }
-
+double deg2rad(double deg)
+{
+    return deg * M_PI / 180.0;
+}
+double shift_theta(double theta)
+{
+    return 360.0 - theta;
+}
+/*
+[180 0 0 -180]
+*/
+double shift_theta_robot(double theta)
+{
+    if(theta < 0){
+        return theta + 360.0;
+    }
+    else{
+        return theta;
+    }
+}
+void MainWindow::updateLidarCircle(cv::Point center_of_object){
+    m_objectDetected = center_of_object;
+    m_detection_update_lidar = true;
+}
+void MainWindow::calculePositionOfObject(cv::Point center_of_object){
+    //0 - 800 kamera pixel center
+	double prob_angle;
+	std::cout << "Center of object: " <<  center_of_object << std::endl;
+	if(center_of_object.x <= 400)
+		prob_angle = MAP(center_of_object.x, 0, 420, 30, 0);
+	else
+		prob_angle = MAP(center_of_object.x, 420, 840, 360, 330);
+	std::cout << "Prob angle: " << prob_angle << std::endl;
+	double dist = INT32_MAX;
+	int k;
+	double threshold = 1;
+	double angle_norm;
+	for(k = 0; k < m_copyOfLaserData.numberOfScans; k++){
+		angle_norm = shift_theta( m_copyOfLaserData.Data[k].scanAngle);
+		if(prob_angle-threshold < 0){
+			if(angle_norm >= 360 + prob_angle - threshold || angle_norm <= prob_angle + threshold){
+				if(dist > m_copyOfLaserData.Data[k].scanDistance && m_copyOfLaserData.Data[k].scanDistance != 0){
+					dist = m_copyOfLaserData.Data[k].scanDistance/10.0;
+					break;
+				}
+			}
+		}else if(prob_angle+threshold > 360){
+			if(angle_norm >= prob_angle - threshold || angle_norm <= prob_angle + threshold - 360){
+				if(dist > m_copyOfLaserData.Data[k].scanDistance && m_copyOfLaserData.Data[k].scanDistance != 0){
+					dist = m_copyOfLaserData.Data[k].scanDistance/10.0;
+					break;
+				}
+			}
+		}else{
+			if(angle_norm >= prob_angle - threshold && angle_norm <= prob_angle + threshold){
+				if(dist > m_copyOfLaserData.Data[k].scanDistance && m_copyOfLaserData.Data[k].scanDistance != 0){
+					dist = m_copyOfLaserData.Data[k].scanDistance/10.0;
+					break;
+				}
+			}
+		}
+	}
+	std::cout << "distance: " << dist << std::endl;
+	std::cout << "Scan angle: " << angle_norm << std::endl;
+	std::cout << "k: " << k << std::endl;
+	robot_x_find_object = m_x;
+	robot_y_find_object = m_y;
+	if(m_fi < 0)
+		robot_fi_find_object = m_fi+2*M_PI;
+	else
+		robot_fi_find_object = m_fi;
+	std::cout << "norm angle " << angle_norm << std::endl;
+	std::cout << "robot fi " << shift_theta_robot(m_fi*180.0/M_PI) << std::endl;
+	m_objectOnMap = cv::Point(dist * cos((shift_theta_robot(m_fi*180.0/M_PI) + angle_norm) * M_PI / 180.0), dist * sin((shift_theta_robot(m_fi*180.0/M_PI) + angle_norm)  * M_PI / 180.0));  //distance from robot
+	m_draw_c = true;
+	std::cout << "Object on map: " << m_objectOnMap << std::endl;
+}
 void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 {
 	if (m_robot == nullptr) {
@@ -1263,6 +1390,8 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 	parse_lidar_data(m_copyOfLaserData, m_distanceFromWall);
 	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
 
+	if(start_pressed)
+        emit haffTransform(frame[actIndex]);  
 	image = image.scaled(rect.width(), rect.height(), Qt::KeepAspectRatio);
 	painter.drawImage(rect, image.rgbSwapped());
 

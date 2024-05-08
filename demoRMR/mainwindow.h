@@ -29,6 +29,7 @@
 
 #include <QJoysticks.h>
 
+#include "object_detection.h"
 namespace Ui {
 class MainWindow;
 }
@@ -122,17 +123,21 @@ private slots:
 	void on_actionTelecontrol_triggered();
 	void on_actionSupervisor_triggered();
 	void openFileDialog();
+	void calculePositionOfObject(cv::Point center_of_object);
 
 public slots:
+    void updateLidarCircle(cv::Point center_of_object);
 	void setUiValues(double robotX, double robotY, double robotFi);
 	void on_rtc_removePoint();
 
 signals:
 	void uiValuesChanged(double newrobotX, double newrobotY, double newrobotFi); ///toto nema telo
 	void changeSpeed(double forwardspeed, double rotationspeed);
+    void haffTransform(cv::Mat frame);
 	void changeArc(double forwardspeed, double rotationspeed);
 	void positionResults(const TKobukiData &robotdat, double correction);
 	void batteryLevel(int battery);
+    void randomSignalObjectDetectionCircleOtherThreadRandom(cv::Point m_objectDetected);
 
 private:
 	//--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
@@ -175,11 +180,33 @@ private:
 	bool m_leftHandedMode;
 	ControllButtons *m_controllButtons;
 	BodyProgressBars *m_bodyProgressBars;
-
+	
 	int m_lastLeftEncoder;
 	int m_lastRightEncoder;
 	double m_fiCorrection;
 	bool m_robotStartupLocation;
+
+	
+    ObjectDetection *m_ObjectDetection;
+	// ObjectDetection m_ObjectDetection;
+	bool start_pressed = false;
+
+    double m_global_center_of_circle;
+	bool m_draw_c;
+	bool m_draw_c_was;
+	double object_pos_x;
+	double object_pos_y;
+	double robot_x_find_object;
+	double robot_y_find_object;
+	double robot_fi_find_object;
+	// double m_prev_size_window_width;
+	// double m_prev_size_window_height;
+	bool m_detection_update_lidar;
+
+    uint32_t m_frame_counter = 0;
+	cv::Point m_objectOnMap;
+    cv::Point m_objectDetected;
+   // std::shared_ptr<ObjectDetection> m_ObjectDetection;
 
 	std::mutex m_odometryLock;
 	double m_fi;

@@ -33,6 +33,10 @@ set(HEADERS
 	MapLoader.h
 	mainwindow.h
 	stylesheeteditor.h
+	ControllButtons.h
+	HelpWindow.h
+	BodyProgressBars.h
+    object_detection.h
 	PidController.h
 	RobotTrajectoryController.h
 )
@@ -46,6 +50,10 @@ set(SOURCES
 	main.cpp
 	mainwindow.cpp
 	stylesheeteditor.cpp
+	ControllButtons.cpp
+	HelpWindow.cpp
+	BodyProgressBars.cpp
+    object_detection.cpp
 	PidController.cpp
 	RobotTrajectoryController.cpp
 )
