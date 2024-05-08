@@ -234,3 +234,31 @@ trajektoria vykresli na cerveno a nebude vediet tuto trajektoriu vykonat.
 
 Nacitavanie mapy je inicializovane operatorom.
 
+\section{Detekcia objektov}
+Na detekciu objektov sme si zvolili kruh, ktorý detekujeme pomocou kamery a dát z lidaru ho vykresľujeme do mapy. 
+
+Vytvorili sme si nové vlákno, na ktorom beží Houghova transformácia na detekciu kruhov. Jej vstupom je aktuálna snímka z kamery a výstupom je pozícia delegovaného objektu na obrázku [x,y] a jej polomer. Pomocou lineárnej aproximácie zistíme približný uhol, ktorý zviera objekt s robotom a následne prehľadávame zvolený úsek v dátach z lidaru. Takto zisťujeme polohu objektu voči robotu. Objekt následne zakreslíme do mapy.
+
+\begin{figure}[!htbp]
+	\centering
+
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/circles.jpg}
+            \caption{ Odfotené robotom }
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/real.jpg}
+            \caption{ Pozície robota a objektu v priestore }
+	\end{subfigure}
+
+	\vspace{\baselineskip}
+
+	\begin{subfigure}{0.49\textwidth}
+		\includegraphics[width=\textwidth]{img/mapa.png}
+            \caption{ Vykreslenie na mape }
+	\end{subfigure}
+
+	\caption{ Detekcia objektov }
+	\label{fig:progres-bars}
+\end{figure}
