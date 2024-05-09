@@ -39,7 +39,7 @@ void ObjectDetection::detectObjects(cv::Mat frame)
         // cv::circle( frame, center, 1, cv::Scalar(0,100,100), 3, cv::LINE_AA);
         // circle outline
         int radius = c[2];
-        // cv::circle( frame, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
+        cv::circle( frame, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
         if(!m_savedImg && circles.size() != m_circleCounter && circles.size() > 0){
             std::cout << "Circle detected!" << " " << c[0] << " " << c[1] << std::endl;
             cv::imwrite("circles.jpg", frame);

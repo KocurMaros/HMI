@@ -99,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(this, &MainWindow::positionResults, m_positionTracker, &PositionTracker::on_positionResults_handle, Qt::QueuedConnection);
 	connect(m_positionTracker, &PositionTracker::resultsReady, this, &MainWindow::on_resultsReady_updateUi, Qt::QueuedConnection);
 
-	m_floodPlanner = std::make_shared<FloodPlanner>("/home/fildo7525/Documents/STU/LS/RMR/demoRMR-all/demoRMR/map.txt");
+	m_floodPlanner = std::make_shared<FloodPlanner>("/home/fildo7525/Documents/STU/LS/HMI/zadania/z1/HMI/map.txt");
 
 	connect(this, &MainWindow::requestPath, m_floodPlanner.get(), &FloodPlanner::on_requestPath_plan, Qt::QueuedConnection);
 	connect(m_floodPlanner.get(), &FloodPlanner::pathPlanned, this, &MainWindow::handlePath, Qt::QueuedConnection);
@@ -214,13 +214,11 @@ void MainWindow::calc_colisions_points(LaserMeasurement laserData, bool *colisio
 	const double b = 200.0;
 
 	double d_crit;
-	if (m_forwardRobot) {
-		for (size_t i = 0; i < laserData.numberOfScans; i++) {
-			d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
-			if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
-				&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
-				*colisions = true;
-			}
+	for (size_t i = 0; i < laserData.numberOfScans; i++) {
+		d_crit = std::abs(b / sin(laserData.Data[i].scanAngle * M_PI / 180.0));
+		if (d_crit >= laserData.Data[i].scanDistance && d_crit < lidarDistance::CRITICAL
+			&& (laserData.Data[i].scanAngle >= 270.0 || laserData.Data[i].scanAngle <= 90.0) && laserData.Data[i].scanDistance != 0) {
+			*colisions = true;
 		}
 	}
 }
@@ -349,8 +347,8 @@ void MainWindow::paintSupervisorControl()
 		}
 	};
 	if(m_draw_c){
-		// m_draw_c = false;
-		// m_draw_c_was = true;
+		m_draw_c = false;
+		m_draw_c_was = true;
 		double cm2pixels = rect.width()*5.0 / (m_mapLoader->maxX - m_mapLoader->minX);
 		pero.setColor(Qt::red);
 		painter.setPen(pero);
@@ -374,7 +372,7 @@ void MainWindow::paintSupervisorControl()
 	if(m_draw_c_was){
 		pero.setColor(Qt::red);
 		painter.setPen(pero);
-		// painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
+		painter.drawEllipse(QPoint(object_pos_x, object_pos_y), 10, 10);
 		// std::cout << "x: " << object_pos_x << " y: " << object_pos_y << std::endl;
 		// std::cout << "rect width: " << rect.width() << " rect height: " << rect.height() << std::endl;
 	}
@@ -407,6 +405,12 @@ void MainWindow::paintSupervisorControl()
 		pero.setColor(Qt::yellow);
 		painter.setPen(pero);
 		painter.drawEllipse(m_transitionPoints[i], 3, 3);
+	}
+
+	pero.setColor(Qt::cyan);
+	for (size_t i = 0; i < m_specialPoints.size(); i++) {
+		painter.setPen(pero);
+		painter.drawEllipse(m_specialPoints[i], 3, 3);
 	}
 
 	pero.setColor(Qt::white);
@@ -563,12 +567,10 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 	}
 
 	QPoint pos = event->pos();
+	QPointF *point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event, &pos](const QPointF &point){
+		return (pos - point).manhattanLength() <= DRAG_N_DROP_RANGE;
+	});
 	if (event->button() == Qt::RightButton) {
-
-		QPointF *point = std::find_if(m_transitionPoints.begin(), m_transitionPoints.end(), [&event, &pos](const QPointF &point){
-			return (pos - point).manhattanLength() <= DRAG_N_DROP_RANGE;
-		});
-
 		if (point != m_transitionPoints.end()) {
 			m_transitionPoints.erase(point);
 		}
@@ -577,7 +579,12 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 		}
 	}
 	else if (event->button() == Qt::LeftButton) {
-		m_endPosition = std::make_shared<QPointF>(pos);
+		if (point != m_transitionPoints.end()) {
+			m_specialPoints.push_back(*point);
+		}
+		else {
+			m_endPosition = std::make_shared<QPointF>(pos);
+		}
 	}
 	else if (event->button() == Qt::MiddleButton) {
 		m_dragNDrop = true;
@@ -708,6 +715,14 @@ void MainWindow::on_rtc_removePoint()
 		return;
 	}
 
+	auto point = m_transitionPoints.front();
+	auto pos = std::find_if(m_specialPoints.begin(), m_specialPoints.end(), [&point](const QPointF &specialPoint){
+		return specialPoint == point;
+	});
+	if (pos != m_specialPoints.end()) {
+		m_specialPoints.erase(pos);
+	}
+
 	m_transitionPoints.pop_front();
 }
 
@@ -770,6 +785,16 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
 		emit randomSignalObjectDetectionCircleOtherThreadRandom(m_objectDetected);
     }
 	update();
+
+	calc_colisions_points(m_copyOfLaserData, &m_colisionDetected);
+	if (m_colisionDetected) {
+		qDebug() << "Collision detected";
+		QMessageBox::warning(this, "Collision", "Collision detected");
+		m_transitionPoints.clear();
+		m_specialPoints.clear();
+		emit moveForward(0);
+		m_colisionDetected = false;
+	}
 
 	return 0;
 }
@@ -1457,6 +1482,7 @@ void MainWindow::drawImageData(QPainter &painter, QRect &rect, bool mini)
 		uint16_t width = rect.width();
 		uint16_t height = rect.height();
 
+		emit moveForward(0);
 		painter.drawImage(QPoint(width / 2 - m_colisionImage.width() / 2, height / 2 - m_colisionImage.height() / 2), m_colisionImage);
 		m_colisionDetected = false;
 	}

@@ -8,6 +8,7 @@ if [ $? -ne 0 ]; then
 fi
 popd
 
+# pushd ./../../../../RMR/demoRMR-all/kobukiSIM/build
 pushd ./../../../../RMR/build-kobukiSIM-Desktop-Debug/
 ./kobukiSIM > /dev/null &
 popd

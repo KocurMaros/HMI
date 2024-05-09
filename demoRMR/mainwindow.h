@@ -234,6 +234,7 @@ private:
 	std::shared_ptr<FloodPlanner> m_floodPlanner;
 	QThread *m_floodPlannerThread;
 	QPointF m_dockPosition;
+	QVector<QPointF> m_specialPoints;
 	bool m_goingHome;
 };
 
